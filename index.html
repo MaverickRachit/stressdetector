@@ -276,6 +276,7 @@
       font-size: 20px;
       font-weight: 600;
       animation: breathe 10s infinite ease-in-out;
+      animation-play-state: paused; /* MODIFIED: Start paused */
       margin: 20px auto 15px auto;
     }
     .breather-text {
@@ -283,6 +284,15 @@
       font-weight: 500;
       color: var(--text-body);
       text-align: center;
+      height: 40px; /* MODIFIED: Added height to prevent layout shift */
+    }
+    /* NEW: Timer for breather */
+    .breather-timer {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--accent);
+      text-align: center;
+      margin-top: 10px;
     }
     @keyframes breathe {
       0%   { transform: scale(0.6); opacity: 0.7; }
@@ -382,7 +392,7 @@
       color: var(--accent);
     }
 
-    /* 3. NEW CSS for Article List */
+    /* Article List */
     .article-list {
       list-style: none;
       padding: 0;
@@ -586,7 +596,8 @@
       </div>
       <div class="breather">
         <div class="breather-circle" id="breather-circle-text">Inhale...</div>
-        <div class="breather-text">Follow the circle for 1 minute.</div>
+        <div class="breather-text" id="breather-text">Follow the circle for 1 minute.</div>
+        <div class="breather-timer">60s</div>
       </div>
     </div>
   </div>
@@ -595,7 +606,7 @@
 <script>
 /*
  * ========================================
- * FINAL JAVASCRIPT (AI, Modals, Fallbacks, Auto-IR)
+ * FINAL JAVASCRIPT
  * ========================================
 */
 
@@ -639,6 +650,9 @@ const closeSosModal = document.getElementById('close-sos-modal');
 const breatherModal = document.getElementById('breather-modal');
 const closeBreatherModal = document.getElementById('close-breather-modal');
 const breatherCircleText = document.getElementById('breather-circle-text');
+// MODIFIED: Added breatherText and breatherTimer
+const breatherText = document.getElementById('breather-text');
+let breatherTimer; // Will be assigned in 'load' event
 
 // --- Fallback Suggestions ---
 const staticSuggestions = {
@@ -683,7 +697,6 @@ function createCharts() {
         tension: 0.4,
         fill: true,
         backgroundColor: (ctx) => {
-          // FIX APPLIED HERE: No context check needed
           const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
           gradient.addColorStop(0, `${color}80`);
           gradient.addColorStop(1, `${color}10`);
@@ -716,7 +729,7 @@ function createCharts() {
 }
 
 function updateChart(chart, value) {
-  if (!chart || value === 0 || value === -1) return; // Add check for chart existence
+  if (!chart || value === 0 || value === -1) return;
   chart.data.labels.push('');
   chart.data.datasets[0].data.push(value);
 
@@ -796,23 +809,20 @@ startBtn.addEventListener('click', async () => {
       startBtn.textContent = 'Start 40s Test';
     }
 
-    // 3. Send the "Start" command
     statusText.textContent = 'STARTING';
     const temp = parseInt(roomTempInput.value || '30');
 
-    // *** Auto-tune IR Threshold ***
-    let irThr = 20000; // Default
+    let irThr = 20000; 
     if (temp < 20) { irThr = 15000; }
     else if (temp >= 28) { irThr = 25000; }
 
-    // Clear UI
     analysisSection.style.display = 'none';
     finalLevelText.textContent = '--';
     finalLevelText.className = '';
     suggestList.innerHTML = '';
 
     [hrChart, spChart, gsrChart].forEach(chart => {
-      if (chart) { // Add check if chart exists
+      if (chart) {
         chart.data.labels = [];
         chart.data.datasets[0].data = [];
         chart.update();
@@ -854,7 +864,7 @@ function handleDataNotification(event) {
 
     updateChart(hrChart, hr);
     updateChart(spChart, spo2);
-    updateChart(gsrChart, gsr); // Ensure gsrChart exists before updating
+    updateChart(gsrChart, gsr);
 
     statusText.textContent = data.status || 'UNKNOWN';
 
@@ -961,7 +971,7 @@ Please provide analysis, suggestions, and find online therapy resources in India
     }
   } catch (error) {
     console.error("Error getting AI suggestions:", error);
-    renderStaticSuggestions(level);
+    renderStaticSuggestions(level); // MODIFIED: Fallback
   }
 }
 
@@ -988,15 +998,16 @@ function renderAISuggestions(level, response) {
   addBreatherButtonListener();
 }
 
+// MODIFIED: Removed the "AI failed" message for a seamless fallback
 function renderStaticSuggestions(level) {
-  suggestList.innerHTML = `<li>⚠️ AI suggestions failed to load. Here are some default tips:</li>`;
+  suggestList.innerHTML = ''; // Start with a clean list
   const suggestions = staticSuggestions[level] || staticSuggestions.MODERATE;
   let html = suggestions.map(s => `<li>${s}</li>`).join('');
 
   if (level === 'HIGH' || level === 'MODERATE') {
     html += `<li><button id="open-breather-btn" class="secondary" style="width: 100%; margin-top: 10px;">🧘 Start Calming Exercise</button></li>`;
   }
-  suggestList.innerHTML += html;
+  suggestList.innerHTML = html; // Set the HTML directly
 
   addBreatherButtonListener();
 }
@@ -1006,6 +1017,7 @@ function addBreatherButtonListener() {
   if (openBreatherBtn) {
     openBreatherBtn.addEventListener('click', () => {
       breatherModal.classList.add('active');
+      breatherCircleText.style.animationPlayState = 'running'; // Start animation
       startBreatherAnimation();
     });
   }
@@ -1045,24 +1057,92 @@ function setBLEStatus(message, color) {
   span.style.color = color;
 }
 
-// Breathing animation text
+// --- MODIFIED: More Engaging Breathing Animation ---
 let breatherInterval;
+let breatherTimerInterval;
+let breatherTimeout;
+
 function startBreatherAnimation() {
-  if (breatherInterval) clearInterval(breatherInterval);
-  breatherCircleText.textContent = 'Inhale...';
-  setTimeout(() => {
-    breatherCircleText.textContent = 'Exhale...';
-  }, 5000);
-  breatherInterval = setInterval(() => {
+    if (breatherInterval) clearInterval(breatherInterval);
+    if (breatherTimerInterval) clearInterval(breatherTimerInterval);
+    if (breatherTimeout) clearTimeout(breatherTimeout);
+
+    if (!breatherTimer) breatherTimer = document.querySelector('.breather-timer'); // Ensure it's assigned
+
+    let secondsLeft = 60;
+    const encouragements = [
+        "You're doing great.",
+        "Focus on your breath.",
+        "Let the tension go.",
+        "Be present in this moment.",
+        "Relax your shoulders.",
+        "Just breathe."
+    ];
+
+    // Start animation
+    breatherCircleText.style.animationPlayState = 'running';
     breatherCircleText.textContent = 'Inhale...';
+    breatherText.textContent = "Let's reset with this 1-minute exercise.";
+    breatherTimer.textContent = `${secondsLeft}s`;
+
+    // Text animation (Inhale/Exhale) - 10s cycle
     setTimeout(() => {
-      breatherCircleText.textContent = 'Exhale...';
-    }, 5000);
-  }, 10000);
+         breatherCircleText.textContent = 'Exhale...';
+         breatherText.textContent = encouragements[Math.floor(Math.random() * encouragements.length)];
+    }, 5000); // 5s inhale
+
+    breatherInterval = setInterval(() => {
+        breatherCircleText.textContent = 'Inhale...';
+        breatherText.textContent = encouragements[Math.floor(Math.random() * encouragements.length)];
+        setTimeout(() => {
+            breatherCircleText.textContent = 'Exhale...';
+        }, 5000); // 5s inhale, 5s exhale
+    }, 10000); // 10s total cycle
+
+    // Timer countdown
+    breatherTimerInterval = setInterval(() => {
+        secondsLeft--;
+        breatherTimer.textContent = `${secondsLeft}s`;
+        if (secondsLeft <= 0) {
+            clearInterval(breatherTimerInterval);
+        }
+    }, 1000);
+
+    // Auto-close after 60 seconds
+    breatherTimeout = setTimeout(() => {
+        stopBreatherAnimation(true); // Pass 'true' to signal completion
+    }, 60000);
 }
-function stopBreatherAnimation() {
-  if (breatherInterval) clearInterval(breatherInterval);
+
+function stopBreatherAnimation(completed = false) {
+    if (breatherInterval) clearInterval(breatherInterval);
+    if (breatherTimerInterval) clearInterval(breatherTimerInterval);
+    if (breatherTimeout) clearTimeout(breatherTimeout);
+
+    breatherCircleText.style.animationPlayState = 'paused'; // Always pause animation
+
+    if (completed) {
+        breatherCircleText.textContent = 'Done!';
+        breatherText.textContent = "Great job. You completed the exercise!";
+        breatherTimer.textContent = '👍';
+        
+        // Wait 2s then close
+        setTimeout(() => {
+            breatherModal.classList.remove('active');
+            // Reset for next time after closing
+            breatherCircleText.textContent = 'Inhale...';
+            breatherText.textContent = 'Follow the circle for 1 minute.';
+            breatherTimer.textContent = '60s';
+        }, 2000);
+    } else {
+        // Reset text immediately if closed manually
+        breatherCircleText.textContent = 'Inhale...';
+        breatherText.textContent = 'Follow the circle for 1 minute.';
+        if(breatherTimer) breatherTimer.textContent = '60s';
+    }
 }
+// --- End of Breathing Animation ---
+
 
 // --- Session History (localStorage) ---
 const HISTORY_KEY = 'stressHistory';
@@ -1098,6 +1178,10 @@ function renderHistory() {
 window.addEventListener('load', () => {
   createCharts();
   renderHistory();
+  
+  // MODIFIED: Assign timer and set animation state
+  breatherTimer = document.querySelector('.breather-timer');
+  breatherCircleText.style.animationPlayState = 'paused';
 
   // SOS Modal
   sosBtn.addEventListener('click', () => sosModal.classList.add('active'));
@@ -1106,7 +1190,7 @@ window.addEventListener('load', () => {
   // Breather Modal
   closeBreatherModal.addEventListener('click', () => {
     breatherModal.classList.remove('active');
-    stopBreatherAnimation();
+    stopBreatherAnimation(false); // MODIFIED: Pass false
   });
 
   // Close modal on overlay click
@@ -1115,7 +1199,7 @@ window.addEventListener('load', () => {
       if (e.target === modal) {
         modal.classList.remove('active');
         if (modal === breatherModal) {
-          stopBreatherAnimation();
+          stopBreatherAnimation(false); // MODIFIED: Pass false
         }
       }
     });
