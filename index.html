@@ -3,54 +3,52 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Stress Monitor 3.0 (AI-Powered)</title>
-  
-  <!-- 1. Import Chart.js for animated graphs -->
+  <title>NeuroWell 2.0 (AI & Emergency)</title>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- 2. Use the Inter font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
+
   <style>
     /*
      * ========================================
-     * NEW STYLING (Glassmorphism, Gradients, Animations)
+     * FINAL STYLING: MODERN DARK "GLASS" THEME
      * ========================================
-    */
+     */
     :root {
       --bg: #020617; /* Dark Navy Blue */
       --card-bg: rgba(255, 255, 255, 0.05);
       --card-border: rgba(255, 255, 255, 0.1);
       --text: #e2e8f0;
+      --text-body: #94a3b8; /* Lighter body text */
       --text-muted: #94a3b8;
       --accent: #22d3ee; /* Cyan */
-      
+
       --good: #4ade80;
       --warn: #facc15;
       --bad: #f87171;
     }
-    
+
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
       background-color: var(--bg);
-      color: var(--text);
-      /* Subtle gradient background */
+      color: var(--text-body);
       background-image: radial-gradient(circle at 10% 20%, rgba(34, 211, 238, 0.15), transparent 50%),
                         radial-gradient(circle at 80% 90%, rgba(139, 92, 246, 0.1), transparent 50%);
       background-attachment: fixed;
     }
-    
+
     .wrap {
       max-width: 1200px;
-      margin: 24px auto;
-      padding: 0 24px;
+      margin: 16px auto;
+      padding: 0 16px;
     }
-    
+
     /* Main Dashboard Grid */
     .dashboard {
       display: grid;
@@ -60,6 +58,10 @@
     @media (min-width: 1024px) {
       .dashboard {
         grid-template-columns: 2fr 1fr;
+      }
+      .wrap {
+        margin: 24px auto;
+        padding: 0 24px;
       }
     }
     .main-col, .side-col {
@@ -79,27 +81,23 @@
       box-shadow: 0 8px 32px rgba(2, 6, 23, 0.3);
       transition: all 0.3s ease;
     }
-    
+
     .card-title {
       font-size: 20px;
       font-weight: 600;
       margin: 0 0 20px 0;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 10px;
       color: var(--text);
     }
-    
+
     /* Config & Connect */
     .config-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 20px;
-    }
-    @media (min-width: 640px) {
-      .config-grid {
-        grid-template-columns: 1fr 1fr;
-      }
     }
     .config-grid-span {
       grid-column: 1 / -1;
@@ -130,25 +128,31 @@
     button {
       cursor: pointer;
       transition: all 0.2s ease;
+      font-weight: 600;
+      border: none;
     }
     button.primary {
       background: var(--accent);
       color: var(--bg);
-      font-weight: 700;
       box-shadow: 0 4px 20px rgba(34, 211, 238, 0.2);
-      border: none;
     }
     button.primary:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 25px rgba(34, 211, 238, 0.3);
     }
     button.secondary {
-      background: #334155; /* Grayish blue */
-      font-weight: 500;
-      border: none;
+      background: #334155;
+      color: var(--text);
     }
-    button.secondary:hover {
-      background: #475569;
+    button.secondary:hover { background: #475569; }
+    button.sos {
+      background: var(--bad);
+      color: var(--text);
+      font-weight: 700;
+      border: none;
+      padding: 8px 16px;
+      font-size: 14px;
+      width: auto;
     }
     button:disabled {
       background: rgba(255, 255, 255, 0.1);
@@ -157,12 +161,17 @@
       transform: none;
       box-shadow: none;
     }
-    
+
     /* Vitals Card */
     .vitals-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: 1fr;
       gap: 20px;
+    }
+    @media (min-width: 640px) {
+      .vitals-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
     }
     .vital {
       text-align: center;
@@ -181,26 +190,26 @@
       gap: 8px;
     }
     .vital-value {
-      font-size: 40px;
+      font-size: clamp(32px, 5vw, 40px);
       font-weight: 800;
       color: var(--text);
       line-height: 1;
     }
     .vital-value span { font-size: 18px; font-weight: 500; color: var(--text-muted); margin-left: 4px; }
-    
+
     /* Animated Heart Icon */
     .heart-icon {
       width: 24px;
       height: 24px;
       fill: var(--bad);
+      stroke: var(--bad);
       animation: beat 1s infinite ease-in-out;
-      /* Animation duration will be set by JS */
     }
     @keyframes beat {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.2); }
     }
-    
+
     /* Status Card */
     .status-box {
       background: rgba(0, 0, 0, 0.15);
@@ -215,7 +224,7 @@
       letter-spacing: 1px;
     }
     .status-box #count {
-      font-size: 64px;
+      font-size: clamp(48px, 10vw, 64px);
       font-weight: 800;
       color: var(--text);
       line-height: 1.2;
@@ -237,11 +246,13 @@
       color: #000;
       text-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
-    /* Gradient backgrounds for stress levels */
     .level-LOW { background: linear-gradient(90deg, var(--good), #86efac); }
     .level-MODERATE { background: linear-gradient(90deg, var(--warn), #fde047); }
     .level-HIGH { background: linear-gradient(90deg, var(--bad), #fca5a5); }
 
+    #suggestList {
+      padding-left: 20px;
+    }
     #suggestList li {
       background: rgba(0, 0, 0, 0.15);
       padding: 12px 16px;
@@ -249,18 +260,11 @@
       margin-bottom: 10px;
       font-size: 15px;
       line-height: 1.6;
+      color: var(--text-body);
     }
-    #suggestList li strong {
-      color: var(--accent);
-    }
-    
+    #suggestList li strong { color: var(--accent); }
+
     /* Breathing Pacemaker */
-    .breather {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
-    }
     .breather-circle {
       width: 150px;
       height: 150px;
@@ -271,20 +275,21 @@
       color: var(--bg);
       font-size: 20px;
       font-weight: 600;
-      /* 5s inhale, 5s exhale = 10s cycle */
       animation: breathe 10s infinite ease-in-out;
+      margin: 20px auto 15px auto;
     }
     .breather-text {
       font-size: 16px;
       font-weight: 500;
-      color: var(--text-muted);
+      color: var(--text-body);
+      text-align: center;
     }
     @keyframes breathe {
       0%   { transform: scale(0.6); opacity: 0.7; }
       50%  { transform: scale(1); opacity: 1; }
       100% { transform: scale(0.6); opacity: 0.7; }
     }
-    
+
     /* History List */
     .history-list {
       list-style: none;
@@ -295,8 +300,8 @@
     }
     .history-item {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
-      align-items: center;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
       padding: 12px 0;
       border-bottom: 1px solid var(--card-border);
       font-size: 14px;
@@ -307,35 +312,139 @@
     .history-level-MODERATE { color: var(--warn); }
     .history-level-HIGH { color: var(--bad); }
 
+    .history-item-date {
+      grid-column: 1 / -1;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    @media (min-width: 640px) {
+      .history-item {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        align-items: center;
+      }
+      .history-item-date {
+        grid-column: auto;
+        margin-top: 0;
+        font-size: 14px;
+        color: var(--text-muted);
+      }
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      z-index: 100;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal-content {
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+      transform: scale(0.9);
+      transition: all 0.3s ease;
+    }
+    .modal-overlay.active .modal-content {
+      transform: scale(1);
+    }
+    .modal-content .card-title {
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 15px;
+    }
+    .helpline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .helpline:last-child { border: none; }
+    .helpline-name { font-weight: 600; color: var(--text-body); }
+    .helpline-number {
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--accent);
+    }
+
+    /* 3. NEW CSS for Article List */
+    .article-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .article-item a {
+      display: block;
+      background: rgba(0, 0, 0, 0.15);
+      padding: 16px;
+      border-radius: 12px;
+      text-decoration: none;
+      color: var(--text-body);
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .article-item a:hover {
+      border-color: var(--card-border);
+      background: rgba(0, 0, 0, 0.25);
+      transform: translateY(-2px);
+    }
+    .article-item a strong {
+      color: var(--text);
+      font-weight: 600;
+      font-size: 16px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .article-item a p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
   </style>
 </head>
 <body>
-  
+
   <div class="wrap">
-    
-    <!-- Header -->
+
     <header class="card">
       <h1 style="display: flex; align-items: center; gap: 12px;">
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-brain-circuit"><path d="M12 5a3 3 0 1 0-5.997.001A3 3 0 0 0 12 5zm0 14a3 3 0 1 0-5.997.001A3 3 0 0 0 12 19zm0-7a3 3 0 1 0 5.997-.001A3 3 0 0 0 12 12zm0 0V5m0 7v7m0-7h7.5m-7.5 7H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2.5"/><path d="M5 12h2.5m14 0h-7.5"/><path d="M9 19v-2.34a2.26 2.26 0 0 1 .9-1.8L12 13l-2.1-1.86a2.26 2.26 0 0 1-.9-1.8V7"/></svg>
-        Stress Monitor 3.0 (AI)
+        NeuroWell 2.0
       </h1>
-      <div id="bleStatus" style="color: var(--text-muted); font-weight: 500;">
-        Status: <span style="color: var(--bad); font-weight: 600;">Disconnected</span>
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <div id="bleStatus" style="color: var(--text-muted); font-weight: 500;">
+          Status: <span style="color: var(--bad); font-weight: 600;">Disconnected</span>
+        </div>
+        <button id="sosBtn" class="sos">SOS</button>
       </div>
     </header>
 
-    <!-- Main Dashboard -->
     <div class="dashboard">
 
-      <!-- Left Column -->
       <div class="main-col">
-        
-        <!-- Config Card -->
+
         <div class="card">
           <div class="config-grid">
-            
-            <!-- NEW: Temp + Location Button -->
-            <div>
+            <div class="config-grid-span">
               <label for="roomTemp">Room Temperature (°C)</label>
               <div class="temp-group">
                 <input id="roomTemp" type="number" min="10" max="45" value="30">
@@ -343,21 +452,14 @@
               </div>
             </div>
 
-            <div>
-              <label for="irThreshold">IR Threshold (Sensor Tuning)</label>
-              <input id="irThreshold" type="number" min="1000" max="200000" value="20000">
-            </div>
-
             <div class="config-grid-span">
               <button id="startBtn" class="primary">Connect & Start Test</button>
             </div>
           </div>
         </div>
-        
-        <!-- Live Vitals Card -->
+
         <div class="card">
           <div class="vitals-grid">
-            <!-- Heart Rate -->
             <div class="vital">
               <div class="vital-label">
                 <svg class="heart-icon" id="heartIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="var(--bad)" stroke="var(--bad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
@@ -365,7 +467,6 @@
               </div>
               <div id="valHR" class="vital-value">--<span>bpm</span></div>
             </div>
-            <!-- SpO2 -->
             <div class="vital">
               <div class="vital-label">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l3-9 3 18 3-9h3"/><path d="M19 10a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></svg>
@@ -373,7 +474,6 @@
               </div>
               <div id="valSp" class="vital-value">--<span>%</span></div>
             </div>
-            <!-- GSR -->
             <div class="vital">
               <div class="vital-label">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
@@ -384,7 +484,6 @@
           </div>
         </div>
 
-        <!-- Charts Card -->
         <div class="card">
           <div class="card-title">Live Sensor Data</div>
           <div style="height: 250px;">
@@ -396,59 +495,112 @@
           </div>
         </div>
       </div>
-      
-      <!-- Right Column -->
+
       <div class="side-col">
-        
-        <!-- Status Card -->
-        <div class="card">
+
+        <div class="card" id="status-analysis-card">
           <div class="card-title">Status</div>
           <div class="status-box">
             <div id="statusText">IDLE</div>
             <div id="count">0<span>s</span></div>
           </div>
+
+          <div id="analysis-section" style="display: none; margin-top: 24px;">
+            <div class="card-title" style="padding-bottom: 0; margin-bottom: 20px;">Analysis & AI Suggestions</div>
+            <div id="finalLevel" class="">--</div>
+            <ol id="suggestList"></ol>
+          </div>
         </div>
         
-        <!-- Results Card -->
-        <div class="card" id="results-card">
-          <div class="card-title">Analysis & AI Suggestions</div>
-          <div id="finalLevel" class="">--</div>
-          <!-- AI Suggestions will be loaded here -->
-          <ol id="suggestList" style="padding-left: 20px;"></ol>
-        </div>
-
-        <!-- Breathing Tool Card (Initially hidden) -->
-        <div class="card" id="breather-card" style="display: none;">
-          <div class="card-title">Calming Exercise</div>
-          <div class="breather">
-            <div class="breather-circle" id="breather-circle-text">Inhale...</div>
-            <div class="breather-text">Follow the circle for 1 minute.</div>
-          </div>
+        <div class="card">
+          <div class="card-title">Wellness Library</div>
+          <ul class="article-list">
+            <li class="article-item">
+              <a href="https://www.who.int/news-room/feature-stories/detail/stress-and-your-health" target="_blank" rel="noopener">
+                <strong>Understanding Stress</strong>
+                <p>Learn about the 'fight or flight' response (WHO).</p>
+              </a>
+            </li>
+            <li class="article-item">
+              <a href="https://www.healthline.com/health/breathing-exercises-for-anxiety" target="_blank" rel="noopener">
+                <strong>Mindful Breathing</strong>
+                <p>Simple breathing exercises to try now.</p>
+              </a>
+            </li>
+            <li class="article-item">
+              <a href="https://www.sleepfoundation.org/mental-health" target="_blank" rel="noopener">
+                <strong>The Power of Sleep</strong>
+                <p>How better sleep improves mental health.</p>
+              </a>
+            </li>
+          </ul>
         </div>
 
       </div>
-
     </div>
 
-    <!-- Session History Card -->
     <div class="card" style="margin-top: 24px;">
       <div class="card-title">Session History (Last 10)</div>
       <ul class="history-list" id="history-list">
-        <!-- JS will populate this -->
       </ul>
     </div>
 
   </div>
 
+  <div class="modal-overlay" id="sos-modal">
+    <div class="modal-content card">
+      <div class="card-title">
+        Emergency Helplines (India)
+        <button id="close-sos-modal" style="width: auto; padding: 5px 10px; font-weight: 700;">X</button>
+      </div>
+      <div class="helpline-list">
+        <div class="helpline">
+          <div class="helpline-name">Ambulance</div>
+          <div class="helpline-number">102 / 108</div>
+        </div>
+        <div class="helpline">
+          <div class="helpline-name">Police</div>
+          <div class="helpline-number">100 / 112</div>
+        </div>
+        <div class="helpline">
+          <div class="helpline-name">National Mental Health</div>
+          <div class="helpline-number">1800-599-0019</div>
+        </div>
+        <div class="helpline">
+          <div class="helpline-name">KIRAN (Mental Health)</div>
+          <div class="helpline-number">1800-599-0019</div>
+        </div>
+        <div class="helpline">
+          <div class="helpline-name">Senior Citizen Helpline</div>
+          <div class="helpline-number">14567</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="breather-modal">
+    <div class="modal-content card">
+      <div class="card-title">
+        Calming Exercise
+        <button id="close-breather-modal" style="width: auto; padding: 5px 10px; font-weight: 700;">X</button>
+      </div>
+      <div class="breather">
+        <div class="breather-circle" id="breather-circle-text">Inhale...</div>
+        <div class="breather-text">Follow the circle for 1 minute.</div>
+      </div>
+    </div>
+  </div>
+
+
 <script>
 /*
  * ========================================
- * UPGRADED JAVASCRIPT (Chart.js, BLE, History, Weather, Gemini AI)
+ * FINAL JAVASCRIPT (AI, Modals, Fallbacks, Auto-IR)
  * ========================================
 */
 
 // --- BLE UUIDs (Must match ESP32) ---
-const SERVICE_UUID      = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+const SERVICE_UUID    = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const CHAR_DATA_UUID    = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 const CHAR_COMMAND_UUID = "a88a02e0-8422-42b0-a555-5203361a832a";
 
@@ -469,17 +621,49 @@ const startBtn = document.getElementById('startBtn');
 const bleStatusText = document.getElementById('bleStatus');
 const statusText = document.getElementById('statusText');
 const countText = document.getElementById('count');
+const analysisSection = document.getElementById('analysis-section');
 const finalLevelText = document.getElementById('finalLevel');
 const valHR = document.getElementById('valHR');
 const valSp = document.getElementById('valSp');
 const valGSR = document.getElementById('valGSR');
 const suggestList = document.getElementById('suggestList');
 const heartIcon = document.getElementById('heartIcon');
-const breatherCard = document.getElementById('breather-card');
-const breatherCircleText = document.getElementById('breather-circle-text');
 const historyList = document.getElementById('history-list');
 const getLocationBtn = document.getElementById('getLocationBtn');
 const roomTempInput = document.getElementById('roomTemp');
+
+// Modal Elements
+const sosBtn = document.getElementById('sosBtn');
+const sosModal = document.getElementById('sos-modal');
+const closeSosModal = document.getElementById('close-sos-modal');
+const breatherModal = document.getElementById('breather-modal');
+const closeBreatherModal = document.getElementById('close-breather-modal');
+const breatherCircleText = document.getElementById('breather-circle-text');
+
+// --- Fallback Suggestions ---
+const staticSuggestions = {
+  LOW: [
+    "😌 **You're in a calm state.** Great job! Keep up the mindful practices.",
+    "💧 **Stay hydrated.** Even mild dehydration can affect your mood. Grab some water.",
+    "🧘 **Maintain good posture.** Sit up straight, relax your shoulders. It makes a difference.",
+    "🚶‍♂️ **Take a short walk.** A 5-10 minute walk can help maintain this positive state.",
+    "🎶 **Listen to music.** Put on a favorite relaxing song."
+  ],
+  MODERATE: [
+    "⚠️ **Slightly elevated stress.** Let's try to manage this before it builds up.",
+    "💨 **Try 4-7-8 Breathing:** Inhale for 4s, hold for 7s, exhale slowly for 8s. Repeat 3 times.",
+    "🤸‍♀️ **Stretch it out.** Roll your neck and shoulders. Stand up and touch your toes.",
+    "🎧 **Listen to calming music.** Put on a favorite playlist or some ambient sounds for 5 minutes.",
+    "🌳 **Look at nature.** If you can, look out the window at a tree or the sky. It helps."
+  ],
+  HIGH: [
+    "🛑 **High stress detected.** Please pause what you're doing. Your well-being is the priority.",
+    "🌬️ **Focus on your breath.** Try to slow your breathing. Inhale for 4s, exhale for 6s.",
+    "🧊 **Ground yourself (5-4-3-2-1):** Name 5 things you see, 4 things you feel, 3 you hear, 2 you smell, 1 you taste.",
+    "🏃‍♂️ **Change your environment.** If possible, step outside or go to a different room for a few minutes.",
+    "🗣️ **Talk to someone.** If this feeling persists, please reach out to a friend or family member."
+  ]
+};
 
 // --- Chart.js Setup ---
 const MAX_CHART_POINTS = 30;
@@ -494,14 +678,15 @@ function createCharts() {
         label: label,
         data: [],
         borderColor: color,
-        borderWidth: 4, // Thicker line
+        borderWidth: 4,
         pointRadius: 0,
-        tension: 0.4, // Wavy "water" line
+        tension: 0.4,
         fill: true,
         backgroundColor: (ctx) => {
+          // FIX APPLIED HERE: No context check needed
           const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
-          gradient.addColorStop(0, `${color}90`); // Stronger gradient start
-          gradient.addColorStop(1, `${color}10`); // Faded gradient end
+          gradient.addColorStop(0, `${color}80`);
+          gradient.addColorStop(1, `${color}10`);
           return gradient;
         }
       }]
@@ -512,9 +697,9 @@ function createCharts() {
       animation: { duration: 500, easing: 'easeOutQuart' },
       plugins: { legend: { display: false } },
       scales: {
-        x: { display: false },
-        y: { 
-          display: true, 
+        x: { display: false, grid: { display: false } },
+        y: {
+          display: true,
           ticks: { color: 'var(--text-muted)' },
           grid: { color: 'var(--card-border)' }
         }
@@ -522,25 +707,24 @@ function createCharts() {
     }
   });
 
-  hrChart = new Chart(document.getElementById('hrChart'), chartConfig('Heart Rate', '#f87171'));
-  spChart = new Chart(document.getElementById('spChart'), chartConfig('SpO2', '#22d3ee'));
-  gsrChart = new Chart(document.getElementById('gsrChart'), chartConfig('GSR', '#facc15'));
-  
-  // Customize SpO2 chart range
+  hrChart = new Chart(document.getElementById('hrChart'), chartConfig('Heart Rate', 'var(--bad)'));
+  spChart = new Chart(document.getElementById('spChart'), chartConfig('SpO2', 'var(--accent)'));
+  gsrChart = new Chart(document.getElementById('gsrChart'), chartConfig('GSR', 'var(--warn)'));
+
   spChart.options.scales.y.min = 85;
   spChart.options.scales.y.max = 100;
 }
 
 function updateChart(chart, value) {
-  if (value === 0 || value === -1) return; // Don't plot zeroes
+  if (!chart || value === 0 || value === -1) return; // Add check for chart existence
   chart.data.labels.push('');
   chart.data.datasets[0].data.push(value);
-  
+
   if (chart.data.labels.length > MAX_CHART_POINTS) {
     chart.data.labels.shift();
     chart.data.datasets[0].data.shift();
   }
-  chart.update('none'); // 'none' for smooth live updates
+  chart.update('none');
 }
 
 // --- Weather API Logic ---
@@ -557,7 +741,7 @@ getLocationBtn.addEventListener('click', () => {
 async function fetchWeather(position) {
   const { latitude, longitude } = position.coords;
   const weatherApiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
-  
+
   try {
     const response = await fetch(weatherApiUrl);
     const data = await response.json();
@@ -583,7 +767,7 @@ function handleLocationError(error) {
 // --- Web Bluetooth Logic ---
 startBtn.addEventListener('click', async () => {
   startBtn.disabled = true;
-  
+
   try {
     if (!bleDevice || !bleDevice.gatt.connected) {
       setBLEStatus('Requesting device...', 'var(--warn)');
@@ -593,7 +777,7 @@ startBtn.addEventListener('click', async () => {
         filters: [{ services: [SERVICE_UUID] }],
         optionalServices: [SERVICE_UUID]
       });
-      
+
       bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
       setBLEStatus('Connecting to device...', 'var(--warn)');
       gattServer = await bleDevice.gatt.connect();
@@ -604,10 +788,10 @@ startBtn.addEventListener('click', async () => {
       setBLEStatus('Getting Characteristics...', 'var(--warn)');
       dataCharacteristic = await service.getCharacteristic(CHAR_DATA_UUID);
       commandCharacteristic = await service.getCharacteristic(CHAR_COMMAND_UUID);
-      
+
       await dataCharacteristic.startNotifications();
       dataCharacteristic.addEventListener('characteristicvaluechanged', handleDataNotification);
-      
+
       setBLEStatus('Connected', 'var(--good)');
       startBtn.textContent = 'Start 40s Test';
     }
@@ -615,24 +799,29 @@ startBtn.addEventListener('click', async () => {
     // 3. Send the "Start" command
     statusText.textContent = 'STARTING';
     const temp = parseInt(roomTempInput.value || '30');
-    const irThr = parseInt(document.getElementById('irThreshold').value || '20000');
-    
-    // Clear UI for new test
+
+    // *** Auto-tune IR Threshold ***
+    let irThr = 20000; // Default
+    if (temp < 20) { irThr = 15000; }
+    else if (temp >= 28) { irThr = 25000; }
+
+    // Clear UI
+    analysisSection.style.display = 'none';
     finalLevelText.textContent = '--';
     finalLevelText.className = '';
     suggestList.innerHTML = '';
-    breatherCard.style.display = 'none';
-    
-    // Reset charts
+
     [hrChart, spChart, gsrChart].forEach(chart => {
-      chart.data.labels = [];
-      chart.data.datasets[0].data = [];
-      chart.update();
+      if (chart) { // Add check if chart exists
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+        chart.update();
+      }
     });
 
     const command = JSON.stringify({ roomTemp: temp, irThreshold: irThr });
     await commandCharacteristic.writeValue(textEncoder.encode(command));
-    
+
     statusText.textContent = 'MEASURING';
 
   } catch (error) {
@@ -647,7 +836,7 @@ startBtn.addEventListener('click', async () => {
 // Main data handler
 function handleDataNotification(event) {
   const jsonString = textDecoder.decode(event.target.value);
-  
+
   try {
     const data = JSON.parse(jsonString);
 
@@ -655,44 +844,34 @@ function handleDataNotification(event) {
     const spo2 = data.spo2 || -1;
     const gsr = data.gsr || 0;
 
-    // Update Live Vitals
     valHR.textContent = hr > 0 ? hr.toFixed(0) : '--';
     valSp.textContent = spo2 > 0 ? spo2 : '--';
     valGSR.textContent = gsr > 0 ? gsr.toFixed(0) : '--';
-    
-    // Update live heart animation
+
     if (hr > 40) {
       heartIcon.style.animationDuration = `${(60 / hr).toFixed(2)}s`;
     }
 
-    // Update Live Charts
     updateChart(hrChart, hr);
     updateChart(spChart, spo2);
-    updateChart(gsrChart, gsr);
+    updateChart(gsrChart, gsr); // Ensure gsrChart exists before updating
 
     statusText.textContent = data.status || 'UNKNOWN';
 
     if (data.status === "MEASURING") {
       countText.textContent = data.timeLeft ? Math.ceil(data.timeLeft / 1000) : '0';
+      analysisSection.style.display = 'none';
     }
 
-    // Handle the final "DONE" packet
     if (data.status === "DONE") {
       countText.textContent = 0;
+      analysisSection.style.display = 'block';
       const level = data.finalLevel || 'ERROR';
       finalLevelText.textContent = level;
       finalLevelText.className = `level-${level}`;
-      
-      // *** NEW: Call Gemini AI for suggestions ***
+
       getAISuggestions(level, data.hr, data.spo2, data.gsr, parseInt(roomTempInput.value || '30'));
-      
-      // Show breather tool if stressed
-      if (level === 'HIGH' || level === 'MODERATE') {
-        breatherCard.style.display = 'block';
-        startBreatherAnimation();
-      }
-      
-      // Save to history
+
       saveSession({
         level: level,
         hr: data.hr.toFixed(0),
@@ -707,7 +886,7 @@ function handleDataNotification(event) {
   }
 }
 
-// --- NEW: Gemini AI Suggestions ---
+// --- Gemini AI Suggestions ---
 async function getAISuggestions(level, hr, spo2, gsr, temp) {
   suggestList.innerHTML = `<li>🧠 Analyzing results and generating personalized AI suggestions...</li>`;
 
@@ -726,7 +905,6 @@ You MUST:
 - Room Temp: ${temp}°C
 Please provide analysis, suggestions, and find online therapy resources in India.`;
 
-  // Define the JSON schema for the response
   const schema = {
     type: "OBJECT",
     properties: {
@@ -754,7 +932,7 @@ Please provide analysis, suggestions, and find online therapy resources in India
   const payload = {
     contents: [{ parts: [{ text: userPrompt }] }],
     systemInstruction: { parts: [{ text: systemPrompt }] },
-    tools: [{ "google_search": {} }], // Enable Google Search
+    tools: [{ "google_search": {} }],
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: schema,
@@ -763,7 +941,6 @@ Please provide analysis, suggestions, and find online therapy resources in India
   };
 
   try {
-    // Call the API with exponential backoff
     const response = await fetchWithBackoff(API_URL + API_KEY, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -774,51 +951,71 @@ Please provide analysis, suggestions, and find online therapy resources in India
 
     const result = await response.json();
     const candidate = result.candidates?.[0];
-    
+
     if (candidate && candidate.content?.parts?.[0]?.text) {
       const jsonText = candidate.content.parts[0].text;
       const aiResponse = JSON.parse(jsonText);
-      renderAISuggestions(aiResponse);
+      renderAISuggestions(level, aiResponse);
     } else {
       throw new Error("Invalid AI response structure.");
     }
-
   } catch (error) {
     console.error("Error getting AI suggestions:", error);
-    suggestList.innerHTML = `<li>⚠️ Error loading AI suggestions. Please try again later.</li>`;
+    renderStaticSuggestions(level);
   }
 }
 
-function renderAISuggestions(response) {
+function renderAISuggestions(level, response) {
   let html = '';
-  
-  // 1. Analysis
+
   if (response.analysis) {
     html += `<li><p>${response.analysis.replace(/\n/g, '<br>')}</p></li>`;
   }
-
-  // 2. Suggestions
   if (response.suggestions && response.suggestions.length > 0) {
     html += response.suggestions.map(s => `<li>${s}</li>`).join('');
   }
-
-  // 3. Resources
+  if (level === 'HIGH' || level === 'MODERATE') {
+    html += `<li><button id="open-breather-btn" class="secondary" style="width: 100%; margin-top: 10px;">🧘 Start Calming Exercise</button></li>`;
+  }
   if (response.resources && response.resources.length > 0) {
     html += `<li><strong>Professional Help Resources (India):</strong></li>`;
-    html += response.resources.map(r => 
+    html += response.resources.map(r =>
       `<li>🌐 <strong>${r.name}</strong>: <a href="${r.uri}" target="_blank" rel="noopener noreferrer" style="color: var(--accent);">${r.uri}</a></li>`
     ).join('');
   }
-
   suggestList.innerHTML = html;
+
+  addBreatherButtonListener();
 }
 
-// Utility for retrying fetch (exponential backoff)
+function renderStaticSuggestions(level) {
+  suggestList.innerHTML = `<li>⚠️ AI suggestions failed to load. Here are some default tips:</li>`;
+  const suggestions = staticSuggestions[level] || staticSuggestions.MODERATE;
+  let html = suggestions.map(s => `<li>${s}</li>`).join('');
+
+  if (level === 'HIGH' || level === 'MODERATE') {
+    html += `<li><button id="open-breather-btn" class="secondary" style="width: 100%; margin-top: 10px;">🧘 Start Calming Exercise</button></li>`;
+  }
+  suggestList.innerHTML += html;
+
+  addBreatherButtonListener();
+}
+
+function addBreatherButtonListener() {
+  const openBreatherBtn = document.getElementById('open-breather-btn');
+  if (openBreatherBtn) {
+    openBreatherBtn.addEventListener('click', () => {
+      breatherModal.classList.add('active');
+      startBreatherAnimation();
+    });
+  }
+}
+
+// Utility for retrying fetch
 async function fetchWithBackoff(url, options, retries = 3, delay = 1000) {
   try {
     const response = await fetch(url, options);
     if (!response.ok && retries > 0 && (response.status === 429 || response.status >= 500)) {
-      // Retry on rate limits or server errors
       await new Promise(resolve => setTimeout(resolve, delay));
       return fetchWithBackoff(url, options, retries - 1, delay * 2);
     }
@@ -837,7 +1034,7 @@ function onDisconnected() {
   setBLEStatus('Disconnected', 'var(--bad)');
   statusText.textContent = 'IDLE';
   countText.textContent = '0';
-  
+  analysisSection.style.display = 'none';
   bleDevice = null;
   startBtn.textContent = 'Connect & Start Test';
 }
@@ -855,14 +1052,16 @@ function startBreatherAnimation() {
   breatherCircleText.textContent = 'Inhale...';
   setTimeout(() => {
     breatherCircleText.textContent = 'Exhale...';
-  }, 5000); // Half of the 10s animation
-  // Loop
+  }, 5000);
   breatherInterval = setInterval(() => {
     breatherCircleText.textContent = 'Inhale...';
     setTimeout(() => {
       breatherCircleText.textContent = 'Exhale...';
     }, 5000);
   }, 10000);
+}
+function stopBreatherAnimation() {
+  if (breatherInterval) clearInterval(breatherInterval);
 }
 
 // --- Session History (localStorage) ---
@@ -871,12 +1070,10 @@ const MAX_HISTORY = 10;
 
 function saveSession(sessionData) {
   let history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-  history.unshift(sessionData); // Add to the front
-  
+  history.unshift(sessionData);
   if (history.length > MAX_HISTORY) {
     history = history.slice(0, MAX_HISTORY);
   }
-  
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
   renderHistory();
 }
@@ -887,24 +1084,44 @@ function renderHistory() {
     historyList.innerHTML = `<li style="color: var(--text-muted); text-align: center; padding: 20px;">No sessions recorded yet.</li>`;
     return;
   }
-  
   historyList.innerHTML = history.map(item => `
     <li class="history-item">
-      <div><span class="history-level-${item.level}">${item.level}</span></div>
-      <div>HR: <span>${item.hr}</span></div>
-      <div>SpO₂: <span>${item.spo2}%</span></div>
-      <div style="color: var(--text-muted); font-size: 12px;">${item.date}</div>
+      <div class="history-item-level"><span class="history-level-${item.level}">${item.level}</span></div>
+      <div class="history-item-hr">HR: <span>${item.hr}</span></div>
+      <div class="history-item-spo2">SpO₂: <span>${item.spo2}%</span></div>
+      <div class="history-item-date">${item.date}</div>
     </li>
   `).join('');
 }
 
-// --- Initial Load ---
+// --- Initial Load & Modal Listeners ---
 window.addEventListener('load', () => {
   createCharts();
   renderHistory();
+
+  // SOS Modal
+  sosBtn.addEventListener('click', () => sosModal.classList.add('active'));
+  closeSosModal.addEventListener('click', () => sosModal.classList.remove('active'));
+
+  // Breather Modal
+  closeBreatherModal.addEventListener('click', () => {
+    breatherModal.classList.remove('active');
+    stopBreatherAnimation();
+  });
+
+  // Close modal on overlay click
+  [sosModal, breatherModal].forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('active');
+        if (modal === breatherModal) {
+          stopBreatherAnimation();
+        }
+      }
+    });
+  });
 });
 
 </script>
 </body>
 </html>
-
