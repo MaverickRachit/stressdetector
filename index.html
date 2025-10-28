@@ -1,0 +1,333 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Stress Monitor — Web BLE</title>
+  <style>
+    :root{--bg:#0b1220;--card:#0f1724;--accent:#06b6d4;--muted:#94a3b8;--good:#16a34a;--warn:#f59e0b;--bad:#ef4444}
+    body{margin:0;font-family:Inter,Segoe UI,Arial;background:linear-gradient(180deg,#041022 0%,var(--bg)100%);color:#e6eef6}
+    .wrap{max-width:980px;margin:18px auto;padding:18px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    h1{font-size:20px;margin:0}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.6);margin-bottom:12px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .small{flex:1 1 160px;padding:10px}
+    .big{flex:2 1 480px;padding:10px}
+    label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px}
+    input[type=number],button,select{width:100%;padding:10px;border-radius:8px;border:none;background:#081023;color:#eaf6fb;font-size:15px}
+    button.primary{background:linear-gradient(90deg,var(--accent),#60a5fa);box-shadow:0 6px 18px rgba(3,102,214,0.15);cursor:pointer}
+    button:disabled{background:var(--card);color:var(--muted);cursor:not-allowed}
+    .status{font-weight:600}
+    .meter{height:140px;width:100%;border-radius:8px;background:#071022;display:flex;align-items:center;justify-content:center;flex-direction:column}
+    canvas{max-width:100%;height:140px;border-radius:8px;background:transparent}
+    .count{font-size:32px;font-weight:700}
+    .results{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+    .resultCard{background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;text-align:center}
+    .suggest{margin-top:10px}
+    .suggest li{margin-bottom:8px}
+    footer{margin-top:14px;color:var(--muted);font-size:13px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="card">
+      <h1>Stress Monitor — Web Bluetooth</h1>
+      <div>
+        <div id="apInfo">Status: <strong id="bleStatus">Not Connected</strong></div>
+      </div>
+    </header>
+
+    <div class="card row">
+      <div class="small">
+        <label>Room Temperature (°C)</label>
+        <input id="roomTemp" type="number" min="10" max="45" value="30">
+      </div>
+      <div class="small">
+        <label>IR Threshold (adjust after checking IR)</label>
+        <input id="irThreshold" type="number" min="1000" max="200000" value="20000">
+      </div>
+      <div class="small">
+        <label>&nbsp;</label>
+        <button id="startBtn" class="primary">Connect & Start 40s Test</button>
+      </div>
+    </div>
+
+    <div class="card row">
+        <div class="big meter">
+          <div style="width:100%;display:flex;gap:8px">
+            <div style="flex:1">
+              <label>Heart Rate (bpm)</label>
+              <canvas id="hrCanvas"></canvas>
+            </div>
+            <div style="flex:1">
+              <label>SpO₂ (%)</label>
+              <canvas id="spCanvas"></canvas>
+            </div>
+            <div style="flex:1">
+              <label>GSR (avg)</label>
+              <canvas id="gsrCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="status">Status: <span id="statusText">IDLE</span></div>
+            <div>Countdown: <span id="count" class="count">0</span>s</div>
+          </div>
+          <div>
+            <div style="text-align:right">
+              <div style="font-size:14px;color:var(--muted)">Final Stress Level</div>
+              <div id="finalLevel" style="font-size:18px;font-weight:800">--</div>
+            </div>
+          </div>
+        </div>
+  
+        <div class="results" id="liveVals" style="margin-top:12px">
+          <div class="resultCard">
+            <div style="color:var(--muted)">HR</div><div id="valHR" style="font-size:22px">--</div>
+          </div>
+          <div class="resultCard">
+            <div style="color:var(--muted)">SpO₂</div><div id="valSp" style="font-size:22px">--</div>
+          </div>
+          <div class="resultCard">
+            <div style="color:var(--muted)">GSR</div><div id="valGSR" style="font-size:22px">--</div>
+          </div>
+        </div>
+  
+        <div class="suggest">
+          <h3>Suggestions</h3>
+          <ol id="suggestList"></ol>
+        </div>
+      </div>
+  
+      <footer class="card">Device connects via Web Bluetooth. For best results, place finger steady and shield from direct light.</footer>
+  </div>
+
+<script>
+/*
+ * ========================================
+ * NEW WEB BLUETOOTH JAVASCRIPT
+ * ========================================
+*/
+
+// UUIDs must match your ESP32 code
+const SERVICE_UUID      = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+const CHAR_DATA_UUID    = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+const CHAR_COMMAND_UUID = "a88a02e0-8422-42b0-a555-5203361a832a";
+
+// Global BLE objects
+let bleDevice = null;
+let gattServer = null;
+let dataCharacteristic = null;
+let commandCharacteristic = null;
+
+// UI Elements
+const startBtn = document.getElementById('startBtn');
+const bleStatusText = document.getElementById('bleStatus');
+const statusText = document.getElementById('statusText');
+const countText = document.getElementById('count');
+const finalLevelText = document.getElementById('finalLevel');
+const valHR = document.getElementById('valHR');
+const valSp = document.getElementById('valSp');
+const valGSR = document.getElementById('valGSR');
+const suggestList = document.getElementById('suggestList');
+
+// --- Suggestions moved from C++ to JS ---
+const suggestions_low = [
+  "Great! Keep a steady breathing pattern.",
+  "Maintain hydration — drink water.",
+  "Keep good posture and take regular breaks.",
+  "Short walk (5-10 min) helps maintain calm.",
+  "Continue light activity and stay mindful."
+];
+const suggestions_moderate = [
+  "Try paced breathing: 4s inhale, 6s exhale for 2 minutes.",
+  "Drink a glass of water and relax your shoulders.",
+  "Stretch for 2–3 minutes to ease tension.",
+  "Reduce screen brightness & take a short walk.",
+  "Play calming music or practice a short meditation."
+];
+const suggestions_high = [
+  "Stop, sit and do 5 deep breaths slowly (6s exhale).",
+  "Move to a cooler/shaded area if hot; drink water.",
+  "Try progressive muscle relaxation for 3 minutes.",
+  "If continuous, consider talking to someone or rest.",
+  "If frequent, monitor and consult a health professional."
+];
+
+function showSuggestions(level) {
+  let suggestions = [];
+  if (level === "LOW") suggestions = suggestions_low;
+  else if (level === "MODERATE") suggestions = suggestions_moderate;
+  else if (level === "HIGH") suggestions = suggestions_high;
+
+  suggestList.innerHTML = '';
+  suggestions.forEach(s => {
+    const li = document.createElement('li');
+    li.textContent = s;
+    suggestList.appendChild(li);
+  });
+}
+
+// --- Your original Charting code (unchanged) ---
+function TinyChart(canvas, color) {
+  this.c = canvas;
+  this.ctx = canvas.getContext('2d');
+  this.color = color||'#38bdf8';
+  this.data = [];
+  this.maxPoints = 30;
+}
+TinyChart.prototype.push = function(v){
+  if (this.data.length>=this.maxPoints) this.data.shift();
+  this.data.push(v);
+  this.draw();
+};
+TinyChart.prototype.draw = function(){
+  const ctx=this.ctx, w=this.c.width, h=this.c.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.beginPath(); ctx.strokeStyle=this.color; ctx.lineWidth=2;
+  if(this.data.length==0) return;
+  const max=Math.max(...this.data,10), min=Math.min(...this.data,0);
+  for(let i=0;i<this.data.length;i++){
+    const x = (i/(this.data.length-1||1))*(w-6)+3;
+    const y = h - 4 - ((this.data[i]-min)/(max-min||1))*(h-8);
+    if(i==0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.fillStyle='#9fbcd5'; ctx.font='12px Arial';
+  ctx.fillText(this.data[this.data.length-1]??'--',6,14);
+};
+
+const hrChart=new TinyChart(document.getElementById('hrCanvas'), '#60a5fa');
+const spChart=new TinyChart(document.getElementById('spCanvas'), '#34d399');
+const gsrChart=new TinyChart(document.getElementById('gsrCanvas'), '#fb7185');
+
+// --- Web Bluetooth Logic ---
+
+// Main button click handler
+startBtn.addEventListener('click', async () => {
+  startBtn.disabled = true;
+  
+  try {
+    // 1. If not connected, request and connect
+    if (!bleDevice || !bleDevice.gatt.connected) {
+      bleStatusText.textContent = 'Requesting device...';
+      statusText.textContent = 'CONNECTING';
+
+      bleDevice = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [SERVICE_UUID] }],
+        optionalServices: [SERVICE_UUID]
+      });
+
+      bleStatusText.textContent = 'Connecting to GATT...';
+      gattServer = await bleDevice.gatt.connect();
+      
+      // Add disconnect listener
+      bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+      bleStatusText.textContent = 'Getting Service...';
+      const service = await gattServer.getPrimaryService(SERVICE_UUID);
+
+      bleStatusText.textContent = 'Getting Characteristics...';
+      dataCharacteristic = await service.getCharacteristic(CHAR_DATA_UUID);
+      commandCharacteristic = await service.getCharacteristic(CHAR_COMMAND_UUID);
+      
+      // 2. Subscribe to data notifications
+      await dataCharacteristic.startNotifications();
+      dataCharacteristic.addEventListener('characteristicvaluechanged', handleDataNotification);
+      
+      bleStatusText.textContent = 'Connected';
+      bleStatusText.style.color = 'var(--good)';
+      startBtn.textContent = 'Start 40s Test'; // Change button text
+    }
+
+    // 3. Send the "Start" command to the ESP32
+    statusText.textContent = 'STARTING';
+    const temp = parseInt(document.getElementById('roomTemp').value || '30');
+    const irThr = parseInt(document.getElementById('irThreshold').value || '20000');
+    
+    // Clear UI
+    finalLevelText.textContent = '--';
+    suggestList.innerHTML = '';
+    
+    // Send command as a JSON string
+    const command = JSON.stringify({ roomTemp: temp, irThreshold: irThr });
+    const encoder = new TextEncoder();
+    await commandCharacteristic.writeValue(encoder.encode(command));
+    
+    statusText.textContent = 'MEASURING';
+
+  } catch (error) {
+    console.error('BLE Error:', error);
+    bleStatusText.textContent = `Error: ${error.message.substring(0, 30)}...`;
+    bleStatusText.style.color = 'var(--bad)';
+    if (bleDevice) bleDevice.gatt.disconnect();
+  } finally {
+    startBtn.disabled = false;
+  }
+});
+
+// This function is called every time the ESP32 sends new data
+function handleDataNotification(event) {
+  const value = event.target.value;
+  const decoder = new TextDecoder();
+  const jsonString = decoder.decode(value);
+  
+  try {
+    const data = JSON.parse(jsonString);
+    //console.log(data);
+
+    // Update common UI elements
+    const hr = data.hr || 0;
+    const spo2 = data.spo2 || -1;
+    const gsr = data.gsr || 0;
+
+    valHR.textContent = hr > 0 ? hr.toFixed(0) : '--';
+    valSp.textContent = spo2 > 0 ? spo2 : '--';
+    valGSR.textContent = gsr > 0 ? gsr.toFixed(0) : '--';
+
+    statusText.textContent = data.status || 'UNKNOWN';
+
+    // Update charts
+    hrChart.push(hr);
+    spChart.push(spo2 > 0 ? spo2 : 0);
+    gsrChart.push(gsr);
+
+    if (data.status === "MEASURING") {
+      countText.textContent = data.timeLeft ? Math.ceil(data.timeLeft / 1000) : 0;
+    }
+
+    // Handle the final "DONE" packet
+    if (data.status === "DONE") {
+      countText.textContent = 0;
+      finalLevelText.textContent = data.finalLevel || 'ERROR';
+      // Show suggestions based on the final level
+      showSuggestions(data.finalLevel);
+    }
+
+  } catch (error) {
+    console.error('Error parsing JSON:', jsonString, error);
+  }
+}
+
+// Handle device disconnection
+function onDisconnected() {
+  bleStatusText.textContent = 'Disconnected';
+  bleStatusText.style.color = 'var(--bad)';
+  statusText.textContent = 'IDLE';
+  countText.textContent = 0;
+  
+  bleDevice = null;
+  gattServer = null;
+  dataCharacteristic = null;
+  commandCharacteristic = null;
+  startBtn.textContent = 'Connect & Start 40s Test';
+}
+
+</script>
+</body>
+</html>
