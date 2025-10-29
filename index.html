@@ -3,145 +3,88 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>NeuroWell 2.0 — Dashboard (BLE + Gemini + Ambient)</title>
+  <title>NeuroWell 2.0 — Dashboard</title>
 
-  <!-- Chart.js (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --bg: #020617;
-      --card-bg: rgba(255,255,255,0.04);
-      --card-border: rgba(255,255,255,0.08);
-      --text: #e6eef8;
-      --text-body:#aab7c6;
-      --accent: #22d3ee;
-      --good:#4ade80; --warn:#facc15; --bad:#f87171;
-      --glass: rgba(255,255,255,0.03);
+      --bg:#020617; --card-bg:rgba(255,255,255,0.04); --card-border:rgba(255,255,255,0.08);
+      --text:#e6eef8; --text-body:#aab7c6; --accent:#22d3ee; --good:#4ade80; --warn:#facc15; --bad:#f87171;
     }
-    .light {
-      --bg: #f6f8fb;
-      --card-bg: rgba(255,255,255,0.95);
-      --card-border: rgba(13,18,25,0.06);
-      --text: #0b1220;
-      --text-body:#475569;
-      --accent: #0ea5b7;
-      --good:#16a34a; --warn:#d97706; --bad:#dc2626;
-      --glass: rgba(255,255,255,0.8);
-    }
+    .light{ --bg:#f6f8fb; --card-bg:rgba(255,255,255,0.95); --card-border:rgba(13,18,25,0.06);
+      --text:#0b1220; --text-body:#475569; --accent:#0ea5b7; --good:#16a34a; --warn:#d97706; --bad:#dc2626; }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-      background: radial-gradient(circle at 10% 20%, rgba(34,211,238,0.07), transparent 35%), radial-gradient(circle at 80% 90%, rgba(139,92,246,0.04), transparent 40%), var(--bg);
-      color:var(--text-body);
-      -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
-      transition: background-color .25s ease, color .25s ease;
-      padding:14px;
-    }
-    .wrap{max-width:1200px;margin:12px auto;padding:0 12px;display:flex;flex-direction:column;gap:14px}
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Arial;background:
+      radial-gradient(circle at 10% 20%, rgba(34,211,238,0.07), transparent 35%),
+      radial-gradient(circle at 80% 90%, rgba(139,92,246,0.04), transparent 40%), var(--bg);
+      color:var(--text-body); padding:14px; transition:all .25s ease;}
+    .wrap{max-width:1200px;margin:12px auto;display:flex;flex-direction:column;gap:14px;padding:0 12px}
 
-    header.appbar{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border:1px solid var(--card-border); padding:14px;border-radius:12px;backdrop-filter: blur(8px);
-    }
-    .title {display:flex;align-items:center;gap:10px;font-weight:700;color:var(--text);font-size:18px}
+    .card{background:var(--card-bg);border-radius:12px;padding:14px;border:1px solid var(--card-border);box-shadow:0 10px 30px rgba(2,6,23,0.28);transition:transform .18s}
+    .card:hover{transform:translateY(-6px)}
+
+    header.appbar{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:12px}
+    .title{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--text)}
     .controls{display:flex;align-items:center;gap:10px}
 
-    .btn {padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
-    .btn.primary{background:var(--accent);color:var(--bg);box-shadow:0 6px 22px rgba(0,0,0,0.18)}
+    .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
+    .btn.primary{background:var(--accent);color:var(--bg)}
     .btn.ghost{background:transparent;border:1px solid var(--card-border);color:var(--text-body)}
-    .btn.sos{background:var(--bad);color:#fff;border-radius:10px;padding:8px 12px}
+    .btn.sos{background:var(--bad);color:#fff;padding:8px 12px;border-radius:10px}
 
-    .dashboard{display:grid;grid-template-columns:1fr;gap:18px;margin-top:6px}
-    @media(min-width:1000px){ .dashboard{grid-template-columns:2fr 1fr} }
+    .dashboard{display:grid;grid-template-columns:1fr;gap:18px}
+    @media(min-width:1000px){.dashboard{grid-template-columns:2fr 1fr}}
 
-    .card{
-      background:var(--card-bg); border-radius:12px; padding:16px; border:1px solid var(--card-border);
-      box-shadow: 0 10px 30px rgba(2,6,23,0.28);
-      transition: transform .18s ease, box-shadow .18s ease;
-    }
-    .card:hover{ transform:translateY(-6px) }
-
-    .config-grid{display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:center}
-    @media(max-width:640px){ .config-grid{grid-template-columns:1fr; } }
+    .config-grid{display:grid;grid-template-columns:1fr 280px;gap:12px;align-items:center}
     label{display:block;color:var(--text-body);font-size:13px;margin-bottom:6px;font-weight:600}
     input[type=number], input[type=text]{padding:10px;border-radius:8px;border:1px solid var(--card-border);background:transparent;color:var(--text);width:100%}
 
-    .vitals-grid{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
-    @media(max-width:760px){ .vitals-grid{grid-template-columns:1fr 1fr 1fr; } }
-    .vital{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:14px;border-radius:12px;text-align:center}
-    .vital-label{font-size:13px;color:var(--text-body);display:flex;align-items:center;gap:8px;justify-content:center}
+    .vitals-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .vital{padding:12px;border-radius:12px;text-align:center;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent)}
+    .vital-label{font-size:13px;color:var(--text-body)}
     .vital-value{font-size:36px;font-weight:800;color:var(--text);margin-top:8px}
 
-    .chart-wrap{height:140px;background:transparent;border-radius:10px;padding:8px}
-    canvas{width:100% !important;height:100% !important;display:block}
+    .chart-wrap{height:140px;padding:8px}
+    canvas{width:100% !important;height:100% !important}
 
-    .status-box{padding:12px;border-radius:10px;text-align:center;background:rgba(0,0,0,0.06)}
-    #statusText{font-weight:700;color:var(--accent)}
+    .status-box{text-align:center;padding:12px;border-radius:10px;background:rgba(0,0,0,0.06)}
+    #statusText{font-weight:800;color:var(--accent)}
     #count{font-size:34px;font-weight:800;color:var(--text);margin-top:8px}
 
-    #finalLevel{font-size:22px;font-weight:800;padding:10px;border-radius:10px;text-align:center;color:#000;margin-bottom:12px}
-    .level-LOW{background:linear-gradient(90deg,var(--good),#86efac)}
-    .level-MODERATE{background:linear-gradient(90deg,var(--warn),#fde047)}
-    .level-HIGH{background:linear-gradient(90deg,var(--bad),#fca5a5)}
+    .breath-circle{width:160px;height:160px;border-radius:50%;display:grid;place-items:center;margin:10px auto;font-weight:800;font-size:18px;
+      background:linear-gradient(135deg,var(--accent),#8b5cf6);color:var(--bg);transform:scale(.6);transition:transform 1s cubic-bezier(.2,.9,.3,1);border:6px solid rgba(255,255,255,0.04)}
 
-    #suggestList li{background:var(--glass);padding:10px;margin-bottom:8px;border-radius:8px;color:var(--text-body);list-style:none}
-    .history-list{list-style:none;padding:0;margin:0;max-height:260px;overflow:auto}
-    .history-item{display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid var(--card-border)}
-    .muted{color:var(--text-body);font-size:13px}
-
-    .modal-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6);z-index:200}
-    .modal-overlay.active{display:flex}
-    .modal{width:92%;max-width:520px;background:var(--card-bg);padding:16px;border-radius:12px;border:1px solid var(--card-border)}
-
-    .breather-container{text-align:center;padding:18px}
-    .breath-circle{
-      width:160px;height:160px;border-radius:50%;display:grid;place-items:center;margin:10px auto;
-      background:linear-gradient(135deg,var(--accent),#8b5cf6);color:var(--bg);font-weight:800;font-size:18px;
-      transform:scale(.6);opacity:.9;border:6px solid rgba(255,255,255,0.04);transition:transform 1s ease;
-    }
-
-    /* chat bubble */
-    .chat-floating{
-      position:fixed;right:20px;bottom:22px;width:56px;height:56px;border-radius:50%;
-      display:grid;place-items:center;background:var(--accent);color:var(--bg);z-index:400;cursor:pointer;box-shadow:0 10px 30px rgba(2,6,23,0.4)
-    }
+    .chat-floating{position:fixed;right:20px;bottom:22px;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--bg);z-index:400;cursor:pointer;box-shadow:0 10px 30px rgba(2,6,23,0.4)}
     .chat-panel{position:fixed;right:20px;bottom:90px;width:360px;max-width:92%;background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:12px;z-index:401;display:none;flex-direction:column;gap:8px}
     .chat-panel.active{display:flex}
     .chat-messages{max-height:300px;overflow:auto;padding:8px;border-radius:8px;background:transparent}
     .chat-input{display:flex;gap:8px}
 
-    .audio-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px;border-radius:999px;border:1px solid var(--card-border);cursor:pointer}
+    .muted{color:var(--text-body);font-size:13px}
     .small{font-size:12px}
   </style>
 </head>
 <body>
-  <div class="wrap" id="app">
+  <div class="wrap">
     <header class="appbar card">
       <div class="title">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.001A3 3 0 0 0 12 5zm0 14a3 3 0 1 0-5.997.001A3 3 0 0 0 12 19zm0-7a3 3 0 1 0 5.997-.001A3 3 0 0 0 12 12z"/></svg>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.001A3 3 0 0 0 12 5z"/><path d="M12 19a3 3 0 1 0-5.997.001A3 3 0 0 0 12 19z"/></svg>
         NeuroWell 2.0
       </div>
 
       <div class="controls">
-        <div id="bleStatus" class="muted">Status: <span style="color:var(--bad);font-weight:800" id="bleStatusText">Disconnected</span></div>
-        <div class="audio-toggle" id="audioToggle" title="Toggle ambient sound">🔉 <span id="audioLabel" class="small">Sound Off</span></div>
-        <div class="audio-toggle" id="themeToggle" title="Toggle Light / Dark">🌙 <span id="themeLabel" class="small">Dark</span></div>
+        <div id="bleStatus" class="muted">Status: <span id="bleStatusText" style="color:var(--bad);font-weight:800">Disconnected</span></div>
+        <div id="audioToggle" class="muted small" style="cursor:pointer">🔈 <span id="audioLabel">Sound Off</span></div>
+        <div id="themeToggle" class="muted small" style="cursor:pointer">🌙 <span id="themeLabel">Dark</span></div>
         <button id="sosBtn" class="btn sos">SOS</button>
       </div>
     </header>
 
     <div class="dashboard">
-      <div class="main-col">
-
+      <div>
         <div class="card">
           <div style="display:flex;flex-direction:column;gap:12px">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
@@ -149,24 +92,24 @@
                 <label>Room Temperature (°C)</label>
                 <div style="display:flex;gap:8px">
                   <input id="roomTemp" type="number" min="10" max="45" value="30" />
-                  <button id="getLocationBtn" class="btn ghost" title="Use my location">📍</button>
+                  <button id="getLocationBtn" class="btn ghost">📍</button>
                 </div>
               </div>
 
               <div style="display:flex;gap:8px;align-items:center">
                 <div style="display:flex;gap:8px;align-items:center">
-                  <label style="margin:0 6px 0 0;font-weight:700;color:var(--text);">Name</label>
+                  <label style="margin:0 6px 0 0;font-weight:700;color:var(--text)">Name</label>
                   <input id="userName" placeholder="Skip or enter name" />
                 </div>
                 <div style="display:flex;gap:8px;align-items:center">
-                  <label style="margin:0 6px 0 0;font-weight:700;color:var(--text);">Age</label>
+                  <label style="margin:0 6px 0 0;font-weight:700;color:var(--text)">Age</label>
                   <input id="userAge" type="number" placeholder="Skip" style="width:90px" />
                 </div>
                 <button id="startBtn" class="btn primary">Connect & Start Test</button>
               </div>
             </div>
 
-            <div class="muted" id="profileNote">Optional: entering name & age helps personalize suggestions. You can skip.</div>
+            <div class="muted">Optional: entering name & age helps personalize suggestions. You can skip.</div>
           </div>
         </div>
 
@@ -175,26 +118,26 @@
             <div class="vital">
               <div class="vital-label">💓 Heart Rate</div>
               <div id="valHR" class="vital-value">-- <span style="font-size:12px;color:var(--text-body)">bpm</span></div>
-              <div style="height:120px;margin-top:12px" class="chart-wrap"><canvas id="hrChart"></canvas></div>
+              <div class="chart-wrap"><canvas id="hrChart"></canvas></div>
             </div>
 
             <div class="vital">
               <div class="vital-label">🩸 SpO₂</div>
               <div id="valSp" class="vital-value">-- <span style="font-size:12px;color:var(--text-body)">%</span></div>
-              <div style="height:120px;margin-top:12px" class="chart-wrap"><canvas id="spChart"></canvas></div>
+              <div class="chart-wrap"><canvas id="spChart"></canvas></div>
             </div>
 
             <div class="vital">
               <div class="vital-label">⚡ GSR</div>
               <div id="valGSR" class="vital-value">--</div>
-              <div style="height:120px;margin-top:12px" class="chart-wrap"><canvas id="gsrChart"></canvas></div>
+              <div class="chart-wrap"><canvas id="gsrChart"></canvas></div>
             </div>
           </div>
         </div>
 
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="font-weight:700;color:var(--text)">Live Sensor Stream</div>
+            <div style="font-weight:800;color:var(--text)">Live Sensor Stream</div>
             <div class="muted">Real-time graphs • smoothing enabled</div>
           </div>
 
@@ -208,63 +151,50 @@
 
             <div style="min-width:260px">
               <div style="display:flex;gap:8px;align-items:center">
-                <button id="openBreathBtn" class="btn ghost">🧘 Start Calming Exercise</button>
+                <button id="openBreathBtn" class="btn ghost">🧘 Start Breathing</button>
                 <button id="resetHistoryBtn" class="btn ghost">Clear History</button>
                 <label style="display:inline-flex;align-items:center;gap:8px;margin-left:8px"><input id="chartToggle" type="checkbox" checked /> Show charts</label>
               </div>
             </div>
           </div>
         </div>
-
       </div>
 
-      <div class="side-col">
+      <div>
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="font-weight:700;color:var(--text)">Analysis & Suggestions</div>
-            <div class="muted">Powered by Gemini (optional)</div>
+            <div style="font-weight:800;color:var(--text)">Suggestions</div>
+            <div class="muted">AI-powered tips (optional)</div>
           </div>
 
           <div style="margin-top:12px" id="analysis-section">
             <div id="finalLevel" class="">--</div>
             <ol id="suggestList"></ol>
             <div style="margin-top:8px;display:flex;gap:8px">
-              <button id="askGeminiBtn" class="btn ghost">Ask Gemini for suggestions</button>
+              <button id="askAI" class="btn ghost">Get suggestions</button>
             </div>
           </div>
         </div>
 
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="font-weight:700;color:var(--text)">Session History (Last 10)</div>
+            <div style="font-weight:800;color:var(--text)">Session History (Last 10)</div>
             <div class="muted">Saved locally</div>
           </div>
           <ul class="history-list" id="history-list" style="margin-top:12px"></ul>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- SOS Modal -->
-    <div class="modal-overlay" id="sos-modal"><div class="modal card">
+  <!-- Breathing Modal -->
+  <div class="modal-overlay" id="breather-modal" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6);z-index:200">
+    <div style="width:92%;max-width:520px;background:var(--card-bg);padding:16px;border-radius:12px;border:1px solid var(--card-border)">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-weight:700">Emergency Helplines (India)</div>
-        <button id="close-sos-modal" class="btn ghost">X</button>
-      </div>
-      <div style="margin-top:12px">
-        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card-border)"><div>Ambulance</div><div style="font-weight:700;color:var(--accent)">102 / 108</div></div>
-        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card-border)"><div>Police</div><div style="font-weight:700;color:var(--accent)">100 / 112</div></div>
-        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card-border)"><div>National Mental Health</div><div style="font-weight:700;color:var(--accent)">1800-599-0019</div></div>
-      </div>
-    </div></div>
-
-    <!-- Breath Modal -->
-    <div class="modal-overlay" id="breather-modal"><div class="modal card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-weight:700">Calming Exercise</div>
+        <div style="font-weight:800">Calming Exercise</div>
         <button id="close-breather-modal" class="btn ghost">X</button>
       </div>
-
-      <div class="breather-container" style="margin-top:16px">
+      <div style="text-align:center;padding:18px">
         <div id="breathCircle" class="breath-circle">Inhale</div>
         <div id="breathDesc" class="muted">Follow the circle for <span id="breathCycles">6</span> cycles</div>
         <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
@@ -277,54 +207,48 @@
           </select>
         </div>
       </div>
-    </div></div>
-
+    </div>
   </div>
 
-  <!-- Gemini Chat Floating -->
-  <div class="chat-floating" id="chatFab" title="Open Gemini Assistant">💬</div>
+  <!-- Floating Assistant Chat -->
+  <div class="chat-floating" id="chatFab" title="Open Assistant">💬</div>
   <div class="chat-panel" id="chatPanel">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <div style="font-weight:800">Gemini Assistant</div>
+      <div style="font-weight:800">Assistant</div>
       <div style="display:flex;gap:8px;align-items:center">
         <button id="closeChatBtn" class="btn ghost">X</button>
       </div>
     </div>
     <div class="chat-messages" id="chatMessages">
-      <div class="muted">Start a conversation — Gemini will analyze your last session when you ask.</div>
+      <div class="muted">Ask for suggestions about your last session or sensor readings.</div>
     </div>
     <div class="chat-input" style="margin-top:8px">
-      <input id="chatInput" placeholder="Ask something (e.g., 'Is my stress level high?')" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--card-border);background:transparent;color:var(--text)" />
+      <input id="chatInput" placeholder="Ask something (e.g., 'What should I do?')" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--card-border);background:transparent;color:var(--text)" />
       <button id="sendChatBtn" class="btn primary">Send</button>
     </div>
   </div>
 
 <script>
 /* =========================
-   CONFIG / CONSTANTS
+   Constants (match ESP32)
    ========================= */
-const SERVICE_UUID    = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
-const CHAR_DATA_UUID    = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
-const CHAR_COMMAND_UUID = "a88a02e0-8422-42b0-a555-5203361a832a";
+const SERVICE_UUID    = "4FAFC201-1FB5-459E-8FCC-C5C9C331914B";
+const CHAR_DATA_UUID  = "BEB5483E-36E1-4688-B7F5-EA07361B26A8";
+const CHAR_COMMAND_UUID = "A88A02E0-8422-42B0-A555-5203361A832A";
 
-const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
-const GEMINI_API_KEY = ""; // <-- PASTE YOUR GEMINI API KEY HERE (Keep it secret in production!)
-/* ========================= */
+/* AI endpoint (client-side key placeholder) */
+const AI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
+const GEMINI_API_KEY = ""; // <- Paste your key here if you want AI suggestions. Keep secret in production.
 
-let bleDevice = null;
-let gattServer = null;
-let dataCharacteristic = null;
-let commandCharacteristic = null;
-const textDecoder = new TextDecoder('utf-8');
-const textEncoder = new TextEncoder();
+/* Globals */
+let bleDevice=null, gattServer=null, dataCharacteristic=null, commandCharacteristic=null;
+const textDecoder = new TextDecoder('utf-8'), textEncoder = new TextEncoder();
 
 /* UI refs */
 const startBtn = document.getElementById('startBtn');
 const bleStatusText = document.getElementById('bleStatusText');
 const statusText = document.getElementById('statusText');
 const countText = document.getElementById('count');
-const analysisSection = document.getElementById('analysis-section');
-const finalLevelText = document.getElementById('finalLevel');
 const valHR = document.getElementById('valHR');
 const valSp = document.getElementById('valSp');
 const valGSR = document.getElementById('valGSR');
@@ -333,15 +257,10 @@ const historyList = document.getElementById('history-list');
 const getLocationBtn = document.getElementById('getLocationBtn');
 const roomTempInput = document.getElementById('roomTemp');
 
-const sosBtn = document.getElementById('sosBtn');
-const sosModal = document.getElementById('sos-modal');
-const closeSosModal = document.getElementById('close-sos-modal');
-
 const openBreathBtn = document.getElementById('openBreathBtn');
 const breatherModal = document.getElementById('breather-modal');
 const closeBreatherModal = document.getElementById('close-breather-modal');
 const breathCircle = document.getElementById('breathCircle');
-const breathDesc = document.getElementById('breathDesc');
 const breathStartBtn = document.getElementById('breathStartBtn');
 const breathStopBtn = document.getElementById('breathStopBtn');
 const breathSpeed = document.getElementById('breathSpeed');
@@ -355,9 +274,9 @@ const audioToggle = document.getElementById('audioToggle');
 const audioLabel = document.getElementById('audioLabel');
 const chartToggle = document.getElementById('chartToggle');
 const resetHistoryBtn = document.getElementById('resetHistoryBtn');
-const askGeminiBtn = document.getElementById('askGeminiBtn');
+const askAI = document.getElementById('askAI');
 
-/* Gemini chat */
+/* Chat UI */
 const chatFab = document.getElementById('chatFab');
 const chatPanel = document.getElementById('chatPanel');
 const closeChatBtn = document.getElementById('closeChatBtn');
@@ -365,105 +284,73 @@ const chatMessages = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
 const sendChatBtn = document.getElementById('sendChatBtn');
 
-/* Charts */
+/* Charts & smoothing */
 const MAX_POINTS = 40;
 let hrChart, spChart, gsrChart;
-
-/* smoothing */
 const HR_BUFFER = [], SP_BUFFER = [], GSR_BUFFER = [];
 const SMOOTH_WINDOW = 6;
 
-/* flat SpO2 detection */
-let spLast = null, spFlatCount = 0;
-const SP_FLAT_LIMIT = 6;
+/* flat-spo2 detection */
+let spLast=null, spFlatCount=0, SP_FLAT_LIMIT=6;
 
-/* history key */
-const HISTORY_KEY = 'stressHistory';
-const MAX_HISTORY = 10;
+/* history */
+const HISTORY_KEY='stressHistory', MAX_HISTORY=10;
 
-/* =========================
-   THEME + PERSISTENCE
-   ========================= */
+/* -------------------------
+   Theme
+   ------------------------- */
 function applyTheme(){
   const isLight = localStorage.getItem('theme') === 'light';
   if (isLight) document.body.classList.add('light'); else document.body.classList.remove('light');
   themeLabel.textContent = isLight ? 'Light' : 'Dark';
 }
-themeToggle.addEventListener('click', () => {
+themeToggle.addEventListener('click', ()=> {
   const isLight = document.body.classList.toggle('light');
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
   applyTheme();
 });
 applyTheme();
 
-/* audio: ambient background using WebAudio (no external file) */
-let audioCtx = null, masterGain = null, droneOsc = null, lfo = null;
-let audioPlaying = false;
-
+/* -------------------------
+   Audio: breathing tone (Web Audio)
+   ------------------------- */
+let audioCtx=null, mainGain=null, osc1=null, lfo=null, audioPlaying=false;
 function initAudio(){
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  masterGain = audioCtx.createGain();
-  masterGain.gain.value = 0.0;
-  masterGain.connect(audioCtx.destination);
+  mainGain = audioCtx.createGain(); mainGain.gain.value = 0; mainGain.connect(audioCtx.destination);
 
-  // main drone (sine)
-  droneOsc = audioCtx.createOscillator();
-  droneOsc.type = 'sine';
-  droneOsc.frequency.value = 110; // low pad
-  const droneGain = audioCtx.createGain();
-  droneGain.gain.value = 0.0;
+  osc1 = audioCtx.createOscillator(); osc1.type='sine'; osc1.frequency.value = 220;
+  const osc1Gain = audioCtx.createGain(); osc1Gain.gain.value = 0.0;
+  lfo = audioCtx.createOscillator(); lfo.type='sine'; lfo.frequency.value = 0.08;
+  const lfoGain = audioCtx.createGain(); lfoGain.gain.value = 0.25;
 
-  // subtle LFO to modulate amplitude
-  lfo = audioCtx.createOscillator();
-  lfo.type = 'sine';
-  lfo.frequency.value = 0.08; // slow swell
-  const lfoGain = audioCtx.createGain();
-  lfoGain.gain.value = 0.25;
+  lfo.connect(lfoGain); lfoGain.connect(osc1Gain.gain);
+  osc1.connect(osc1Gain); osc1Gain.connect(mainGain);
 
-  // connect nodes
-  lfo.connect(lfoGain);
-  lfoGain.connect(droneGain.gain);
-  droneOsc.connect(droneGain);
-  droneGain.connect(masterGain);
+  const hp = audioCtx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = 50;
+  const lp = audioCtx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value = 1200;
+  osc1Gain.connect(hp); hp.connect(lp); lp.connect(mainGain);
 
-  // gentle high-pass + low-pass to shape timbre
-  const hp = audioCtx.createBiquadFilter();
-  hp.type = 'highpass';
-  hp.frequency.value = 20;
-  const lp = audioCtx.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.frequency.value = 1200;
-  droneGain.connect(hp);
-  hp.connect(lp);
-  lp.connect(masterGain);
-
-  droneOsc.start();
-  lfo.start();
+  osc1.start(); lfo.start();
 }
-
 function toggleAudio(){
   if (!audioCtx) initAudio();
   if (!audioPlaying){
-    // resume context on user gesture
     audioCtx.resume().then(()=> {
-      masterGain.gain.exponentialRampToValueAtTime(0.22, audioCtx.currentTime + 1.2);
-      audioLabel.textContent = 'Sound On';
-      audioPlaying = true;
+      mainGain.gain.exponentialRampToValueAtTime(0.18, audioCtx.currentTime + 1.2);
+      audioPlaying = true; audioLabel.textContent='Sound On';
     });
   } else {
-    masterGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.0);
-    audioLabel.textContent = 'Sound Off';
-    audioPlaying = false;
+    mainGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.0);
+    audioPlaying = false; audioLabel.textContent='Sound Off';
   }
 }
-audioToggle.addEventListener('click', () => {
-  try { toggleAudio(); } catch(e){ console.warn('Audio error', e); }
-});
+audioToggle.addEventListener('click', ()=> { try { toggleAudio(); } catch(e){ console.warn(e); } });
 
-/* =========================
-   CHARTS
-   ========================= */
+/* -------------------------
+   Charts
+   ------------------------- */
 function createCharts(){
   const css = getComputedStyle(document.documentElement);
   const bad = css.getPropertyValue('--bad').trim() || '#f87171';
@@ -473,80 +360,54 @@ function createCharts(){
   function cfg(label, color){
     return {
       type:'line',
-      data:{labels:[],datasets:[{
-        label, data:[], borderColor:color, borderWidth:3, pointRadius:0, tension:0.35, fill:true,
-        backgroundColor: (ctx)=>{
-          const chart = ctx.chart;
-          const gradient = chart.ctx.createLinearGradient(0,0,0,chart.height);
-          gradient.addColorStop(0, color + '33');
-          gradient.addColorStop(1, color + '05');
-          return gradient;
-        }
-      }]},
-      options:{
-        responsive:true, maintainAspectRatio:false, animation:false,
-        plugins:{legend:{display:false}},
-        scales:{
-          x:{display:false, grid:{display:false}},
-          y:{ticks:{color:css.getPropertyValue('--text-body')}, grid:{color:css.getPropertyValue('--card-border')}}
-        }
-      }
+      data:{labels:[],datasets:[{label,data:[],borderColor:color,borderWidth:3,pointRadius:0,tension:0.35,fill:true,
+        backgroundColor:(ctx)=>{const c=ctx.chart;const g=c.ctx.createLinearGradient(0,0,0,c.height);g.addColorStop(0,color+'33');g.addColorStop(1,color+'05');return g}}]},
+      options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false}},
+        scales:{x:{display:false,grid:{display:false}},y:{ticks:{color:css.getPropertyValue('--text-body')},grid:{color:css.getPropertyValue('--card-border')}}}
     };
   }
-
-  hrChart = new Chart(document.getElementById('hrChart'), cfg('Heart Rate', bad || '#f87171'));
-  spChart = new Chart(document.getElementById('spChart'), cfg('SpO2', accent || '#22d3ee'));
-  gsrChart = new Chart(document.getElementById('gsrChart'), cfg('GSR', warn || '#facc15'));
-
-  spChart.options.scales.y.min = 80;
-  spChart.options.scales.y.max = 100;
+  hrChart = new Chart(document.getElementById('hrChart'), cfg('HR', bad));
+  spChart = new Chart(document.getElementById('spChart'), cfg('SpO2', accent));
+  gsrChart = new Chart(document.getElementById('gsrChart'), cfg('GSR', warn));
+  spChart.options.scales.y.min = 80; spChart.options.scales.y.max = 100;
 }
 function updateChart(chart, value){
-  if(!chart || !chart.data) return;
+  if (!chart || !chart.data) return;
   if (!document.getElementById('chartToggle').checked) return;
-  chart.data.labels.push('');
-  chart.data.datasets[0].data.push(value);
+  chart.data.labels.push(''); chart.data.datasets[0].data.push(value);
   if (chart.data.labels.length > MAX_POINTS){ chart.data.labels.shift(); chart.data.datasets[0].data.shift(); }
   chart.update('none');
 }
 window.addEventListener('load', createCharts);
 
-/* =========================
-   WEATHER (geolocation helper)
-   ========================= */
-getLocationBtn.addEventListener('click', () => {
-  if (navigator.geolocation){
+/* -------------------------
+   Weather helper
+   ------------------------- */
+getLocationBtn.addEventListener('click', ()=> {
+  if (navigator.geolocation) {
     getLocationBtn.disabled = true; getLocationBtn.textContent = '...';
-    navigator.geolocation.getCurrentPosition(fetchWeather, (e)=>{ alert('Location error: ' + e.message); getLocationBtn.disabled=false; getLocationBtn.textContent='📍'; });
+    navigator.geolocation.getCurrentPosition(fetchWeather, (e)=>{ alert('Location error: '+e.message); getLocationBtn.disabled=false; getLocationBtn.textContent='📍'; });
   } else alert('Geolocation not supported.');
 });
 async function fetchWeather(position){
-  try{
-    const {latitude,longitude} = position.coords;
-    const api = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
-    const r = await fetch(api); const data = await r.json();
-    if (data.current_weather && typeof data.current_weather.temperature === 'number'){
-      roomTempInput.value = Math.round(data.current_weather.temperature);
-    }
-  }catch(e){ console.error(e) } finally { getLocationBtn.disabled=false; getLocationBtn.textContent='📍'; }
+  try{ const {latitude,longitude} = position.coords; const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`); const d = await r.json(); if (d.current_weather && typeof d.current_weather.temperature === 'number') roomTempInput.value = Math.round(d.current_weather.temperature); } catch(e){ console.error(e) } finally { getLocationBtn.disabled=false; getLocationBtn.textContent='📍'; }
 }
 
-/* =========================
-   BLE CONNECT & DATA
-   ========================= */
-startBtn.addEventListener('click', async () => {
+/* -------------------------
+   BLE connect & data
+   ------------------------- */
+startBtn.addEventListener('click', async ()=>{
   startBtn.disabled = true;
   try {
     if (!bleDevice || !bleDevice.gatt.connected) {
-      setBLEStatus('Requesting device...', 'warn');
-      statusText.textContent = 'CONNECTING';
-      bleDevice = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }], optionalServices: [SERVICE_UUID] });
+      setBLEStatus('Requesting device...', 'warn'); statusText.textContent='CONNECTING';
+      bleDevice = await navigator.bluetooth.requestDevice({ filters:[{ services: [SERVICE_UUID] }], optionalServices:[SERVICE_UUID] });
       bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
       setBLEStatus('Connecting...', 'warn');
       gattServer = await bleDevice.gatt.connect();
       setBLEStatus('Getting service...', 'warn');
       const service = await gattServer.getPrimaryService(SERVICE_UUID);
-      setBLEStatus('Getting chars...', 'warn');
+      setBLEStatus('Getting characteristics...', 'warn');
       dataCharacteristic = await service.getCharacteristic(CHAR_DATA_UUID);
       commandCharacteristic = await service.getCharacteristic(CHAR_COMMAND_UUID);
       await dataCharacteristic.startNotifications();
@@ -555,98 +416,73 @@ startBtn.addEventListener('click', async () => {
       startBtn.textContent = 'Start 40s Test';
     }
 
-    // send start command
+    // Send start command to ESP32: roomTemp and a suggested IR threshold hint
     statusText.textContent = 'STARTING';
     const temp = parseInt(roomTempInput.value || '30', 10);
-    let irThr = 20000;
-    if (temp < 20) irThr = 15000;
-    else if (temp >= 28) irThr = 25000;
-
-    analysisSection.style.display = 'none';
-    finalLevelText.textContent = '--';
-    finalLevelText.className = '';
+    let irThr = 20000; if (temp < 20) irThr = 15000; else if (temp >= 28) irThr = 25000;
+    analysisSection.style.display = 'none'; finalLevelText.textContent='--'; finalLevelText.className='';
     suggestList.innerHTML = '';
-
-    [hrChart, spChart, gsrChart].forEach(c => { if (c) { c.data.labels = []; c.data.datasets[0].data = []; c.update(); } });
-
-    const command = JSON.stringify({ roomTemp: temp, irThreshold: irThr });
-    try { await commandCharacteristic.writeValue(textEncoder.encode(command)); } catch(e){ console.warn('Command write failed', e); }
-
+    [hrChart, spChart, gsrChart].forEach(c => { if (c){ c.data.labels=[]; c.data.datasets[0].data=[]; c.update(); }});
+    const cmd = JSON.stringify({ roomTemp: temp, irThreshold: irThr });
+    try { await commandCharacteristic.writeValue(textEncoder.encode(cmd)); } catch(e){ console.warn('Command write failed', e); }
     statusText.textContent = 'MEASURING';
-  } catch (err) {
-    console.error('BLE Err', err);
+  } catch(e){
+    console.error('BLE error', e);
     setBLEStatus('Error', 'bad');
     if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
   } finally { startBtn.disabled = false; }
 });
 
-function onDisconnected(){
-  setBLEStatus('Disconnected','bad');
-  statusText.textContent = 'IDLE';
-  countText.textContent = '0';
-  analysisSection.style.display = 'none';
-  bleDevice = null;
-  startBtn.textContent = 'Connect & Start Test';
-}
-function setBLEStatus(message, level){
-  bleStatusText.textContent = message;
-  if (level === 'good') bleStatusText.style.color = getComputedStyle(document.documentElement).getPropertyValue('--good');
-  else if (level === 'warn') bleStatusText.style.color = getComputedStyle(document.documentElement).getPropertyValue('--warn');
-  else bleStatusText.style.color = getComputedStyle(document.documentElement).getPropertyValue('--bad');
-}
+function onDisconnected(){ setBLEStatus('Disconnected','bad'); statusText.textContent='IDLE'; countText.textContent='0'; analysisSection.style.display='none'; bleDevice=null; startBtn.textContent='Connect & Start Test'; }
+function setBLEStatus(msg, level){ document.getElementById('bleStatusText').textContent = msg; if(level==='good') document.getElementById('bleStatusText').style.color = getComputedStyle(document.documentElement).getPropertyValue('--good'); else if(level==='warn') document.getElementById('bleStatusText').style.color = getComputedStyle(document.documentElement).getPropertyValue('--warn'); else document.getElementById('bleStatusText').style.color = getComputedStyle(document.documentElement).getPropertyValue('--bad'); }
 
-/* =========================
+/* -------------------------
    Data handling + smoothing
-   ========================= */
+   ------------------------- */
 function pushAndSmooth(buffer, v){
   if (typeof v !== 'number' || isNaN(v)) return null;
   buffer.push(v);
   if (buffer.length > SMOOTH_WINDOW) buffer.shift();
-  const sum = buffer.reduce((a,b)=>a+b,0);
-  return sum / buffer.length;
+  return buffer.reduce((a,b)=>a+b,0) / buffer.length;
 }
 
 function handleDataNotification(event){
   const jsonString = textDecoder.decode(event.target.value);
   try {
     const data = JSON.parse(jsonString);
-
-    // raw values
     const hrRaw = Number(data.hr) || 0;
     const spo2Raw = Number(data.spo2) || -1;
     const gsrRaw = Number(data.gsr) || 0;
 
-    // smoothing
     const hr = pushAndSmooth(HR_BUFFER, hrRaw) || 0;
-    const spo2 = (spo2Raw > 0) ? pushAndSmooth(SP_BUFFER, spo2Raw) : -1;
+    const spo2 = (spo2Raw>0) ? pushAndSmooth(SP_BUFFER, spo2Raw) : -1;
     const gsr = pushAndSmooth(GSR_BUFFER, gsrRaw) || 0;
 
-    // update UI
-    valHR.textContent = hr > 0 ? Math.round(hr) : '--';
-    valSp.textContent = (spo2 > 0) ? Math.round(spo2) : '--';
-    valGSR.textContent = gsr > 0 ? Math.round(gsr) : '--';
+    valHR.textContent = hr>0 ? Math.round(hr) : '--';
+    valSp.textContent = spo2>0 ? Math.round(spo2) : '--';
+    valGSR.textContent = gsr>0 ? Math.round(gsr) : '--';
 
-    if (hr > 0 && hr < 220) updateChart(hrChart, Math.round(hr));
-    if (spo2 > 0 && spo2 <= 100) updateChart(spChart, Math.round(spo2));
-    if (gsr >= 0) updateChart(gsrChart, Math.round(gsr));
+    if (hr>0 && hr<220) updateChart(hrChart, Math.round(hr));
+    if (spo2>0 && spo2<=100) updateChart(spChart, Math.round(spo2));
+    if (gsr>=0) updateChart(gsrChart, Math.round(gsr));
 
     statusText.textContent = data.status || 'UNKNOWN';
     if (data.status === 'MEASURING') {
       countText.textContent = data.timeLeft ? Math.ceil(data.timeLeft / 1000) : '0';
-      analysisSection.style.display = 'none';
+      document.getElementById('analysis-section').style.display = 'none';
     }
 
     if (data.status === 'DONE') {
       countText.textContent = 0;
-      analysisSection.style.display = 'block';
+      document.getElementById('analysis-section').style.display = 'block';
       const level = data.finalLevel || 'ERROR';
-      finalLevelText.textContent = level;
-      finalLevelText.className = `level-${level}`;
+      document.getElementById('finalLevel').textContent = level;
+      document.getElementById('finalLevel').className = `level-${level}`;
       saveSession({
         level,
-        hr: hr > 0 ? Math.round(hr) : '--',
-        spo2: spo2 > 0 ? Math.round(spo2) : '--',
-        gsr: gsr > 0 ? Math.round(gsr) : '--',
+        hr: hr>0 ? Math.round(hr) : '--',
+        spo2: spo2>0 ? Math.round(spo2) : '--',
+        gsr: gsr>0 ? Math.round(gsr) : '--',
         date: new Date().toLocaleString('en-IN'),
         name: nameInput.value || '—',
         age: ageInput.value || '—'
@@ -657,261 +493,150 @@ function handleDataNotification(event){
     detectFlatSpO2(spo2Raw);
 
   } catch (err) {
-    console.error('Parse Err:', jsonString, err);
+    console.error('Parse error', jsonString, err);
   }
 }
 
-/* detect flat spO2 and attempt soft recalibrate hint to device */
+/* detect flat spO2 and ask user to adjust */
 function detectFlatSpO2(spo2Raw){
   if (typeof spo2Raw !== 'number') return;
-  if (spo2Raw === spLast){
-    spFlatCount++;
-  } else {
-    spFlatCount = 0;
-    spLast = spo2Raw;
-  }
-
+  if (spo2Raw === spLast) spFlatCount++; else { spFlatCount=0; spLast=spo2Raw; }
   if (spFlatCount >= SP_FLAT_LIMIT){
     suggestList.innerHTML = `<li>⚠️ SpO₂ is not varying — sensor may not detect pulse. Tips:
       <ul style="margin:6px 0 0 18px">
-        <li>Fully cover sensor with finger; moderate pressure.</li>
-        <li>Reduce ambient light; cover sensor housing.</li>
-        <li>Try a different finger or warm finger if cold.</li>
+        <li>Cover the sensor fully with your finger (moderate pressure).</li>
+        <li>Reduce ambient light (cover with hand/housing).</li>
+        <li>Try warming the finger or use another finger.</li>
       </ul>
     </li>`;
     try {
       if (commandCharacteristic){
-        const cmd = JSON.stringify({ action: 'recalibrate', hint: 'increase_ir' });
-        commandCharacteristic.writeValue(textEncoder.encode(cmd)).catch(()=>{/*non-fatal*/});
+        const cmd = JSON.stringify({ action:'recalibrate', hint:'increase_ir' });
+        commandCharacteristic.writeValue(textEncoder.encode(cmd)).catch(()=>{/*ignore*/});
       }
-    } catch(e){ /*ignore*/ }
+    } catch(e){/*ignore*/}
   }
 }
 
-/* =========================
+/* -------------------------
    Local suggestions & history
-   ========================= */
+   ------------------------- */
 const staticSuggestions = {
-  LOW: ["😌 You're calm. Keep hydrating and take short breaks.", "🧘 Try a 3–5 minute breathing routine."],
-  MODERATE: ["⚠ Slight stress detected. Try 4-4-6 breathing x3.", "🚶 Take a 5 minute walk or stretch."],
-  HIGH: ["🛑 High stress detected. Pause and focus on breathing.", "🗣 If persistent, contact someone you trust or a professional."]
+  LOW: ["😌 You're calm. Keep hydrating and short breaks.", "🧘 Try breathing practice for 3–5 minutes."],
+  MODERATE: ["⚠ Slight stress. Try 4-4-6 breathing x3.", "🚶 Step away for 5 minutes and stretch."],
+  HIGH: ["🛑 High stress. Pause and perform deep breathing (4s in, 6s out).", "🗣 If persistent, contact someone or seek professional help."]
 };
 function renderStaticSuggestions(level){
-  suggestList.innerHTML = '';
-  const arr = staticSuggestions[level] || staticSuggestions.MODERATE;
-  arr.forEach(s => {
-    const li = document.createElement('li'); li.innerHTML = s; suggestList.appendChild(li);
-  });
+  suggestList.innerHTML=''; (staticSuggestions[level]||staticSuggestions.MODERATE).forEach(s=>{ const li=document.createElement('li'); li.innerHTML=s; suggestList.appendChild(li); });
 }
 
-/* history saving */
+/* history */
 function saveSession(sessionData){
-  let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-  history.unshift(sessionData);
-  if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-  renderHistory();
+  let history = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
+  history.unshift(sessionData); if (history.length>MAX_HISTORY) history=history.slice(0,MAX_HISTORY);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); renderHistory();
 }
-function renderHistory(){
-  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-  if (!history.length){
-    historyList.innerHTML = `<li style="text-align:center;color:var(--text-body);padding:12px">No sessions recorded yet.</li>`; return;
-  }
-  historyList.innerHTML = history.map(h => `
-    <li class="history-item">
-      <div style="flex:1"><div style="font-weight:700">${h.name || '—'}</div><div class="muted" style="font-size:12px">${h.date}</div></div>
-      <div style="min-width:80px;text-align:right"><div style="font-weight:700">${h.level}</div><div class="muted" style="font-size:12px">HR:${h.hr}</div></div>
-    </li>
-  `).join('');
-}
+function renderHistory(){ const history=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); if(!history.length){ historyList.innerHTML='<li style="text-align:center;color:var(--text-body);padding:12px">No sessions recorded.</li>'; return; }
+  historyList.innerHTML = history.map(h=>`<li style="display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid var(--card-border)"><div style="flex:1"><div style="font-weight:700">${h.name||'—'}</div><div class="muted" style="font-size:12px">${h.date}</div></div><div style="min-width:80px;text-align:right"><div style="font-weight:700">${h.level}</div><div class="muted" style="font-size:12px">HR:${h.hr}</div></div></li>`).join(''); }
 resetHistoryBtn.addEventListener('click', ()=>{ localStorage.removeItem(HISTORY_KEY); renderHistory(); });
 renderHistory();
 
-/* persist simple profile */
-[nameInput, ageInput].forEach(el => el.addEventListener('change', ()=> {
-  localStorage.setItem('nw_profile', JSON.stringify({ name: nameInput.value||'', age: ageInput.value||'' }));
-}));
-(() => {
-  const p = JSON.parse(localStorage.getItem('nw_profile') || '{}');
-  if (p.name) nameInput.value = p.name;
-  if (p.age) ageInput.value = p.age;
-})();
+/* persist profile */
+[nameInput, ageInput].forEach(el=>el.addEventListener('change', ()=> localStorage.setItem('nw_profile', JSON.stringify({name:nameInput.value||'', age:ageInput.value||''}))));
+(() => { const p=JSON.parse(localStorage.getItem('nw_profile')||'{}'); if(p.name) nameInput.value=p.name; if(p.age) ageInput.value=p.age; })();
 
-/* =========================
+/* -------------------------
    Breathing exercise
-   ========================= */
-let breathInterval = null, breathRunning = false;
-function startBreathing(cycles = 6, inhale = 3, hold = 0, exhale = 4){
-  stopBreathing();
-  breathRunning = true;
-  let step = 0; // 0 inhale, 1 hold, 2 exhale
-  let cycleCount = 0;
-  breathCircle.style.transition = `transform ${inhale}s cubic-bezier(.2,.9,.3,1), opacity .2s`;
-  breathCircle.textContent = 'Inhale';
-  breathCircle.style.transform = 'scale(1)';
-  breathCyclesLabel.textContent = cycles;
-  breathDesc.textContent = `Follow the circle for ${cycles} cycles`;
-
+   ------------------------- */
+let breathInterval=null, breathRunning=false;
+function startBreathing(cycles=6, inhale=3, hold=0, exhale=4){
+  stopBreathing(); breathRunning=true; let step=0, cycleCount=0;
+  breathCircle.style.transition=`transform ${inhale}s cubic-bezier(.2,.9,.3,1), opacity .2s`;
+  breathCircle.textContent='Inhale'; breathCircle.style.transform='scale(1)'; breathCyclesLabel.textContent=cycles;
   breathInterval = setTimeout(function loop(){
     if (!breathRunning) return;
-    if (step === 0){
-      if (hold > 0){
-        breathCircle.textContent = 'Hold';
-        breathCircle.style.transition = `transform ${hold}s linear`;
-        step = 1;
-        breathInterval = setTimeout(loop, hold*1000);
-      } else {
-        step = 2;
-        breathCircle.textContent = 'Exhale';
-        breathCircle.style.transition = `transform ${exhale}s ease-out`;
-        breathCircle.style.transform = 'scale(.6)';
-        breathInterval = setTimeout(loop, exhale*1000);
-      }
-    } else if (step === 1){
-      step = 2;
-      breathCircle.textContent = 'Exhale';
-      breathCircle.style.transition = `transform ${exhale}s ease-out`;
-      breathCircle.style.transform = 'scale(.6)';
-      breathInterval = setTimeout(loop, exhale*1000);
-    } else if (step === 2){
-      cycleCount++;
-      if (cycleCount >= cycles){ stopBreathing(); return; }
-      step = 0;
-      breathCircle.textContent = 'Inhale';
-      breathCircle.style.transition = `transform ${inhale}s cubic-bezier(.2,.9,.3,1)`;
-      breathCircle.style.transform = 'scale(1)';
-      breathInterval = setTimeout(loop, inhale*1000);
-    }
+    if (step===0){
+      if (hold>0){ breathCircle.textContent='Hold'; breathCircle.style.transition=`transform ${hold}s linear`; step=1; breathInterval=setTimeout(loop, hold*1000); }
+      else { step=2; breathCircle.textContent='Exhale'; breathCircle.style.transition=`transform ${exhale}s ease-out`; breathCircle.style.transform='scale(.6)'; breathInterval=setTimeout(loop, exhale*1000); }
+    } else if (step===1){ step=2; breathCircle.textContent='Exhale'; breathCircle.style.transition=`transform ${exhale}s ease-out`; breathCircle.style.transform='scale(.6)'; breathInterval=setTimeout(loop, exhale*1000); }
+    else if (step===2){ cycleCount++; if (cycleCount>=cycles){ stopBreathing(); return; } step=0; breathCircle.textContent='Inhale'; breathCircle.style.transition=`transform ${inhale}s cubic-bezier(.2,.9,.3,1)`; breathCircle.style.transform='scale(1)'; breathInterval=setTimeout(loop, inhale*1000); }
   }, inhale*1000);
 }
-function stopBreathing(){ if (breathInterval) clearTimeout(breathInterval); breathInterval = null; breathRunning = false; breathCircle.style.transform = 'scale(.6)'; breathCircle.textContent = 'Stopped'; }
+function stopBreathing(){ if (breathInterval) clearTimeout(breathInterval); breathInterval=null; breathRunning=false; breathCircle.style.transform='scale(.6)'; breathCircle.textContent='Stopped'; }
 
-openBreathBtn.addEventListener('click', ()=> { breatherModal.classList.add('active'); });
-closeBreatherModal.addEventListener('click', ()=> { breatherModal.classList.remove('active'); stopBreathing(); });
+openBreathBtn.addEventListener('click', ()=> document.getElementById('breather-modal').style.display='flex');
+closeBreatherModal.addEventListener('click', ()=> { document.getElementById('breather-modal').style.display='none'; stopBreathing(); });
 breathStartBtn.addEventListener('click', ()=> {
-  const val = Number(breathSpeed.value);
-  if (val === 8) startBreathing(6,4,0,6); else if (val === 6) startBreathing(6,3,0,4); else startBreathing(8,2,0,3);
+  const val=Number(breathSpeed.value);
+  if (val===8) startBreathing(6,4,0,6); else if (val===6) startBreathing(6,3,0,4); else startBreathing(8,2,0,3);
 });
-breathStopBtn.addEventListener('click', ()=> { stopBreathing(); });
+breathStopBtn.addEventListener('click', ()=> stopBreathing());
 
-/* =========================
-   Gemini integration (AI)
-   - Uses Gemini REST endpoint. Replace GEMINI_API_KEY above.
-   - This implementation posts a structured prompt and expects JSON/plain text in response.
-   ========================= */
-
-async function fetchWithBackoff(url, options, retries = 3, delay = 1000){
-  try {
-    const resp = await fetch(url, options);
-    if (!resp.ok && retries > 0 && (resp.status === 429 || resp.status >= 500)) {
-      await new Promise(r => setTimeout(r, delay));
-      return fetchWithBackoff(url, options, retries - 1, delay * 2);
-    }
-    return resp;
-  } catch (err) {
-    if (retries > 0){
-      await new Promise(r => setTimeout(r, delay));
-      return fetchWithBackoff(url, options, retries - 1, delay * 2);
-    }
-    throw err;
-  }
-}
-
-/* Compose a request to Gemini to analyze the last session */
-async function askGeminiAnalysis(userQuestion='Please analyze my last session and give tips.') {
-  if (!GEMINI_API_KEY) {
-    appendChatMessage('system', 'Gemini API key not set. Paste your API key into the HTML file to enable Gemini.');
-    return;
-  }
-
-  appendChatMessage('user', userQuestion);
-
-  // Prepare a short system + user prompt using the latest session
-  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-  const last = history[0] || null;
-  const systemPrompt = `You are a compassionate wellness assistant. Provide concise, actionable advice based on sensor readings.`;
-  const userPrompt = last ? `Last session data:
-- Name: ${last.name}
-- Age: ${last.age}
-- Stress Level: ${last.level}
-- Avg HR: ${last.hr} bpm
-- Avg SpO2: ${last.spo2} %
-- Avg GSR: ${last.gsr}
-Please give a 2-sentence analysis and 3 concise suggestions.` : userQuestion;
-
-  const payload = {
-    // The payload format mirrors the one used earlier in the project,
-    // but Gemini endpoints can accept simpler content too.
-    "contents": [{ "parts": [{ "text": userPrompt }] }],
-    "systemInstruction": { "parts": [{ "text": systemPrompt }] },
-    "generationConfig": { "temperature": 0.5, "maxOutputTokens": 450 }
-  };
-
-  try {
-    appendChatMessage('system', 'Thinking...');
-    const resp = await fetchWithBackoff(GEMINI_BASE + GEMINI_API_KEY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }, 3, 1000);
-
-    if (!resp.ok) throw new Error(`Gemini error ${resp.status}`);
-
-    const result = await resp.json();
-    const candidate = result.candidates?.[0];
-    const text = candidate?.content?.parts?.[0]?.text || candidate?.content?.[0]?.text || JSON.stringify(result);
-
-    appendChatMessage('assistant', text);
-  } catch (err) {
-    console.error('Gemini error', err);
-    appendChatMessage('assistant', 'Sorry — Gemini request failed. Showing local suggestions instead.');
-    const lastLevel = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')[0]?.level || 'MODERATE';
-    renderStaticSuggestions(lastLevel);
-  }
-}
-
-/* chat helpers */
+/* -------------------------
+   Assistant (AI) integration (anonymous "Assistant")
+   ------------------------- */
 function appendChatMessage(who, text){
-  const div = document.createElement('div');
-  if (who === 'user') div.style.textAlign = 'right', div.innerHTML = `<div style="display:inline-block;background:var(--accent);color:var(--bg);padding:8px;border-radius:8px;margin:6px">${escapeHtml(text)}</div>`;
-  else if (who === 'assistant') div.innerHTML = `<div style="display:inline-block;background:var(--glass);color:var(--text);padding:8px;border-radius:8px;margin:6px">${escapeHtml(text)}</div>`;
-  else div.innerHTML = `<div style="display:inline-block;color:var(--text-body);padding:6px;margin:6px">${escapeHtml(text)}</div>`;
-  chatMessages.appendChild(div);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  const div=document.createElement('div');
+  if (who==='user') div.style.textAlign='right', div.innerHTML=`<div style="display:inline-block;background:var(--accent);color:var(--bg);padding:8px;border-radius:8px;margin:6px">${escapeHtml(text)}</div>`;
+  else if (who==='assistant') div.innerHTML=`<div style="display:inline-block;background:rgba(255,255,255,0.03);color:var(--text);padding:8px;border-radius:8px;margin:6px">${escapeHtml(text)}</div>`;
+  else div.innerHTML=`<div style="display:inline-block;color:var(--text-body);padding:6px;margin:6px">${escapeHtml(text)}</div>`;
+  chatMessages.appendChild(div); chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 chatFab.addEventListener('click', ()=> chatPanel.classList.toggle('active'));
 closeChatBtn.addEventListener('click', ()=> chatPanel.classList.remove('active'));
 sendChatBtn.addEventListener('click', ()=> {
-  const q = chatInput.value.trim();
-  if (!q) return;
-  askGeminiAnalysis(q);
-  chatInput.value = '';
+  const q = chatInput.value.trim(); if (!q) return;
+  appendChatMessage('user', q);
+  askAssistant(q);
+  chatInput.value='';
 });
 
-/* quick Ask button */
-askGeminiBtn.addEventListener('click', ()=> askGeminiAnalysis());
+askAI.addEventListener('click', ()=> {
+  // ask about last session
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); const last = history[0];
+  if (!last) { appendChatMessage('assistant', 'No session found. Complete a test first.'); return; }
+  const prompt = `Please analyze the last session and give a concise 2-sentence analysis and 3 actionable tips. Data: Level=${last.level}, HR=${last.hr}, SpO2=${last.spo2}, GSR=${last.gsr}, Age=${last.age}`;
+  appendChatMessage('user', 'Analyze last session');
+  askAssistant(prompt);
+});
 
-/* =========================
-   Small UI listeners
-   ========================= */
-sosBtn.addEventListener('click', ()=> document.getElementById('sos-modal').classList.add('active'));
-document.getElementById('close-sos-modal').addEventListener('click', ()=> document.getElementById('sos-modal').classList.remove('active'));
+/* AI call helper (uses Gemini endpoint if key is present) */
+async function askAssistant(prompt){
+  if (!GEMINI_API_KEY) {
+    appendChatMessage('assistant','Assistant is offline (no API key configured). Showing local suggestions instead.');
+    const lastLevel = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]')[0]?.level || 'MODERATE';
+    renderStaticSuggestions(lastLevel);
+    return;
+  }
 
-document.getElementById('close-breather-modal').addEventListener('click', ()=> { document.getElementById('breather-modal').classList.remove('active'); stopBreathing(); });
+  appendChatMessage('assistant','Thinking...');
+  try {
+    const payload = { contents:[ { parts:[{ text: prompt }] } ], systemInstruction:{ parts:[{ text: "You are a concise wellness assistant." }] }, generationConfig:{ temperature:0.45, maxOutputTokens:400 } };
+    const resp = await fetch(AI_BASE + GEMINI_API_KEY, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+    if (!resp.ok) throw new Error('AI error ' + resp.status);
+    const data = await resp.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || JSON.stringify(data);
+    // Replace previous "Thinking..." message with assistant response
+    appendChatMessage('assistant', text);
+  } catch (e) {
+    console.error('AI error', e);
+    appendChatMessage('assistant','Sorry — could not fetch suggestions. Showing local tips instead.');
+    const lastLevel = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]')[0]?.level || 'MODERATE';
+    renderStaticSuggestions(lastLevel);
+  }
+}
 
-/* =========================
-   Utility helpers
-   ========================= */
-function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+/* -------------------------
+   Small helpers & init
+   ------------------------- */
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-/* =========================
-   Final note / warning about API keys
-   ========================= */
-console.log("NeuroWell dashboard loaded. Remember to set GEMINI_API_KEY in the HTML before using Gemini in production.");
+/* initialize theme, charts */
+applyTheme();
 
-/* End of script */
+/* End of file */
 </script>
 </body>
 </html>
