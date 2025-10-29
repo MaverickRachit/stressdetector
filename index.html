@@ -44,7 +44,8 @@
       transition: background-color .25s ease, color .25s ease;
       padding:14px;
     }
-    .wrap{max-width:1200px;margin:12px auto;padding:0 12px;display:flex;flex-direction:column;gap:14px}
+    /* --- MODIFIED: Consistent gap --- */
+    .wrap{max-width:1200px;margin:12px auto;padding:0 12px;display:flex;flex-direction:column;gap:16px}
 
     header.appbar{
       display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -52,7 +53,7 @@
       border:1px solid var(--card-border); padding:14px;border-radius:12px;backdrop-filter: blur(8px);
     }
     .title {display:flex;align-items:center;gap:10px;font-weight:700;color:var(--text);font-size:18px}
-    .controls{display:flex;align-items:center;gap:10px}
+    .controls{display:flex;align-items:center;gap:10px;flex-wrap: wrap;justify-content: flex-end;}
 
     .btn {padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
     .btn.primary{background:var(--accent);color:var(--bg);box-shadow:0 6px 22px rgba(0,0,0,0.18)}
@@ -60,7 +61,8 @@
     .btn.sos{background:var(--bad);color:#fff;border-radius:10px;padding:8px 12px}
     .btn.small{padding:8px 10px;font-size:12px}
 
-    .dashboard{display:grid;grid-template-columns:1fr;gap:18px;margin-top:6px}
+    /* --- MODIFIED: Consistent gap --- */
+    .dashboard{display:grid;grid-template-columns:1fr;gap:16px;margin-top:6px}
     @media(min-width:1000px){ .dashboard{grid-template-columns:2fr 1fr} }
 
     .card{
@@ -144,6 +146,7 @@
       <div class="controls">
         <div id="bleStatus" class="muted">Status: <span style="color:var(--bad);font-weight:800" id="bleStatusText">Disconnected</span></div>
         <button id="profileBtn" class="btn ghost small">Profile</button>
+        <button id="resourcesBtn" class="btn ghost small">Resources</button>
         <div class="audio-toggle" id="themeToggle" title="Toggle Light / Dark">🌙 <span id="themeLabel" class="small">Dark</span></div>
         <button id="sosBtn" class="btn sos">SOS</button>
       </div>
@@ -195,7 +198,7 @@
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div style="font-weight:700;color:var(--text)">Live Sensor Stream</div>
-            <div class="muted">Real-time graphs • Raw data (no smoothing)</div>
+            <div class="muted">Real-time graphs • Raw data</div>
           </div>
 
           <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
@@ -222,7 +225,7 @@
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div style="font-weight:700;color:var(--text)">Analysis & Suggestions</div>
-            <div class="muted">Powered by Gemini (optional)</div>
+            <div class="muted">AI-Assisted Suggestions</div>
           </div>
 
           <div style="margin-top:12px" id="analysis-section">
@@ -258,7 +261,7 @@
 
     <div class="modal-overlay" id="breather-modal"><div class="modal card">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-weight:7700">Calming Exercise</div>
+        <div style="font-weight:700">Calming Exercise</div>
         <button id="close-breather-modal" class="btn ghost">X</button>
       </div>
 
@@ -292,7 +295,38 @@
             <input id="userAge" type="number" placeholder="Enter age" style="width:120px" />
         </div>
         <div class="muted" id="profileNote" style="margin-top:8px;">Optional: entering name & age helps personalize suggestions. You can skip.</div>
-        <button id="save-profile-btn" class="btn primary" style="align-self:flex-end">Save</button>
+        <button id="save-profile-btn" class="btn primary" style="align-self:flex-end">Save & Close</button>
+      </div>
+    </div></div>
+
+    <div class="modal-overlay" id="resources-modal"><div class="modal card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:700">Mental Health Resources</div>
+        <button id="close-resources-modal" class="btn ghost">X</button>
+      </div>
+      <div style="margin-top:16px; max-height: 400px; overflow-y: auto;">
+        <ul id="resources-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px;">
+          <li style="background:var(--glass);padding:12px;border-radius:8px;">
+            <div style="font-weight:700;color:var(--text)">Understanding Stress vs. Anxiety</div>
+            <div class="muted" style="font-size:12px; margin-top:4px;">Learn the key differences and how your body responds to each.</div>
+            <a href="#" onclick="alert('Placeholder: This would link to a real article.')" style="color:var(--accent);font-size:12px;font-weight:700;margin-top:6px;display:inline-block;">Read More</a>
+          </li>
+          <li style="background:var(--glass);padding:12px;border-radius:8px;">
+            <div style="font-weight:700;color:var(--text)">5-Minute Mindfulness Exercises</div>
+            <div class="muted" style="font-size:12px; margin-top:4px;">Simple exercises you can do at your desk to recalibrate.</div>
+            <a href="#" onclick="alert('Placeholder: This would link to a real article.')" style="color:var(--accent);font-size:12px;font-weight:700;margin-top:6px;display:inline-block;">Read More</a>
+          </li>
+          <li style="background:var(--glass);padding:12px;border-radius:8px;">
+            <div style="font-weight:700;color:var(--text)">The Science of Deep Breathing</div>
+            <div class="muted" style="font-size:12px; margin-top:4px;">How diaphragmatic breathing calms your nervous system.</div>
+            <a href="#" onclick="alert('Placeholder: This would link to a real article.')" style="color:var(--accent);font-size:12px;font-weight:700;margin-top:6px;display:inline-block;">Read More</a>
+          </li>
+           <li style="background:var(--glass);padding:12px;border-radius:8px;">
+            <div style="font-weight:700;color:var(--text)">Journaling for Mental Clarity</div>
+            <div class="muted" style="font-size:12px; margin-top:4px;">Techniques for reducing stress through writing.</div>
+            <a href="#" onclick="alert('Placeholder: This would link to a real article.')" style="color:var(--accent);font-size:12px;font-weight:700;margin-top:6px;display:inline-block;">Read More</a>
+          </li>
+        </ul>
       </div>
     </div></div>
 
@@ -307,7 +341,7 @@
       </div>
     </div>
     <div class="chat-messages" id="chatMessages">
-      <div class="muted">Start a conversation — Gemini will analyze your last session when you ask.</div>
+      <div class="muted">Start a conversation — Gemini can analyze your last session when you ask.</div>
     </div>
     <div class="chat-input" style="margin-top:8px">
       <input id="chatInput" placeholder="Ask something (e.g., 'Is my stress high?')" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--card-border);background:transparent;color:var(--text)" />
@@ -364,11 +398,16 @@ const breathStopBtn = document.getElementById('breathStopBtn');
 const breathSpeed = document.getElementById('breathSpeed');
 const breathCyclesLabel = document.getElementById('breathCycles');
 
-/* NEW Profile Modal Refs */
+/* Profile Modal Refs */
 const profileBtn = document.getElementById('profileBtn');
 const profileModal = document.getElementById('profile-modal');
 const closeProfileModal = document.getElementById('close-profile-modal');
 const saveProfileBtn = document.getElementById('save-profile-btn');
+
+/* --- NEW: Resources Modal Refs --- */
+const resourcesBtn = document.getElementById('resourcesBtn');
+const resourcesModal = document.getElementById('resources-modal');
+const closeResourcesModal = document.getElementById('close-resources-modal');
 
 const nameInput = document.getElementById('userName');
 const ageInput = document.getElementById('userAge');
@@ -424,27 +463,23 @@ function initAudio(){
   masterGain.gain.value = 0.0;
   masterGain.connect(audioCtx.destination);
 
-  // main drone (sine)
   droneOsc = audioCtx.createOscillator();
   droneOsc.type = 'sine';
-  droneOsc.frequency.value = 110; // low pad
+  droneOsc.frequency.value = 110;
   const droneGain = audioCtx.createGain();
   droneGain.gain.value = 0.0;
 
-  // subtle LFO to modulate amplitude
   lfo = audioCtx.createOscillator();
   lfo.type = 'sine';
-  lfo.frequency.value = 0.08; // slow swell
+  lfo.frequency.value = 0.08;
   const lfoGain = audioCtx.createGain();
   lfoGain.gain.value = 0.25;
 
-  // connect nodes
   lfo.connect(lfoGain);
   lfoGain.connect(droneGain.gain);
   droneOsc.connect(droneGain);
   droneGain.connect(masterGain);
 
-  // gentle high-pass + low-pass to shape timbre
   const hp = audioCtx.createBiquadFilter();
   hp.type = 'highpass';
   hp.frequency.value = 20;
@@ -459,14 +494,8 @@ function initAudio(){
   lfo.start();
 }
 
-/**
- * REFACTORED: Starts or stops the ambient audio
- * @param {boolean} play - true to play, false to stop
- */
 function setAudio(play) {
     if (!audioCtx) initAudio();
-    
-    // Resume context on user gesture if starting
     if (play && !audioPlaying) {
         audioCtx.resume().then(() => {
             masterGain.gain.exponentialRampToValueAtTime(0.22, audioCtx.currentTime + 1.2);
@@ -477,7 +506,6 @@ function setAudio(play) {
         audioPlaying = false;
     }
 }
-// NOTE: Audio toggle button removed. Audio is now controlled by the breathing modal.
 
 /* =========================
   CHARTS
@@ -573,7 +601,6 @@ startBtn.addEventListener('click', async () => {
       startBtn.textContent = 'Start 40s Test';
     }
 
-    // send start command
     statusText.textContent = 'STARTING';
     const temp = parseInt(roomTempInput.value || '30', 10);
     let irThr = 20000;
@@ -615,24 +642,20 @@ function setBLEStatus(message, level){
 
 /* =========================
   Data handling
-  NOTE: Smoothing removed for faster 'feel'. Charts will be noisy.
   ========================= */
 function handleDataNotification(event){
   const jsonString = textDecoder.decode(event.target.value);
   try {
     const data = JSON.parse(jsonString);
 
-    // raw values
     const hr = Number(data.hr) || 0;
     const spo2 = Number(data.spo2) || -1;
     const gsr = Number(data.gsr) || 0;
 
-    // update UI
     valHR.textContent = hr > 0 ? Math.round(hr) : '--';
     valSp.textContent = (spo2 > 0) ? Math.round(spo2) : '--';
     valGSR.textContent = gsr >= 0 ? Math.round(gsr) : '--';
 
-    // Heartbeat animation
     if (hr > 0 && !valHR.classList.contains('pulsing')) {
         valHR.classList.add('pulsing');
         valHR.addEventListener('animationend', () => {
@@ -665,6 +688,7 @@ function handleDataNotification(event){
         name: nameInput.value || '—',
         age: ageInput.value || '—'
       });
+      // This is the default: show static suggestions on completion.
       renderStaticSuggestions(level);
     }
 
@@ -675,7 +699,6 @@ function handleDataNotification(event){
   }
 }
 
-/* detect flat spO2 and attempt soft recalibrate hint to device */
 function detectFlatSpO2(spo2Raw){
   if (typeof spo2Raw !== 'number') return;
   if (spo2Raw === spLast && spo2Raw > 0){
@@ -699,7 +722,7 @@ function detectFlatSpO2(spo2Raw){
         commandCharacteristic.writeValue(textEncoder.encode(cmd)).catch(()=>{/*non-fatal*/});
       }
     } catch(e){ /*ignore*/ }
-    spFlatCount = 0; // Reset after firing
+    spFlatCount = 0; 
   }
 }
 
@@ -730,22 +753,17 @@ const staticSuggestions = {
   ]
 };
 
-/**
- * REFACTORED: Selects 2-3 random suggestions
- * @param {string} level - 'LOW', 'MODERATE', or 'HIGH'
- */
 function renderStaticSuggestions(level){
   suggestList.innerHTML = '';
   const all = staticSuggestions[level] || staticSuggestions.MODERATE;
   
-  // Shuffle and pick 3 (or fewer if not enough)
   const shuffled = [...all].sort(() => 0.5 - Math.random());
   const count = Math.min(3, all.length);
   const selected = shuffled.slice(0, count); 
   
   selected.forEach(s => {
     const li = document.createElement('li'); 
-    li.innerHTML = s; // Use innerHTML to allow for simple formatting
+    li.innerHTML = s;
     suggestList.appendChild(li);
   });
 }
@@ -774,13 +792,28 @@ resetHistoryBtn.addEventListener('click', ()=>{ localStorage.removeItem(HISTORY_
 renderHistory();
 
 /* persist simple profile */
-[nameInput, ageInput].forEach(el => el.addEventListener('change', ()=> {
-  localStorage.setItem('nw_profile', JSON.stringify({ name: nameInput.value||'', age: ageInput.value||'' }));
-}));
+function saveProfile() {
+    localStorage.setItem('nw_profile', JSON.stringify({ name: nameInput.value||'', age: ageInput.value||'' }));
+}
+[nameInput, ageInput].forEach(el => el.addEventListener('change', saveProfile));
+
+/* --- MODIFIED: Auto-show profile modal on first load --- */
 (() => {
   const p = JSON.parse(localStorage.getItem('nw_profile') || '{}');
-  if (p.name) nameInput.value = p.name;
-  if (p.age) ageInput.value = p.age;
+  let profileSet = false;
+  if (p.name) {
+    nameInput.value = p.name;
+    profileSet = true;
+  }
+  if (p.age) {
+    ageInput.value = p.age;
+    profileSet = true;
+  }
+  
+  // Auto-show profile modal if no profile is saved
+  if (!profileSet) {
+     profileModal.classList.add('active');
+  }
 })();
 
 /* =========================
@@ -790,7 +823,7 @@ let breathInterval = null, breathRunning = false;
 function startBreathing(cycles = 6, inhale = 3, hold = 0, exhale = 4){
   stopBreathing();
   breathRunning = true;
-  let step = 0; // 0 inhale, 1 hold, 2 exhale
+  let step = 0;
   let cycleCount = 0;
   breathCircle.style.transition = `transform ${inhale}s cubic-bezier(.2,.9,.3,1), opacity .2s`;
   breathCircle.textContent = 'Inhale';
@@ -836,17 +869,16 @@ function stopBreathing(){
     breathRunning = false; 
     breathCircle.style.transform = 'scale(.6)'; 
     breathCircle.textContent = 'Stopped'; 
-    // Do not stop audio here, only when modal closes
 }
 
 openBreathBtn.addEventListener('click', ()=> { 
     breatherModal.classList.add('active'); 
-    setAudio(true); // Start audio when modal opens
+    setAudio(true); 
 });
 closeBreatherModal.addEventListener('click', ()=> { 
     breatherModal.classList.remove('active'); 
     stopBreathing(); 
-    setAudio(false); // Stop audio when modal closes
+    setAudio(false);
 });
 breathStartBtn.addEventListener('click', ()=> {
   const val = Number(breathSpeed.value);
@@ -854,7 +886,6 @@ breathStartBtn.addEventListener('click', ()=> {
 });
 breathStopBtn.addEventListener('click', ()=> { 
     stopBreathing(); 
-    // Don't stop audio, let it play until modal is closed
 });
 
 /* =========================
@@ -878,16 +909,14 @@ async function fetchWithBackoff(url, options, retries = 3, delay = 1000){
   }
 }
 
-/* Compose a request to Gemini to analyze the last session */
 async function askGeminiAnalysis(userQuestion='Please analyze my last session and give tips.') {
   if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
-    appendChatMessage('system', 'Gemini API key not set. Paste your API key into the HTML file (at the top of the <script> block) to enable Gemini.');
+    appendChatMessage('system', 'Gemini API key not set. Paste your API key into the HTML file (at the top of the <script> block) to enable this feature.');
     return;
   }
 
   appendChatMessage('user', userQuestion);
 
-  // Prepare a short system + user prompt using the latest session
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
   const last = history[0] || null;
   const systemPrompt = `You are a compassionate wellness assistant. Provide concise, actionable advice based on sensor readings. Keep your analysis to 2-3 sentences and provide 3-4 very short, actionable bullet points as suggestions.`;
@@ -920,11 +949,21 @@ My question is: ${userQuestion}` : userQuestion;
     const result = await resp.json();
     const candidate = result.candidates?.[0];
     const text = candidate?.content?.parts?.[0]?.text || candidate?.content?.[0]?.text || JSON.stringify(result);
-
+    
+    // Success: Put Gemini response in chat
     appendChatMessage('assistant', text);
+    
+    // Also, parse the response and put it in the MAIN suggestion box
+    // This is a simple parser; a real app might want structured JSON
+    const parts = text.split('\n');
+    suggestList.innerHTML = parts.map(s => `<li>${escapeHtml(s)}</li>`).join('');
+
   } catch (err) {
     console.error('Gemini error', err);
-    appendChatMessage('assistant', 'Sorry — Gemini request failed. Check console or API key. Showing local suggestions instead.');
+    // --- MODIFIED: Better fallback ---
+    // 1. Put error in chat
+    appendChatMessage('assistant', 'Sorry — the AI analysis failed. Here are some general suggestions based on your results instead.');
+    // 2. Populate the MAIN suggestion box with static suggestions
     const lastLevel = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')[0]?.level || 'MODERATE';
     renderStaticSuggestions(lastLevel);
   }
@@ -934,7 +973,7 @@ My question is: ${userQuestion}` : userQuestion;
 function appendChatMessage(who, text){
   const div = document.createElement('div');
   if (who === 'user') div.style.textAlign = 'right', div.innerHTML = `<div style="display:inline-block;background:var(--accent);color:var(--bg);padding:8px;border-radius:8px;margin:6px">${escapeHtml(text)}</div>`;
-  else if (who === 'assistant') div.innerHTML = `<div style="display:inline-block;background:var(--glass);color:var(--text);padding:8px;border-radius:8px;margin:6px">${text.replace(/\n/g, '<br>')}</div>`; // allow line breaks
+  else if (who === 'assistant') div.innerHTML = `<div style="display:inline-block;background:var(--glass);color:var(--text);padding:8px;border-radius:8px;margin:6px">${text.replace(/\n/g, '<br>')}</div>`;
   else div.innerHTML = `<div style="display:inline-block;color:var(--text-body);padding:6px;margin:6px">${escapeHtml(text)}</div>`;
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -951,7 +990,10 @@ sendChatBtn.addEventListener('click', ()=> {
 });
 
 /* quick Ask button */
-askGeminiBtn.addEventListener('click', ()=> askGeminiAnalysis('Please analyze my last session and give tips.'));
+askGeminiBtn.addEventListener('click', ()=> {
+    analysisSection.style.display = 'block'; // Ensure it's visible
+    askGeminiAnalysis('Please analyze my last session and give tips.');
+});
 
 /* =========================
   Small UI listeners
@@ -959,12 +1001,15 @@ askGeminiBtn.addEventListener('click', ()=> askGeminiAnalysis('Please analyze my
 sosBtn.addEventListener('click', ()=> document.getElementById('sos-modal').classList.add('active'));
 document.getElementById('close-sos-modal').addEventListener('click', ()=> document.getElementById('sos-modal').classList.remove('active'));
 
-/* NEW Profile Modal Listeners */
+/* --- NEW: Resources Modal Listeners --- */
+resourcesBtn.addEventListener('click', () => resourcesModal.classList.add('active'));
+closeResourcesModal.addEventListener('click', () => resourcesModal.classList.remove('active'));
+
+/* Profile Modal Listeners */
 profileBtn.addEventListener('click', () => profileModal.classList.add('active'));
 closeProfileModal.addEventListener('click', () => profileModal.classList.remove('active'));
 saveProfileBtn.addEventListener('click', () => {
-    // Save logic is already handled by the 'change' listeners on the inputs.
-    // This button just closes the modal.
+    saveProfile(); // Explicitly save on button click as well
     profileModal.classList.remove('active');
 });
 
