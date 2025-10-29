@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>NeuroWell 2.0 — Dashboard (BLE + Gemini + Ambient)</title>
 
-  <!-- Chart.js (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -59,6 +58,7 @@
     .btn.primary{background:var(--accent);color:var(--bg);box-shadow:0 6px 22px rgba(0,0,0,0.18)}
     .btn.ghost{background:transparent;border:1px solid var(--card-border);color:var(--text-body)}
     .btn.sos{background:var(--bad);color:#fff;border-radius:10px;padding:8px 12px}
+    .btn.small{padding:8px 10px;font-size:12px}
 
     .dashboard{display:grid;grid-template-columns:1fr;gap:18px;margin-top:6px}
     @media(min-width:1000px){ .dashboard{grid-template-columns:2fr 1fr} }
@@ -81,6 +81,16 @@
     .vital-label{font-size:13px;color:var(--text-body);display:flex;align-items:center;gap:8px;justify-content:center}
     .vital-value{font-size:36px;font-weight:800;color:var(--text);margin-top:8px}
 
+    /* Heartbeat animation */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+    .vital-value.pulsing {
+      animation: pulse 0.3s ease-out;
+    }
+
     .chart-wrap{height:140px;background:transparent;border-radius:10px;padding:8px}
     canvas{width:100% !important;height:100% !important;display:block}
 
@@ -98,7 +108,7 @@
     .history-item{display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid var(--card-border)}
     .muted{color:var(--text-body);font-size:13px}
 
-    .modal-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6);z-index:200}
+    .modal-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6);z-index:200;backdrop-filter: blur(4px);}
     .modal-overlay.active{display:flex}
     .modal{width:92%;max-width:520px;background:var(--card-bg);padding:16px;border-radius:12px;border:1px solid var(--card-border)}
 
@@ -133,7 +143,7 @@
 
       <div class="controls">
         <div id="bleStatus" class="muted">Status: <span style="color:var(--bad);font-weight:800" id="bleStatusText">Disconnected</span></div>
-        <div class="audio-toggle" id="audioToggle" title="Toggle ambient sound">🔉 <span id="audioLabel" class="small">Sound Off</span></div>
+        <button id="profileBtn" class="btn ghost small">Profile</button>
         <div class="audio-toggle" id="themeToggle" title="Toggle Light / Dark">🌙 <span id="themeLabel" class="small">Dark</span></div>
         <button id="sosBtn" class="btn sos">SOS</button>
       </div>
@@ -154,19 +164,9 @@
               </div>
 
               <div style="display:flex;gap:8px;align-items:center">
-                <div style="display:flex;gap:8px;align-items:center">
-                  <label style="margin:0 6px 0 0;font-weight:700;color:var(--text);">Name</label>
-                  <input id="userName" placeholder="Skip or enter name" />
-                </div>
-                <div style="display:flex;gap:8px;align-items:center">
-                  <label style="margin:0 6px 0 0;font-weight:700;color:var(--text);">Age</label>
-                  <input id="userAge" type="number" placeholder="Skip" style="width:90px" />
-                </div>
                 <button id="startBtn" class="btn primary">Connect & Start Test</button>
               </div>
             </div>
-
-            <div class="muted" id="profileNote">Optional: entering name & age helps personalize suggestions. You can skip.</div>
           </div>
         </div>
 
@@ -195,7 +195,7 @@
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div style="font-weight:700;color:var(--text)">Live Sensor Stream</div>
-            <div class="muted">Real-time graphs • smoothing enabled</div>
+            <div class="muted">Real-time graphs • Raw data (no smoothing)</div>
           </div>
 
           <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
@@ -244,7 +244,6 @@
       </div>
     </div>
 
-    <!-- SOS Modal -->
     <div class="modal-overlay" id="sos-modal"><div class="modal card">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="font-weight:700">Emergency Helplines (India)</div>
@@ -257,10 +256,9 @@
       </div>
     </div></div>
 
-    <!-- Breath Modal -->
     <div class="modal-overlay" id="breather-modal"><div class="modal card">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-weight:700">Calming Exercise</div>
+        <div style="font-weight:7700">Calming Exercise</div>
         <button id="close-breather-modal" class="btn ghost">X</button>
       </div>
 
@@ -278,10 +276,28 @@
         </div>
       </div>
     </div></div>
+    
+    <div class="modal-overlay" id="profile-modal"><div class="modal card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:700">Your Profile</div>
+        <button id="close-profile-modal" class="btn ghost">X</button>
+      </div>
+      <div style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
+        <div>
+            <label style="font-weight:700;color:var(--text);">Name</label>
+            <input id="userName" placeholder="Enter name" />
+        </div>
+        <div>
+            <label style="font-weight:700;color:var(--text);">Age</label>
+            <input id="userAge" type="number" placeholder="Enter age" style="width:120px" />
+        </div>
+        <div class="muted" id="profileNote" style="margin-top:8px;">Optional: entering name & age helps personalize suggestions. You can skip.</div>
+        <button id="save-profile-btn" class="btn primary" style="align-self:flex-end">Save</button>
+      </div>
+    </div></div>
 
   </div>
 
-  <!-- Gemini Chat Floating -->
   <div class="chat-floating" id="chatFab" title="Open Gemini Assistant">💬</div>
   <div class="chat-panel" id="chatPanel">
     <div style="display:flex;justify-content:space-between;align-items:center">
@@ -294,21 +310,22 @@
       <div class="muted">Start a conversation — Gemini will analyze your last session when you ask.</div>
     </div>
     <div class="chat-input" style="margin-top:8px">
-      <input id="chatInput" placeholder="Ask something (e.g., 'Is my stress level high?')" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--card-border);background:transparent;color:var(--text)" />
+      <input id="chatInput" placeholder="Ask something (e.g., 'Is my stress high?')" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--card-border);background:transparent;color:var(--text)" />
       <button id="sendChatBtn" class="btn primary">Send</button>
     </div>
   </div>
 
 <script>
 /* =========================
-   CONFIG / CONSTANTS
-   ========================= */
+  CONFIG / CONSTANTS
+  ========================= */
 const SERVICE_UUID    = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const CHAR_DATA_UUID    = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 const CHAR_COMMAND_UUID = "a88a02e0-8422-42b0-a555-5203361a832a";
 
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
-const GEMINI_API_KEY = "AIzaSyA9zty3CbSQAhWFsavkUkI-7RYQxJl0llM"; // <-- PASTE YOUR GEMINI API KEY HERE (Keep it secret in production!)
+// !! IMPORTANT !! PASTE YOUR GEMINI API KEY HERE
+const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
 /* ========================= */
 
 let bleDevice = null;
@@ -347,12 +364,16 @@ const breathStopBtn = document.getElementById('breathStopBtn');
 const breathSpeed = document.getElementById('breathSpeed');
 const breathCyclesLabel = document.getElementById('breathCycles');
 
+/* NEW Profile Modal Refs */
+const profileBtn = document.getElementById('profileBtn');
+const profileModal = document.getElementById('profile-modal');
+const closeProfileModal = document.getElementById('close-profile-modal');
+const saveProfileBtn = document.getElementById('save-profile-btn');
+
 const nameInput = document.getElementById('userName');
 const ageInput = document.getElementById('userAge');
 const themeToggle = document.getElementById('themeToggle');
 const themeLabel = document.getElementById('themeLabel');
-const audioToggle = document.getElementById('audioToggle');
-const audioLabel = document.getElementById('audioLabel');
 const chartToggle = document.getElementById('chartToggle');
 const resetHistoryBtn = document.getElementById('resetHistoryBtn');
 const askGeminiBtn = document.getElementById('askGeminiBtn');
@@ -369,10 +390,6 @@ const sendChatBtn = document.getElementById('sendChatBtn');
 const MAX_POINTS = 40;
 let hrChart, spChart, gsrChart;
 
-/* smoothing */
-const HR_BUFFER = [], SP_BUFFER = [], GSR_BUFFER = [];
-const SMOOTH_WINDOW = 6;
-
 /* flat SpO2 detection */
 let spLast = null, spFlatCount = 0;
 const SP_FLAT_LIMIT = 6;
@@ -382,8 +399,8 @@ const HISTORY_KEY = 'stressHistory';
 const MAX_HISTORY = 10;
 
 /* =========================
-   THEME + PERSISTENCE
-   ========================= */
+  THEME + PERSISTENCE
+  ========================= */
 function applyTheme(){
   const isLight = localStorage.getItem('theme') === 'light';
   if (isLight) document.body.classList.add('light'); else document.body.classList.remove('light');
@@ -442,28 +459,29 @@ function initAudio(){
   lfo.start();
 }
 
-function toggleAudio(){
-  if (!audioCtx) initAudio();
-  if (!audioPlaying){
-    // resume context on user gesture
-    audioCtx.resume().then(()=> {
-      masterGain.gain.exponentialRampToValueAtTime(0.22, audioCtx.currentTime + 1.2);
-      audioLabel.textContent = 'Sound On';
-      audioPlaying = true;
-    });
-  } else {
-    masterGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.0);
-    audioLabel.textContent = 'Sound Off';
-    audioPlaying = false;
-  }
+/**
+ * REFACTORED: Starts or stops the ambient audio
+ * @param {boolean} play - true to play, false to stop
+ */
+function setAudio(play) {
+    if (!audioCtx) initAudio();
+    
+    // Resume context on user gesture if starting
+    if (play && !audioPlaying) {
+        audioCtx.resume().then(() => {
+            masterGain.gain.exponentialRampToValueAtTime(0.22, audioCtx.currentTime + 1.2);
+            audioPlaying = true;
+        });
+    } else if (!play && audioPlaying) {
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.0);
+        audioPlaying = false;
+    }
 }
-audioToggle.addEventListener('click', () => {
-  try { toggleAudio(); } catch(e){ console.warn('Audio error', e); }
-});
+// NOTE: Audio toggle button removed. Audio is now controlled by the breathing modal.
 
 /* =========================
-   CHARTS
-   ========================= */
+  CHARTS
+  ========================= */
 function createCharts(){
   const css = getComputedStyle(document.documentElement);
   const bad = css.getPropertyValue('--bad').trim() || '#f87171';
@@ -512,8 +530,8 @@ function updateChart(chart, value){
 window.addEventListener('load', createCharts);
 
 /* =========================
-   WEATHER (geolocation helper)
-   ========================= */
+  WEATHER (geolocation helper)
+  ========================= */
 getLocationBtn.addEventListener('click', () => {
   if (navigator.geolocation){
     getLocationBtn.disabled = true; getLocationBtn.textContent = '...';
@@ -532,8 +550,8 @@ async function fetchWeather(position){
 }
 
 /* =========================
-   BLE CONNECT & DATA
-   ========================= */
+  BLE CONNECT & DATA
+  ========================= */
 startBtn.addEventListener('click', async () => {
   startBtn.disabled = true;
   try {
@@ -596,35 +614,31 @@ function setBLEStatus(message, level){
 }
 
 /* =========================
-   Data handling + smoothing
-   ========================= */
-function pushAndSmooth(buffer, v){
-  if (typeof v !== 'number' || isNaN(v)) return null;
-  buffer.push(v);
-  if (buffer.length > SMOOTH_WINDOW) buffer.shift();
-  const sum = buffer.reduce((a,b)=>a+b,0);
-  return sum / buffer.length;
-}
-
+  Data handling
+  NOTE: Smoothing removed for faster 'feel'. Charts will be noisy.
+  ========================= */
 function handleDataNotification(event){
   const jsonString = textDecoder.decode(event.target.value);
   try {
     const data = JSON.parse(jsonString);
 
     // raw values
-    const hrRaw = Number(data.hr) || 0;
-    const spo2Raw = Number(data.spo2) || -1;
-    const gsrRaw = Number(data.gsr) || 0;
-
-    // smoothing
-    const hr = pushAndSmooth(HR_BUFFER, hrRaw) || 0;
-    const spo2 = (spo2Raw > 0) ? pushAndSmooth(SP_BUFFER, spo2Raw) : -1;
-    const gsr = pushAndSmooth(GSR_BUFFER, gsrRaw) || 0;
+    const hr = Number(data.hr) || 0;
+    const spo2 = Number(data.spo2) || -1;
+    const gsr = Number(data.gsr) || 0;
 
     // update UI
     valHR.textContent = hr > 0 ? Math.round(hr) : '--';
     valSp.textContent = (spo2 > 0) ? Math.round(spo2) : '--';
-    valGSR.textContent = gsr > 0 ? Math.round(gsr) : '--';
+    valGSR.textContent = gsr >= 0 ? Math.round(gsr) : '--';
+
+    // Heartbeat animation
+    if (hr > 0 && !valHR.classList.contains('pulsing')) {
+        valHR.classList.add('pulsing');
+        valHR.addEventListener('animationend', () => {
+            valHR.classList.remove('pulsing');
+        }, { once: true });
+    }
 
     if (hr > 0 && hr < 220) updateChart(hrChart, Math.round(hr));
     if (spo2 > 0 && spo2 <= 100) updateChart(spChart, Math.round(spo2));
@@ -646,7 +660,7 @@ function handleDataNotification(event){
         level,
         hr: hr > 0 ? Math.round(hr) : '--',
         spo2: spo2 > 0 ? Math.round(spo2) : '--',
-        gsr: gsr > 0 ? Math.round(gsr) : '--',
+        gsr: gsr >= 0 ? Math.round(gsr) : '--',
         date: new Date().toLocaleString('en-IN'),
         name: nameInput.value || '—',
         age: ageInput.value || '—'
@@ -654,7 +668,7 @@ function handleDataNotification(event){
       renderStaticSuggestions(level);
     }
 
-    detectFlatSpO2(spo2Raw);
+    detectFlatSpO2(spo2);
 
   } catch (err) {
     console.error('Parse Err:', jsonString, err);
@@ -664,7 +678,7 @@ function handleDataNotification(event){
 /* detect flat spO2 and attempt soft recalibrate hint to device */
 function detectFlatSpO2(spo2Raw){
   if (typeof spo2Raw !== 'number') return;
-  if (spo2Raw === spLast){
+  if (spo2Raw === spLast && spo2Raw > 0){
     spFlatCount++;
   } else {
     spFlatCount = 0;
@@ -685,22 +699,54 @@ function detectFlatSpO2(spo2Raw){
         commandCharacteristic.writeValue(textEncoder.encode(cmd)).catch(()=>{/*non-fatal*/});
       }
     } catch(e){ /*ignore*/ }
+    spFlatCount = 0; // Reset after firing
   }
 }
 
 /* =========================
-   Local suggestions & history
-   ========================= */
+  Local suggestions & history
+  ========================= */
 const staticSuggestions = {
-  LOW: ["😌 You're calm. Keep hydrating and take short breaks.", "🧘 Try a 3–5 minute breathing routine."],
-  MODERATE: ["⚠ Slight stress detected. Try 4-4-6 breathing x3.", "🚶 Take a 5 minute walk or stretch."],
-  HIGH: ["🛑 High stress detected. Pause and focus on breathing.", "🗣 If persistent, contact someone you trust or a professional."]
+  LOW: [
+    "😌 You're in a calm state. Great job. Take a moment to acknowledge this feeling.",
+    "🧘 Try a simple 3-minute mindfulness exercise to maintain this calm.",
+    "💧 Remember to stay hydrated. A glass of water can help maintain balance.",
+    "☀️ Your readings look good. Keep up the healthy habits!",
+    "🚶‍♀️ Consider a short, gentle walk to enjoy this state of low arousal."
+  ],
+  MODERATE: [
+    "⚠️ Slight stress detected. Try the '4-7-8' breathing technique: inhale for 4s, hold for 7s, exhale for 8s. Repeat 3 times.",
+    "🚶 Take a 5-minute walk, focusing on your surroundings. Notice 3 things you can see and 2 things you can hear.",
+    "👀 Try 'peripheral vision' exercise: focus on a point, then slowly widen your gaze to see as much of the room as possible without moving your eyes. Hold for 30 seconds.",
+    "🤔 Pause and identify one small thing that might be causing this tension. Can it be addressed quickly?",
+    "🥤 Drink some water. Dehydration can sometimes mimic or contribute to feelings of stress."
+  ],
+  HIGH: [
+    "🛑 High stress detected. Please pause what you are doing. Your well-being is the priority.",
+    "🧘‍♀️ Use the '5-4-3-2-1' grounding technique: Name 5 things you see, 4 things you feel, 3 things you hear, 2 things you smell, and 1 thing you taste.",
+    "🗣 If possible, step away from your current situation for a few minutes. A change of scenery can help.",
+    "🤝 This feeling is temporary. Consider talking to someone you trust about how you feel.",
+    "💪 Try 'Progressive Muscle Relaxation': Tense your shoulders up to your ears for 5 seconds, then release completely. Repeat 3 times."
+  ]
 };
+
+/**
+ * REFACTORED: Selects 2-3 random suggestions
+ * @param {string} level - 'LOW', 'MODERATE', or 'HIGH'
+ */
 function renderStaticSuggestions(level){
   suggestList.innerHTML = '';
-  const arr = staticSuggestions[level] || staticSuggestions.MODERATE;
-  arr.forEach(s => {
-    const li = document.createElement('li'); li.innerHTML = s; suggestList.appendChild(li);
+  const all = staticSuggestions[level] || staticSuggestions.MODERATE;
+  
+  // Shuffle and pick 3 (or fewer if not enough)
+  const shuffled = [...all].sort(() => 0.5 - Math.random());
+  const count = Math.min(3, all.length);
+  const selected = shuffled.slice(0, count); 
+  
+  selected.forEach(s => {
+    const li = document.createElement('li'); 
+    li.innerHTML = s; // Use innerHTML to allow for simple formatting
+    suggestList.appendChild(li);
   });
 }
 
@@ -738,8 +784,8 @@ renderHistory();
 })();
 
 /* =========================
-   Breathing exercise
-   ========================= */
+  Breathing exercise
+  ========================= */
 let breathInterval = null, breathRunning = false;
 function startBreathing(cycles = 6, inhale = 3, hold = 0, exhale = 4){
   stopBreathing();
@@ -784,21 +830,36 @@ function startBreathing(cycles = 6, inhale = 3, hold = 0, exhale = 4){
     }
   }, inhale*1000);
 }
-function stopBreathing(){ if (breathInterval) clearTimeout(breathInterval); breathInterval = null; breathRunning = false; breathCircle.style.transform = 'scale(.6)'; breathCircle.textContent = 'Stopped'; }
+function stopBreathing(){ 
+    if (breathInterval) clearTimeout(breathInterval); 
+    breathInterval = null; 
+    breathRunning = false; 
+    breathCircle.style.transform = 'scale(.6)'; 
+    breathCircle.textContent = 'Stopped'; 
+    // Do not stop audio here, only when modal closes
+}
 
-openBreathBtn.addEventListener('click', ()=> { breatherModal.classList.add('active'); });
-closeBreatherModal.addEventListener('click', ()=> { breatherModal.classList.remove('active'); stopBreathing(); });
+openBreathBtn.addEventListener('click', ()=> { 
+    breatherModal.classList.add('active'); 
+    setAudio(true); // Start audio when modal opens
+});
+closeBreatherModal.addEventListener('click', ()=> { 
+    breatherModal.classList.remove('active'); 
+    stopBreathing(); 
+    setAudio(false); // Stop audio when modal closes
+});
 breathStartBtn.addEventListener('click', ()=> {
   const val = Number(breathSpeed.value);
   if (val === 8) startBreathing(6,4,0,6); else if (val === 6) startBreathing(6,3,0,4); else startBreathing(8,2,0,3);
 });
-breathStopBtn.addEventListener('click', ()=> { stopBreathing(); });
+breathStopBtn.addEventListener('click', ()=> { 
+    stopBreathing(); 
+    // Don't stop audio, let it play until modal is closed
+});
 
 /* =========================
-   Gemini integration (AI)
-   - Uses Gemini REST endpoint. Replace GEMINI_API_KEY above.
-   - This implementation posts a structured prompt and expects JSON/plain text in response.
-   ========================= */
+  Gemini integration (AI)
+  ========================= */
 
 async function fetchWithBackoff(url, options, retries = 3, delay = 1000){
   try {
@@ -819,8 +880,8 @@ async function fetchWithBackoff(url, options, retries = 3, delay = 1000){
 
 /* Compose a request to Gemini to analyze the last session */
 async function askGeminiAnalysis(userQuestion='Please analyze my last session and give tips.') {
-  if (!GEMINI_API_KEY) {
-    appendChatMessage('system', 'Gemini API key not set. Paste your API key into the HTML file to enable Gemini.');
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
+    appendChatMessage('system', 'Gemini API key not set. Paste your API key into the HTML file (at the top of the <script> block) to enable Gemini.');
     return;
   }
 
@@ -829,19 +890,18 @@ async function askGeminiAnalysis(userQuestion='Please analyze my last session an
   // Prepare a short system + user prompt using the latest session
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
   const last = history[0] || null;
-  const systemPrompt = `You are a compassionate wellness assistant. Provide concise, actionable advice based on sensor readings.`;
-  const userPrompt = last ? `Last session data:
-- Name: ${last.name}
-- Age: ${last.age}
+  const systemPrompt = `You are a compassionate wellness assistant. Provide concise, actionable advice based on sensor readings. Keep your analysis to 2-3 sentences and provide 3-4 very short, actionable bullet points as suggestions.`;
+  
+  const userPrompt = last ? `My name is ${last.name || 'not given'} and my age is ${last.age || 'not given'}.
+My last session data was:
 - Stress Level: ${last.level}
 - Avg HR: ${last.hr} bpm
 - Avg SpO2: ${last.spo2} %
-- Avg GSR: ${last.gsr}
-Please give a 2-sentence analysis and 3 concise suggestions.` : userQuestion;
+- Avg GSR: ${last.gsr} (raw value)
+
+My question is: ${userQuestion}` : userQuestion;
 
   const payload = {
-    // The payload format mirrors the one used earlier in the project,
-    // but Gemini endpoints can accept simpler content too.
     "contents": [{ "parts": [{ "text": userPrompt }] }],
     "systemInstruction": { "parts": [{ "text": systemPrompt }] },
     "generationConfig": { "temperature": 0.5, "maxOutputTokens": 450 }
@@ -864,7 +924,7 @@ Please give a 2-sentence analysis and 3 concise suggestions.` : userQuestion;
     appendChatMessage('assistant', text);
   } catch (err) {
     console.error('Gemini error', err);
-    appendChatMessage('assistant', 'Sorry — Gemini request failed. Showing local suggestions instead.');
+    appendChatMessage('assistant', 'Sorry — Gemini request failed. Check console or API key. Showing local suggestions instead.');
     const lastLevel = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')[0]?.level || 'MODERATE';
     renderStaticSuggestions(lastLevel);
   }
@@ -874,7 +934,7 @@ Please give a 2-sentence analysis and 3 concise suggestions.` : userQuestion;
 function appendChatMessage(who, text){
   const div = document.createElement('div');
   if (who === 'user') div.style.textAlign = 'right', div.innerHTML = `<div style="display:inline-block;background:var(--accent);color:var(--bg);padding:8px;border-radius:8px;margin:6px">${escapeHtml(text)}</div>`;
-  else if (who === 'assistant') div.innerHTML = `<div style="display:inline-block;background:var(--glass);color:var(--text);padding:8px;border-radius:8px;margin:6px">${escapeHtml(text)}</div>`;
+  else if (who === 'assistant') div.innerHTML = `<div style="display:inline-block;background:var(--glass);color:var(--text);padding:8px;border-radius:8px;margin:6px">${text.replace(/\n/g, '<br>')}</div>`; // allow line breaks
   else div.innerHTML = `<div style="display:inline-block;color:var(--text-body);padding:6px;margin:6px">${escapeHtml(text)}</div>`;
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -891,25 +951,39 @@ sendChatBtn.addEventListener('click', ()=> {
 });
 
 /* quick Ask button */
-askGeminiBtn.addEventListener('click', ()=> askGeminiAnalysis());
+askGeminiBtn.addEventListener('click', ()=> askGeminiAnalysis('Please analyze my last session and give tips.'));
 
 /* =========================
-   Small UI listeners
-   ========================= */
+  Small UI listeners
+  ========================= */
 sosBtn.addEventListener('click', ()=> document.getElementById('sos-modal').classList.add('active'));
 document.getElementById('close-sos-modal').addEventListener('click', ()=> document.getElementById('sos-modal').classList.remove('active'));
 
-document.getElementById('close-breather-modal').addEventListener('click', ()=> { document.getElementById('breather-modal').classList.remove('active'); stopBreathing(); });
+/* NEW Profile Modal Listeners */
+profileBtn.addEventListener('click', () => profileModal.classList.add('active'));
+closeProfileModal.addEventListener('click', () => profileModal.classList.remove('active'));
+saveProfileBtn.addEventListener('click', () => {
+    // Save logic is already handled by the 'change' listeners on the inputs.
+    // This button just closes the modal.
+    profileModal.classList.remove('active');
+});
 
 /* =========================
-   Utility helpers
-   ========================= */
+  Utility helpers
+  ========================= */
 function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
 /* =========================
-   Final note / warning about API keys
-   ========================= */
-console.log("NeuroWell dashboard loaded. Remember to set GEMINI_API_KEY in the HTML before using Gemini in production.");
+  Final note / warning about API keys
+  ========================= */
+if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
+    console.warn("************************************************************");
+    console.warn("GEMINI_API_KEY is not set!");
+    console.warn("Paste your key at the top of the <script> block in this HTML file.");
+    console.warn("************************************************************");
+} else {
+    console.log("NeuroWell dashboard loaded. Gemini key is set.");
+}
 
 /* End of script */
 </script>
