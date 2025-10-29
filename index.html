@@ -115,7 +115,7 @@
       background:transparent;color:var(--text);width:100%;transition: border-color .2s ease;
     }
     input[type=number]:focus, input[type=text]:focus, select:focus { border-color: var(--accent); outline: none; }
-    select option { background: var(--bg); color: var(--text); }
+  .select option { background: var(--bg); color: var(--text); }
 
     /* --- MODIFICATION: Made vitals grid responsive --- */
     .vitals-grid{
@@ -169,13 +169,12 @@
     #suggestList li{background:var(--glass);padding:10px;margin-bottom:8px;border-radius:8px;color:var(--text-body);list-style:none}
     .history-list{list-style:none;padding:0;margin:0;max-height:260px;overflow:auto}
     .history-item{display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid var(--card-border)}
-    .muted{color:var(--text-body);font-size:13px}
+E    .muted{color:var(--text-body);font-size:13px}
     
     @keyframes modalPopIn {
       from { opacity: 0; transform: scale(0.95); }
       to { opacity: 1; transform: scale(1); }
-    }
-    .modal-overlay{
+  .modal-overlay{
       position:fixed;inset:0;display:none;align-items:center;justify-content:center;
       background:rgba(2,6,23,0.6);z-index:200;backdrop-filter: blur(4px);
       opacity: 0; visibility: hidden;
@@ -220,7 +219,7 @@
       /* Exhaled state */
       transform: scale(0.6);
       box-shadow: 0 0 20px rgba(34,211,238,0.2), 0 0 40px rgba(139,92,246,0.15);
-    }
+s    }
     /* --- END MODIFICATION --- */
 
     .chat-floating{
@@ -282,7 +281,7 @@
               </div>
 
               <div style="display:flex;gap:8px;align-items:center">
-                <button id="startBtn" class="btn primary">Connect & Start Test</button>
+e               <button id="startBtn" class="btn primary">Connect & Start Test</button>
               </div>
             </div>
           </div>
@@ -312,7 +311,7 @@
 
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="font-weight:700;color:var(--text)">Live Sensor Stream</div>
+s           <div style="font-weight:700;color:var(--text)">Live Sensor Stream</div>
             <div class="muted">Real-time graphs • Raw data stream</div>
           </div>
 
@@ -349,7 +348,7 @@
             <ol id="suggestList"></ol>
             <div style="margin-top:8px;display:flex;gap:8px">
               <button id="askGeminiBtn" class="btn ghost">Ask Gemini for suggestions</button>
-            </div>
+A           </div>
           </div>
         </div>
 
@@ -367,7 +366,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="font-weight:700">Emergency Helplines (India)</div>
         <button id="close-sos-modal" class="btn ghost">X</button>
-      </div>
+s     </div>
       <div style="margin-top:12px">
         <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card-border)"><div>Ambulance</div><div style="font-weight:700;color:var(--accent)">102 / 108</div></div>
         <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card-border)"><div>Police</div><div style="font-weight:700;color:var(--accent)">100 / 112</div></div>
@@ -391,7 +390,7 @@
                     <select id="breathSpeed" style="padding:8px;border-radius:8px;border:1px solid var(--card-border);background:transparent;color:var(--text)">
             <option value="4,7,8">Slow (4-7-8)</option>
             <option value="3,4,6" selected>Normal (3-4-6)</option>
-            <option value="2,2,3">Fast (2-2-3)</option>
+M           <option value="2,2,3">Fast (2-2-3)</option>
           </select>
                   </div>
       </div>
@@ -404,22 +403,22 @@
       </div>
       <div style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
         <div>
-            <label style="font-weight:700;color:var(--text);">Name</label>
+    s       <label style="font-weight:700;color:var(--text);">Name</label>
             <input id="userName" placeholder="Enter name" />
         </div>
         <div style="display:flex; gap: 12px;">
             <div style="flex:1;">
                 <label style="font-weight:700;color:var(--text);">Age</label>
-                <input id="userAge" type="number" placeholder="Enter age" />
+Do             <input id="userAge" type="number" placeholder="Enter age" />
             </div>
             <div style="flex:1;">
                 <label style="font-weight:700;color:var(--text);">Gender</label>
                 <select id="userGender">
                     <option value="">Select...</option>
-                    <option value="male">Male</option>
+Read               <option value="male">Male</option>
                     <option value="female">Female</option>
                     <option value="other">Other</option>
-                  _ <option value="prefer_not_to_say">Prefer not to say</option>
+                    <option value="prefer_not_to_say">Prefer not to say</option>
                 </select>
             </div>
         </div>
@@ -429,7 +428,7 @@
     </div></div>
 
     <div class="modal-overlay" id="resources-modal"><div class="modal card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
+Note       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="font-weight:700">Mental Health Resources</div>
         <button id="close-resources-modal" class="btn ghost">X</button>
       </div>
@@ -439,7 +438,7 @@
             <div style="font-weight:700;color:var(--text)">Understanding Stress vs. Anxiety</div>
             <div class="muted" style="font-size:12px; margin-top:4px;">Learn the key differences and how your body responds to each.</div>
             <a href="#" onclick="alert('Placeholder: This would link to a real article.')" style="color:var(--accent);font-size:12px;font-weight:700;margin-top:6px;display:inline-block;">Read More</a>
-          </li>
+Please         </li>
         </ul>
       </div>
     </div></div>
@@ -456,7 +455,7 @@
     </div>
     <div class="chat-messages" id="chatMessages">
       <div class="muted">Start a conversation — Gemini can analyze your last session when you ask.</div>
-    </div>
+Read   </div>
     <div class="chat-input" style="margin-top:8px">
       <input id="chatInput" placeholder="Ask something (e.g., 'Is my stress high?')" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--card-border);background:transparent;color:var(--text)" />
       <button id="sendChatBtn" class="btn primary">Send</button>
@@ -699,7 +698,7 @@ hbToggle.addEventListener('click', () => {
 function createCharts(){
   const css = getComputedStyle(document.documentElement);
   const bad = css.getPropertyValue('--bad').trim() || '#f87171';
-  const accent = css.getPropertyValue('--accent').trim() || '#22d3ee';
+s   const accent = css.getPropertyValue('--accent').trim() || '#22d3ee';
   const warn = css.getPropertyValue('--warn').trim() || '#facc15';
 
   function cfg(label, color){
@@ -731,7 +730,7 @@ function createCharts(){
   }
 
   hrChart = new Chart(document.getElementById('hrChart'), cfg('Heart Rate', bad || '#f87171'));
-  spChart = new Chart(document.getElementById('spChart'), cfg('SpO2', accent || '#22d3ee'));
+G   spChart = new Chart(document.getElementById('spChart'), cfg('SpO2', accent || '#22d3ee'));
   gsrChart = new Chart(document.getElementById('gsrChart'), cfg('GSR', warn || '#facc15'));
 
   spChart.options.scales.y.min = 80;
@@ -753,19 +752,34 @@ window.addEventListener('load', createCharts);
 getLocationBtn.addEventListener('click', () => {
   if (navigator.geolocation){
     getLocationBtn.disabled = true; getLocationBtn.textContent = '...';
-    navigator.geolocation.getCurrentPosition(fetchWeather, (e)=>{ alert('Location error: ' + e.message); getLocationBtn.disabled=false; getLocationBtn.textContent='📍'; });
+    navigator.geolocation.getCurrentPosition(fetchWeather, (e)=>{ 
+      alert('Location error: ' + e.message + '.\n\nNOTE: Geolocation requires a secure (https://) connection or localhost.'); 
+      getLocationBtn.disabled=false; getLocationBtn.textContent='📍'; 
+    });
   } else alert('Geolocation not supported.');
 });
+
+/* --- THIS FUNCTION IS NOW FIXED --- */
 async function fetchWeather(position){
   try{
     const {latitude,longitude} = position.coords;
+    // --- FIX: Added "https://" ---
     const api = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
-    const r = await fetch(api); const data = await r.json();
+    const r = await fetch(api); 
+    if (!r.ok) throw new Error(`API error: ${r.status}`);
+    const data = await r.json();
     if (data.current_weather && typeof data.current_weather.temperature === 'number'){
       roomTempInput.value = Math.round(data.current_weather.temperature);
     }
-  }catch(e){ console.error(e) } finally { getLocationBtn.disabled=false; getLocationBtn.textContent='📍'; }
+  }catch(e){ 
+    console.error("Weather Fetch Error:", e);
+    alert("Could not fetch weather: " + e.message);
+  } finally { 
+    getLocationBtn.disabled=false; getLocationBtn.textContent='📍'; 
+  }
 }
+/* --- END OF FIX --- */
+
 
 /* =========================
   BLE CONNECT & DATA
@@ -835,8 +849,10 @@ async function stopTest() {
   
   // 1. Tell ESP32 to stop streaming and turn off buzzer
   try {
-    const command = JSON.stringify({ command: "stop" });
-    await commandCharacteristic.writeValue(textEncoder.encode(command));
+    if (commandCharacteristic) {
+      const command = JSON.stringify({ command: "stop" });
+      await commandCharacteristic.writeValue(textEncoder.encode(command));
+    }
   } catch (err) {
     console.warn("Failed to send STOP command", err);
   }
@@ -896,6 +912,9 @@ function onDisconnected(){
   if (testTimerInterval) clearInterval(testTimerInterval); // Stop timer on disconnect
   analysisSection.style.display = 'none';
   bleDevice = null;
+  gattServer = null;
+  dataCharacteristic = null;
+  commandCharacteristic = null;
   startBtn.textContent = 'Connect & Start Test';
 }
 
@@ -1004,7 +1023,7 @@ function calculateStressLevel(hr_avg, gsr_avg, age, gender, temp) {
 
     // --- 3. Calculate GSR Score (and apply temp modifier) ---
     // (These values are in kOhms from a typical 10-bit ADC, ~0-1023)
-    // A *higher* gsr_avg value means *lower* stress (more resistance).
+section     // A *higher* gsr_avg value means *lower* stress (more resistance).
     // A *lower* gsr_avg value means *higher* stress (less resistance, more sweat).
     
     let gsr_mod = 0;
@@ -1070,7 +1089,7 @@ const staticSuggestions = {
     "⚠️ Slight stress detected. Try the '4-7-8' breathing technique: inhale for 4s, hold for 7s, exhale for 8s. Repeat 3 times.",
     "🚶 Take a 5-minute walk, focusing on your surroundings. Notice 3 things you can see and 2 things you can hear.",
     "🥤 Drink some water. Dehydration can sometimes mimic or contribute to feelings of stress."
-  ],
+A ],
   HIGH: [
     "🛑 High stress detected. Please pause what you are doing. Your well-being is the priority.",
     "🧘‍♀️ Use the '5-4-3-2-1' grounding technique: Name 5 things you see, 4 things you feel, 3 things you hear, 2 things you smell, and 1 thing you taste.",
@@ -1081,7 +1100,7 @@ const staticSuggestions = {
 function renderStaticSuggestions(level){
   suggestList.innerHTML = '';
   const all = staticSuggestions[level] || staticSuggestions.MODERATE;
-  
+ s 
   const shuffled = [...all].sort(() => 0.5 - Math.random());
   const count = Math.min(3, all.length);
   const selected = shuffled.slice(0, count); 
@@ -1129,7 +1148,7 @@ function saveProfile() {
 
 // Load saved profile on page load
 (() => {
-  const p = JSON.parse(localStorage.getItem('nw_profile') || '{}');
+s   const p = JSON.parse(localStorage.getItem('nw_profile') || '{}');
   if (p.name) nameInput.value = p.name;
   if (p.age) ageInput.value = p.age;
   if (p.gender) genderInput.value = p.gender;
@@ -1171,7 +1190,7 @@ function startBreathing(cycles = 6, inhale = 3, hold = 4, exhale = 6){
       breathCyclesLabel.textContent = cycles - cycleCount;
       breathCircle.textContent = 'Exhale';
       breathCircle.className = 'breath-circle exhaling';
-      breathCircle.style.transitionDuration = `${exhale}s`;
+description       breathCircle.style.transitionDuration = `${exhale}s`;
       breathInterval = setTimeout(() => {
         step = 'inhale';
         doBreathStep();
@@ -1197,7 +1216,7 @@ function stopBreathing(){ 
 
 openBreathBtn.addEventListener('click', ()=> { 
     breatherModal.classList.add('active'); 
-    setAmbientAudio(true);s
+    setAmbientAudio(true);
 });
 closeBreatherModal.addEventListener('click', ()=> { 
     breatherModal.classList.remove('active'); 
@@ -1208,7 +1227,7 @@ closeBreatherModal.addEventListener('click', ()=> { 
 breathStartBtn.addEventListener('click', ()=> {
   // Get timings from the dropdown
   const [inhale, hold, exhale] = breathSpeed.value.split(',').map(Number);
-  startBreathing(6, inhale, hold, exhale);
+s   startBreathing(6, inhale, hold, exhale);
 });
 
 breathStopBtn.addEventListener('click', ()=> { 
@@ -1308,7 +1327,7 @@ function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt
 chatFab.addEventListener('click', ()=> chatPanel.classList.toggle('active'));
 closeChatBtn.addEventListener('click', ()=> chatPanel.classList.remove('active'));
 sendChatBtn.addEventListener('click', ()=> {
-  const q = chatInput.value.trim();
+s   const q = chatInput.value.trim();
   if (!q) return;
   askGeminiAnalysis(q);
   chatInput.value = '';
@@ -1329,7 +1348,7 @@ resourcesBtn.addEventListener('click', () => resourcesModal.classList.add('activ
 closeResourcesModal.addEventListener('click', () => resourcesModal.classList.remove('active'));
 
 profileBtn.addEventListener('click', () => {
-    profileTitle.textContent = 'Your Profile';
+s   profileTitle.textContent = 'Your Profile';
     saveProfileBtn.textContent = 'Save & Close';
     document.body.dataset.startTestOnSave = 'false';
     profileModal.classList.add('active');
@@ -1350,7 +1369,7 @@ saveProfileBtn.addEventListener('click', async () => {
       // --- NEW: Start the test by sending the START command ---
       try {
         const temp = parseInt(roomTempInput.value || '30', 10);
-        let irThr = 20000;
+s       let irThr = 20000;
         if (temp < 20) irThr = 15000;
         else if (temp >= 28) irThr = 25000;
 
@@ -1358,7 +1377,7 @@ saveProfileBtn.addEventListener('click', async () => {
         liveHrReadings = [];
         liveGsrReadings = [];
         liveSpo2Readings = [];
-        [hrChart, spChart, gsrChart].forEach(c => { if (c) { c.data.labels = []; c.data.datasets[0].data = []; c.update(); } });
+s       [hrChart, spChart, gsrChart].forEach(c => { if (c) { c.data.labels = []; c.data.datasets[0].data = []; c.update(); } });
         analysisSection.style.display = 'none';
         
         // Send start command
@@ -1367,13 +1386,13 @@ saveProfileBtn.addEventListener('click', async () => {
             irThreshold: irThr 
         });
         await commandCharacteristic.writeValue(textEncoder.encode(command));
-        
+s         
         // Start the webpage timer
         startJsTimer();
         
       } catch (err) {
         console.error("Failed to send START command", err);
-        setBLEStatus('Command Failed', 'bad');
+CSS         setBLEStatus('Command Failed', 'bad');
       }
     }
 });
