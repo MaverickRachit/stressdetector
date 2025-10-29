@@ -94,7 +94,6 @@
       background:transparent;color:var(--text);width:100%;transition: border-color .2s ease;
     }
     input[type=number]:focus, input[type=text]:focus, select:focus { border-color: var(--accent); outline: none; }
-    /* Fix for dark-mode select options */
     select option { background: var(--bg); color: var(--text); }
 
     .vitals-grid{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
@@ -124,6 +123,17 @@
     .level-MODERATE{background:linear-gradient(90deg,var(--warn),#fde047)}
     .level-HIGH{background:linear-gradient(90deg,var(--bad),#fca5a5)}
 
+    /* --- NEW: Overview Text --- */
+    #overviewText{
+      font-size: 14px;
+      color: var(--text);
+      background: var(--glass);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border: 1px solid var(--card-border);
+    }
+    
     #suggestList li{background:var(--glass);padding:10px;margin-bottom:8px;border-radius:8px;color:var(--text-body);list-style:none}
     .history-list{list-style:none;padding:0;margin:0;max-height:260px;overflow:auto}
     .history-item{display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid var(--card-border)}
@@ -281,6 +291,7 @@
 
           <div style="margin-top:12px" id="analysis-section">
             <div id="finalLevel" class="">--</div>
+            <div id="overviewText" style="display:none;"></div>
             <ol id="suggestList"></ol>
             <div style="margin-top:8px;display:flex;gap:8px">
               <button id="askGeminiBtn" class="btn ghost">Ask Gemini for suggestions</button>
@@ -429,6 +440,7 @@ const statusText = document.getElementById('statusText');
 const countText = document.getElementById('count');
 const analysisSection = document.getElementById('analysis-section');
 const finalLevelText = document.getElementById('finalLevel');
+const overviewText = document.getElementById('overviewText'); // <-- NEW
 const valHR = document.getElementById('valHR');
 const valSp = document.getElementById('valSp');
 const valGSR = document.getElementById('valGSR');
@@ -524,24 +536,20 @@ function initAmbientAudio(){
   ambientMasterGain = ambientAudioCtx.createGain();
   ambientMasterGain.gain.value = 0.0;
   ambientMasterGain.connect(ambientAudioCtx.destination);
-
   droneOsc = ambientAudioCtx.createOscillator();
   droneOsc.type = 'sine';
   droneOsc.frequency.value = 110;
   const droneGain = ambientAudioCtx.createGain();
   droneGain.gain.value = 0.0;
-
   ambientLfo = ambientAudioCtx.createOscillator();
   ambientLfo.type = 'sine';
   ambientLfo.frequency.value = 0.08;
   const lfoGain = ambientAudioCtx.createGain();
   lfoGain.gain.value = 0.25;
-
   ambientLfo.connect(lfoGain);
   lfoGain.connect(droneGain.gain);
   droneOsc.connect(droneGain);
   droneGain.connect(ambientMasterGain);
-
   const hp = ambientAudioCtx.createBiquadFilter();
   hp.type = 'highpass';
   hp.frequency.value = 20;
@@ -551,7 +559,6 @@ function initAmbientAudio(){
   droneGain.connect(hp);
   hp.connect(lp);
   lp.connect(ambientMasterGain);
-
   droneOsc.start();
   ambientLfo.start();
 }
@@ -570,7 +577,7 @@ function setAmbientAudio(play) {
 }
 
 /* --- NEW: Heartbeat Audio --- */
-let hbAudioCtx = null, hbMasterGain = null, thumpOsc1 = null, thumpGain1 = null, thumpOsc2 = null, thumpGain2 = null;
+let hbAudioCtx = null, hbMasterGain = null;
 let hbAudioPlaying = false;
 let hbInterval = null;
 
@@ -580,40 +587,38 @@ function initHeartbeatAudio() {
     hbMasterGain = hbAudioCtx.createGain();
     hbMasterGain.gain.value = 0.0; // Start silent
     hbMasterGain.connect(hbAudioCtx.destination);
-    
-    // Thump 1 (BA)
-    thumpOsc1 = hbAudioCtx.createOscillator();
-    thumpOsc1.type = 'sine';
-    thumpOsc1.frequency.value = 60; // Low thump
-    thumpGain1 = hbAudioCtx.createGain();
-    thumpGain1.gain.value = 0;
-    thumpOsc1.connect(thumpGain1).connect(hbMasterGain);
-    thumpOsc1.start();
-    
-    // Thump 2 (DUM)
-    thumpOsc2 = hbAudioCtx.createOscillator();
-    thumpOsc2.type = 'sine';
-    thumpOsc2.frequency.value = 50; // Slightly lower
-    thumpGain2 = hbAudioCtx.createGain();
-    thumpGain2.gain.value = 0;
-    thumpOsc2.connect(thumpGain2).connect(hbMasterGain);
-    thumpOsc2.start();
 }
 
 function playHeartbeatSound() {
     if (!hbAudioCtx) return;
     const now = hbAudioCtx.currentTime;
     
-    // Ba
+    // Thump 1 (BA)
+    const thumpOsc1 = hbAudioCtx.createOscillator();
+    thumpOsc1.type = 'sine';
+    thumpOsc1.frequency.setValueAtTime(70, now);
+    thumpOsc1.frequency.exponentialRampToValueAtTime(50, now + 0.1);
+    const thumpGain1 = hbAudioCtx.createGain();
     thumpGain1.gain.setValueAtTime(0, now);
     thumpGain1.gain.linearRampToValueAtTime(0.5, now + 0.02); // Quick attack
     thumpGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.1); // Fast decay
+    thumpOsc1.connect(thumpGain1).connect(hbMasterGain);
+    thumpOsc1.start(now);
+    thumpOsc1.stop(now + 0.15);
     
-    // Dump (slightly after)
+    // Thump 2 (DUM)
     const dumpTime = now + 0.12;
+    const thumpOsc2 = hbAudioCtx.createOscillator();
+    thumpOsc2.type = 'sine';
+    thumpOsc2.frequency.setValueAtTime(60, dumpTime);
+    thumpOsc2.frequency.exponentialRampToValueAtTime(40, dumpTime + 0.15);
+    const thumpGain2 = hbAudioCtx.createGain();
     thumpGain2.gain.setValueAtTime(0, dumpTime);
     thumpGain2.gain.linearRampToValueAtTime(0.4, dumpTime + 0.02);
     thumpGain2.gain.exponentialRampToValueAtTime(0.001, dumpTime + 0.15);
+    thumpOsc2.connect(thumpGain2).connect(hbMasterGain);
+    thumpOsc2.start(dumpTime);
+    thumpOsc2.stop(dumpTime + 0.2);
 }
 
 hbToggle.addEventListener('click', () => {
@@ -739,18 +744,18 @@ async function startTest() {
     startBtn.textContent = 'Start 40s Test';
     statusText.textContent = 'STARTING';
 
-    // --- MODIFIED: Send all profile/sensor data to ESP32 ---
     const temp = parseInt(roomTempInput.value || '30', 10);
     const age = parseInt(ageInput.value || '0', 10);
     const gender = genderInput.value || 'unknown';
     
-    let irThr = 20000; // Default
+    let irThr = 20000;
     if (temp < 20) irThr = 15000;
     else if (temp >= 28) irThr = 25000;
 
     analysisSection.style.display = 'none';
     finalLevelText.textContent = '--';
     finalLevelText.className = '';
+    overviewText.style.display = 'none';
     suggestList.innerHTML = '';
     
     [HR_BUFFER, SP_BUFFER, GSR_BUFFER].forEach(b => b.length = 0);
@@ -764,7 +769,7 @@ async function startTest() {
         gender: gender
     });
     
-    console.log('Sending command to ESP32:', command); // For debugging
+    console.log('Sending command to ESP32:', command);
     try { 
       await commandCharacteristic.writeValue(textEncoder.encode(command)); 
     } catch(e){ 
@@ -784,10 +789,9 @@ async function startTest() {
 
 // --- MODIFIED: This button now *only* opens the modal ---
 startBtn.addEventListener('click', () => {
-    // Set up the modal for starting a test
     profileTitle.textContent = 'Profile for New Test';
     saveProfileBtn.textContent = 'Save & Start Test';
-    document.body.dataset.startTestOnSave = 'true'; // Set flag
+    document.body.dataset.startTestOnSave = 'true';
     profileModal.classList.add('active');
 });
 
@@ -841,6 +845,48 @@ function handleDataNotification(event){
   try {
     const data = JSON.parse(jsonString);
 
+    // --- MAJOR CHANGE: Listen for 'DONE' status ---
+    if (data.status === 'DONE') {
+      countText.textContent = 0;
+      statusText.textContent = 'DONE';
+      analysisSection.style.display = 'block';
+
+      // Get profile data
+      const age = parseInt(ageInput.value || '30', 10);
+      const gender = genderInput.value || 'male';
+      const temp = parseInt(roomTempInput.value || '30', 10);
+      
+      // --- NEW: Calculate stress level in JavaScript ---
+      const { level, overview } = calculateStressLevel(data.hr_avg, data.gsr_avg, age, gender, temp);
+      
+      finalLevelText.textContent = level;
+      finalLevelText.className = `level-${level}`;
+      
+      overviewText.textContent = overview;
+      overviewText.style.display = 'block';
+      
+      saveSession({
+        level: level,
+        hr: data.hr_avg > 0 ? Math.round(data.hr_avg) : '--',
+        spo2: data.spo2_avg > 0 ? Math.round(data.spo2_avg) : '--',
+        gsr: data.gsr_avg >= 0 ? Math.round(data.gsr_avg) : '--',
+        date: new Date().toLocaleString('en-IN'),
+        name: nameInput.value || '—',
+        age: ageInput.value || '—'
+      });
+      renderStaticSuggestions(level);
+      return; // Stop processing this packet
+    }
+    
+    // --- This part now *only* handles live data ---
+    if (data.status === 'MEASURING') {
+      statusText.textContent = 'MEASURING';
+      countText.textContent = data.timeLeft ? Math.ceil(data.timeLeft / 1000) : '0';
+      analysisSection.style.display = 'none';
+    } else {
+      statusText.textContent = data.status || 'UNKNOWN';
+    }
+
     const hrRaw = Number(data.hr) || 0;
     const spo2Raw = Number(data.spo2) || -1;
     const gsrRaw = Number(data.gsr) || 0;
@@ -864,30 +910,6 @@ function handleDataNotification(event){
     if (spo2 > 0 && spo2 <= 100) updateChart(spChart, Math.round(spo2));
     if (gsr >= 0) updateChart(gsrChart, Math.round(gsr));
 
-    statusText.textContent = data.status || 'UNKNOWN';
-    if (data.status === 'MEASURING') {
-      countText.textContent = data.timeLeft ? Math.ceil(data.timeLeft / 1000) : '0';
-      analysisSection.style.display = 'none';
-    }
-
-    if (data.status === 'DONE') {
-      countText.textContent = 0;
-      analysisSection.style.display = 'block';
-      const level = data.finalLevel || 'ERROR';
-      finalLevelText.textContent = level;
-      finalLevelText.className = `level-${level}`;
-      saveSession({
-        level,
-        hr: hr > 0 ? Math.round(hr) : '--',
-        spo2: spo2 > 0 ? Math.round(spo2) : '--',
-        gsr: gsr >= 0 ? Math.round(gsr) : '--',
-        date: new Date().toLocaleString('en-IN'),
-        name: nameInput.value || '—',
-        age: ageInput.value || '—'
-      });
-      renderStaticSuggestions(level);
-    }
-
     detectFlatSpO2(spo2Raw);
 
   } catch (err) {
@@ -895,6 +917,77 @@ function handleDataNotification(event){
     console.error('Received problematic string:', jsonString);
   }
 }
+
+/* =========================
+  NEW STRESS CALCULATION LOGIC
+  ========================= */
+function calculateStressLevel(hr_avg, gsr_avg, age, gender, temp) {
+    console.log(`Calculating stress with: HR:${hr_avg}, GSR:${gsr_avg}, Age:${age}, Gender:${gender}, Temp:${temp}`);
+    let overview = "";
+    
+    // --- 1. Get HR Baseline (Based on research) ---
+    let baselineHR = 70; // Default average
+    if (age >= 18 && age <= 25) baselineHR = 70;
+    else if (age >= 26 && age <= 35) baselineHR = 71;
+    else if (age >= 36 && age <= 45) baselineHR = 72;
+    else if (age >= 46 && age <= 55) baselineHR = 73;
+    else if (age >= 56 && age <= 65) baselineHR = 72;
+    else if (age > 65) baselineHR = 70;
+
+    // Adjust for gender (on avg, female RHR is 2-7bpm higher)
+    if (gender === 'female') {
+        baselineHR += 3;
+    }
+
+    // --- 2. Calculate HR Score ---
+    // How many bpm *above* their expected baseline is the user?
+    const hr_delta = hr_avg - baselineHR;
+    let hr_score = 0;
+    if (hr_delta > 25) hr_score = 100; // e.g., 72 -> 97+
+    else if (hr_delta > 15) hr_score = 70; // e.g., 72 -> 87
+    else if (hr_delta > 5) hr_score = 40;  // e.g., 72 -> 77
+    else hr_score = 10;
+    
+    if (hr_delta > 15) overview += `Your heart rate was notably elevated for your age and gender. `;
+    else if (hr_delta > 5) overview += `Your heart rate was slightly elevated. `;
+    else overview += `Your heart rate was in a calm range. `;
+
+    // --- 3. Calculate GSR Score (and apply temp modifier) ---
+    // GSR is highly variable. We'll use rough thresholds.
+    // (These values are in kOhms from a typical 10-bit ADC, ~0-1023)
+    // A *higher* gsr_avg value means *lower* stress (more resistance).
+    // A *lower* gsr_avg value means *higher* stress (less resistance, more sweat).
+    
+    let gsr_mod = 0;
+    if (temp > 28) gsr_mod = 50; // Hot room: expect more sweat. Be *less* sensitive. (add 50 to gsr)
+    if (temp < 20) gsr_mod = -50; // Cold room: expect less sweat. Be *more* sensitive. (sub 50 from gsr)
+    
+    const gsr_modified = gsr_avg + gsr_mod;
+    
+    let gsr_score = 0;
+    if (gsr_modified < 300) gsr_score = 100; // Very high stress
+    else if (gsr_modified < 450) gsr_score = 70; // High stress
+    else if (gsr_modified < 600) gsr_score = 40; // Moderate stress
+    else gsr_score = 10; // Low stress
+    
+    if (gsr_score > 70) overview += `Your skin conductance was high, indicating a strong physiological arousal.`;
+    else if (gsr_score > 40) overview += `Your skin conductance showed signs of arousal.`;
+    else overview += `Your skin activity appears low and calm.`;
+
+    // --- 4. Final Weighted Score ---
+    // We weigh HR slightly more as it's more stable than non-baselined GSR.
+    const final_score = (hr_score * 0.6) + (gsr_score * 0.4);
+
+    // --- 5. Determine Level ---
+    let level = "LOW";
+    if (final_score > 75) level = "HIGH";
+    else if (final_score > 45) level = "MODERATE";
+    
+    console.log(`Scores: HR_Score=${hr_score}, GSR_Score=${gsr_score}, Final=${final_score}, Level=${level}`);
+    return { level, overview };
+}
+/* ========================= */
+
 
 function detectFlatSpO2(spo2Raw){
   if (typeof spo2Raw !== 'number') return;
@@ -927,9 +1020,21 @@ function detectFlatSpO2(spo2Raw){
   Local suggestions & history
   ========================= */
 const staticSuggestions = {
-  LOW: ["😌 You're calm. Keep hydrating and take short breaks.", "🧘 Try a 3–5 minute breathing routine."],
-  MODERATE: ["⚠ Slight stress detected. Try 4-4-6 breathing x3.", "🚶 Take a 5 minute walk or stretch."],
-  HIGH: ["🛑 High stress detected. Pause and focus on breathing.", "🗣 If persistent, contact someone you trust or a professional."]
+  LOW: [
+    "😌 You're in a calm state. Great job. Take a moment to acknowledge this feeling.",
+    "🧘 Try a simple 3-minute mindfulness exercise to maintain this calm.",
+    "💧 Remember to stay hydrated. A glass of water can help maintain balance."
+  ],
+  MODERATE: [
+    "⚠️ Slight stress detected. Try the '4-7-8' breathing technique: inhale for 4s, hold for 7s, exhale for 8s. Repeat 3 times.",
+    "🚶 Take a 5-minute walk, focusing on your surroundings. Notice 3 things you can see and 2 things you can hear.",
+    "🥤 Drink some water. Dehydration can sometimes mimic or contribute to feelings of stress."
+  ],
+  HIGH: [
+    "🛑 High stress detected. Please pause what you are doing. Your well-being is the priority.",
+    "🧘‍♀️ Use the '5-4-3-2-1' grounding technique: Name 5 things you see, 4 things you feel, 3 things you hear, 2 things you smell, and 1 thing you taste.",
+    "🗣 If possible, step away from your current situation for a few minutes. A change of scenery can help."
+  ]
 };
 
 function renderStaticSuggestions(level){
@@ -976,7 +1081,7 @@ function saveProfile() {
     localStorage.setItem('nw_profile', JSON.stringify({ 
         name: nameInput.value||'', 
         age: ageInput.value||'',
-        gender: genderInput.value||'' // <-- NEW
+        gender: genderInput.value||''
     }));
 }
 [nameInput, ageInput, genderInput].forEach(el => el.addEventListener('change', saveProfile));
@@ -986,7 +1091,7 @@ function saveProfile() {
   const p = JSON.parse(localStorage.getItem('nw_profile') || '{}');
   if (p.name) nameInput.value = p.name;
   if (p.age) ageInput.value = p.age;
-  if (p.gender) genderInput.value = p.gender; // <-- NEW
+  if (p.gender) genderInput.value = p.gender;
 })();
 
 /* =========================
@@ -1115,6 +1220,7 @@ My question is: ${userQuestion}` : userQuestion;
     appendChatMessage('assistant', text);
     
     const parts = text.split('\n').filter(s => s.trim().length > 0);
+    // Put AI suggestions in the list, but *don't* overwrite the overview
     suggestList.innerHTML = parts.map(s => `<li>${escapeHtml(s)}</li>`).join('');
 
   } catch (err) {
