@@ -123,7 +123,6 @@
     .level-MODERATE{background:linear-gradient(90deg,var(--warn),#fde047)}
     .level-HIGH{background:linear-gradient(90deg,var(--bad),#fca5a5)}
 
-    /* --- NEW: Overview Text --- */
     #overviewText{
       font-size: 14px;
       color: var(--text);
@@ -259,7 +258,7 @@
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div style="font-weight:700;color:var(--text)">Live Sensor Stream</div>
-            <div class="muted">Real-time graphs • Light smoothing</div>
+            <div class="muted">Real-time graphs • Raw data stream</div>
           </div>
 
           <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
@@ -357,7 +356,7 @@
                 <label style="font-weight:700;color:var(--text);">Age</label>
                 <input id="userAge" type="number" placeholder="Enter age" />
             </div>
-             <div style="flex:1;">
+            <div style="flex:1;">
                 <label style="font-weight:700;color:var(--text);">Gender</label>
                 <select id="userGender">
                     <option value="">Select...</option>
@@ -368,7 +367,7 @@
                 </select>
             </div>
         </div>
-        <div class="muted" id="profileNote" style="margin-top:8px;">Optional: this info is sent to the device to help calibrate results.</div>
+        <div class="muted" id="profileNote" style="margin-top:8px;">This info is used to help calibrate results.</div>
         <button id="save-profile-btn" class="btn primary" style="align-self:flex-end">Save & Close</button>
       </div>
     </div></div>
@@ -383,11 +382,6 @@
           <li style="background:var(--glass);padding:12px;border-radius:8px;">
             <div style="font-weight:700;color:var(--text)">Understanding Stress vs. Anxiety</div>
             <div class="muted" style="font-size:12px; margin-top:4px;">Learn the key differences and how your body responds to each.</div>
-            <a href="#" onclick="alert('Placeholder: This would link to a real article.')" style="color:var(--accent);font-size:12px;font-weight:700;margin-top:6px;display:inline-block;">Read More</a>
-          </li>
-          <li style="background:var(--glass);padding:12px;border-radius:8px;">
-            <div style="font-weight:700;color:var(--text)">5-Minute Mindfulness Exercises</div>
-            <div class="muted" style="font-size:12px; margin-top:4px;">Simple exercises you can do at your desk to recalibrate.</div>
             <a href="#" onclick="alert('Placeholder: This would link to a real article.')" style="color:var(--accent);font-size:12px;font-weight:700;margin-top:6px;display:inline-block;">Read More</a>
           </li>
         </ul>
@@ -417,9 +411,10 @@
 /* =========================
   CONFIG / CONSTANTS
   ========================= */
-const SERVICE_UUID    = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
-const CHAR_DATA_UUID    = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
-const CHAR_COMMAND_UUID = "a88a02e0-8422-42b0-a555-5203361a832a";
+const SERVICE_UUID    = "4FAFC201-1FB5-459E-8FCC-C5C9C331914B";
+const CHAR_DATA_UUID    = "BEB5483E-36E1-4688-B7F5-EA07361B26A8";
+const CHAR_COMMAND_UUID = "A88A02E0-8422-42B0-A555-5203361A832A";
+const TEST_DURATION_S = 40; // Test duration in seconds
 
 const GEMINI_BASE = "https.generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
 const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
@@ -440,7 +435,7 @@ const statusText = document.getElementById('statusText');
 const countText = document.getElementById('count');
 const analysisSection = document.getElementById('analysis-section');
 const finalLevelText = document.getElementById('finalLevel');
-const overviewText = document.getElementById('overviewText'); // <-- NEW
+const overviewText = document.getElementById('overviewText');
 const valHR = document.getElementById('valHR');
 const valSp = document.getElementById('valSp');
 const valGSR = document.getElementById('valGSR');
@@ -475,14 +470,13 @@ const closeResourcesModal = document.getElementById('close-resources-modal');
 
 const nameInput = document.getElementById('userName');
 const ageInput = document.getElementById('userAge');
-const genderInput = document.getElementById('userGender'); // <-- NEW
+const genderInput = document.getElementById('userGender');
 const themeToggle = document.getElementById('themeToggle');
 const themeLabel = document.getElementById('themeLabel');
 const chartToggle = document.getElementById('chartToggle');
 const resetHistoryBtn = document.getElementById('resetHistoryBtn');
 const askGeminiBtn = document.getElementById('askGeminiBtn');
 
-/* --- NEW: Heartbeat Audio Refs --- */
 const hbToggle = document.getElementById('hbToggle');
 const hbLabel = document.getElementById('hbLabel');
 
@@ -498,8 +492,11 @@ const sendChatBtn = document.getElementById('sendChatBtn');
 const MAX_POINTS = 40;
 let hrChart, spChart, gsrChart;
 
-const HR_BUFFER = [], SP_BUFFER = [], GSR_BUFFER = [];
-const SMOOTH_WINDOW = 3; 
+/* --- NEW: Data collection arrays --- */
+let liveHrReadings = [];
+let liveGsrReadings = [];
+let liveSpo2Readings = [];
+let testTimerInterval = null;
 
 let spLast = null, spFlatCount = 0;
 const SP_FLAT_LIMIT = 6;
@@ -576,7 +573,7 @@ function setAmbientAudio(play) {
     }
 }
 
-/* --- NEW: Heartbeat Audio --- */
+/* --- Heartbeat Audio --- */
 let hbAudioCtx = null, hbMasterGain = null;
 let hbAudioPlaying = false;
 let hbInterval = null;
@@ -600,8 +597,8 @@ function playHeartbeatSound() {
     thumpOsc1.frequency.exponentialRampToValueAtTime(50, now + 0.1);
     const thumpGain1 = hbAudioCtx.createGain();
     thumpGain1.gain.setValueAtTime(0, now);
-    thumpGain1.gain.linearRampToValueAtTime(0.5, now + 0.02); // Quick attack
-    thumpGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.1); // Fast decay
+    thumpGain1.gain.linearRampToValueAtTime(0.5, now + 0.02);
+    thumpGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
     thumpOsc1.connect(thumpGain1).connect(hbMasterGain);
     thumpOsc1.start(now);
     thumpOsc1.stop(now + 0.15);
@@ -718,15 +715,13 @@ async function fetchWeather(position){
   BLE CONNECT & DATA
   ========================= */
 
-// --- MODIFIED: Logic moved to its own function ---
-async function startTest() {
+async function connectToDevice() {
   startBtn.disabled = true;
   startBtn.textContent = 'Connecting...';
   
   try {
     if (!bleDevice || !bleDevice.gatt.connected) {
       setBLEStatus('Requesting device...', 'warn');
-      statusText.textContent = 'CONNECTING';
       bleDevice = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }], optionalServices: [SERVICE_UUID] });
       bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
       setBLEStatus('Connecting...', 'warn');
@@ -741,42 +736,12 @@ async function startTest() {
       setBLEStatus('Connected', 'good');
     }
     
-    startBtn.textContent = 'Start 40s Test';
-    statusText.textContent = 'STARTING';
+    // --- MODIFIED: Open modal *after* connecting ---
+    profileTitle.textContent = 'Profile for New Test';
+    saveProfileBtn.textContent = 'Save & Start Test';
+    document.body.dataset.startTestOnSave = 'true';
+    profileModal.classList.add('active');
 
-    const temp = parseInt(roomTempInput.value || '30', 10);
-    const age = parseInt(ageInput.value || '0', 10);
-    const gender = genderInput.value || 'unknown';
-    
-    let irThr = 20000;
-    if (temp < 20) irThr = 15000;
-    else if (temp >= 28) irThr = 25000;
-
-    analysisSection.style.display = 'none';
-    finalLevelText.textContent = '--';
-    finalLevelText.className = '';
-    overviewText.style.display = 'none';
-    suggestList.innerHTML = '';
-    
-    [HR_BUFFER, SP_BUFFER, GSR_BUFFER].forEach(b => b.length = 0);
-    [hrChart, spChart, gsrChart].forEach(c => { if (c) { c.data.labels = []; c.data.datasets[0].data = []; c.update(); } });
-
-    // --- NEW: Send age and gender ---
-    const command = JSON.stringify({ 
-        roomTemp: temp, 
-        irThreshold: irThr,
-        age: age,
-        gender: gender
-    });
-    
-    console.log('Sending command to ESP32:', command);
-    try { 
-      await commandCharacteristic.writeValue(textEncoder.encode(command)); 
-    } catch(e){ 
-      console.warn('Command write failed', e); 
-    }
-
-    statusText.textContent = 'MEASURING';
   } catch (err) {
     console.error('BLE Err', err);
     setBLEStatus('Error', 'bad');
@@ -787,18 +752,92 @@ async function startTest() {
   }
 }
 
-// --- MODIFIED: This button now *only* opens the modal ---
-startBtn.addEventListener('click', () => {
-    profileTitle.textContent = 'Profile for New Test';
-    saveProfileBtn.textContent = 'Save & Start Test';
-    document.body.dataset.startTestOnSave = 'true';
-    profileModal.classList.add('active');
-});
+// --- NEW: Function to start the JS timer ---
+function startJsTimer() {
+  let timeLeft = TEST_DURATION_S;
+  statusText.textContent = 'MEASURING';
+  countText.textContent = timeLeft;
+  
+  if (testTimerInterval) clearInterval(testTimerInterval); // Clear any old timer
+  
+  testTimerInterval = setInterval(() => {
+    timeLeft--;
+    countText.textContent = timeLeft;
+    
+    if (timeLeft <= 0) {
+      clearInterval(testTimerInterval);
+      testTimerInterval = null;
+      stopTest(); // Call stop function when timer ends
+    }
+  }, 1000);
+}
+
+// --- NEW: Function to stop the test and process data ---
+async function stopTest() {
+  statusText.textContent = 'CALCULATING...';
+  countText.textContent = '0';
+  
+  // 1. Tell ESP32 to stop streaming and turn off buzzer
+  try {
+    const command = JSON.stringify({ command: "stop" });
+    await commandCharacteristic.writeValue(textEncoder.encode(command));
+  } catch (err) {
+    console.warn("Failed to send STOP command", err);
+  }
+  
+  // 2. Process the collected data
+  const hr_avg = calculateAverage(liveHrReadings.filter(hr => hr > 35)); // Filter out 0s
+  const gsr_avg = calculateAverage(liveGsrReadings.filter(gsr => gsr > 0)); // Filter out 0s
+  const spo2_avg = calculateAverage(liveSpo2Readings.filter(sp => sp > 80)); // Filter out -1s
+  
+  console.log("Final Averages:", { hr_avg, gsr_avg, spo2_avg });
+  console.log("Collected Data:", { liveHrReadings, liveGsrReadings, liveSpo2Readings });
+
+  // 3. Get profile data
+  const age = parseInt(ageInput.value || '30', 10);
+  const gender = genderInput.value || 'male';
+  const temp = parseInt(roomTempInput.value || '30', 10);
+  
+  // 4. Calculate stress level in JavaScript
+  const { level, overview } = calculateStressLevel(hr_avg, gsr_avg, age, gender, temp);
+  
+  // 5. Display results
+  analysisSection.style.display = 'block';
+  finalLevelText.textContent = level;
+  finalLevelText.className = `level-${level}`;
+  overviewText.textContent = overview;
+  overviewText.style.display = 'block';
+  
+  // 6. Save to history
+  saveSession({
+    level: level,
+    hr: hr_avg > 0 ? Math.round(hr_avg) : '--',
+    spo2: spo2_avg > 0 ? Math.round(spo2_avg) : '--',
+    gsr: gsr_avg >= 0 ? Math.round(gsr_avg) : '--',
+    date: new Date().toLocaleString('en-IN'),
+    name: nameInput.value || '—',
+    age: ageInput.value || '—'
+  });
+  
+  renderStaticSuggestions(level);
+}
+
+// --- NEW: Helper function to average arrays ---
+function calculateAverage(arr) {
+  if (!arr || arr.length === 0) return 0;
+  const sum = arr.reduce((a, b) => a + b, 0);
+  return sum / arr.length;
+}
+
+
+// "Connect & Start" button now connects, *then* opens modal
+startBtn.addEventListener('click', connectToDevice);
 
 function onDisconnected(){
   setBLEStatus('Disconnected','bad');
   statusText.textContent = 'IDLE';
   countText.textContent = '0';
+  if (testTimerInterval) clearInterval(testTimerInterval); // Stop timer on disconnect
   analysisSection.style.display = 'none';
   bleDevice = null;
   startBtn.textContent = 'Connect & Start Test';
@@ -826,16 +865,8 @@ function setBLEStatus(message, level){
 }
 
 /* =========================
-  Data handling + smoothing
+  Data handling (now much simpler)
   ========================= */
-function pushAndSmooth(buffer, v){
-  if (typeof v !== 'number' || isNaN(v)) return null;
-  buffer.push(v);
-  if (buffer.length > SMOOTH_WINDOW) buffer.shift();
-  const sum = buffer.reduce((a,b)=>a+b,0);
-  return sum / buffer.length;
-}
-
 function handleDataNotification(event){
   if (bleStatusText.textContent === 'Connected') {
       setBLEStatus('Receiving...', 'good');
@@ -845,70 +876,34 @@ function handleDataNotification(event){
   try {
     const data = JSON.parse(jsonString);
 
-    // --- MAJOR CHANGE: Listen for 'DONE' status ---
-    if (data.status === 'DONE') {
-      countText.textContent = 0;
-      statusText.textContent = 'DONE';
-      analysisSection.style.display = 'block';
-
-      // Get profile data
-      const age = parseInt(ageInput.value || '30', 10);
-      const gender = genderInput.value || 'male';
-      const temp = parseInt(roomTempInput.value || '30', 10);
-      
-      // --- NEW: Calculate stress level in JavaScript ---
-      const { level, overview } = calculateStressLevel(data.hr_avg, data.gsr_avg, age, gender, temp);
-      
-      finalLevelText.textContent = level;
-      finalLevelText.className = `level-${level}`;
-      
-      overviewText.textContent = overview;
-      overviewText.style.display = 'block';
-      
-      saveSession({
-        level: level,
-        hr: data.hr_avg > 0 ? Math.round(data.hr_avg) : '--',
-        spo2: data.spo2_avg > 0 ? Math.round(data.spo2_avg) : '--',
-        gsr: data.gsr_avg >= 0 ? Math.round(data.gsr_avg) : '--',
-        date: new Date().toLocaleString('en-IN'),
-        name: nameInput.value || '—',
-        age: ageInput.value || '—'
-      });
-      renderStaticSuggestions(level);
-      return; // Stop processing this packet
-    }
+    // --- This function now ONLY updates live UI and stores data ---
     
-    // --- This part now *only* handles live data ---
-    if (data.status === 'MEASURING') {
-      statusText.textContent = 'MEASURING';
-      countText.textContent = data.timeLeft ? Math.ceil(data.timeLeft / 1000) : '0';
-      analysisSection.style.display = 'none';
-    } else {
-      statusText.textContent = data.status || 'UNKNOWN';
-    }
-
     const hrRaw = Number(data.hr) || 0;
     const spo2Raw = Number(data.spo2) || -1;
     const gsrRaw = Number(data.gsr) || 0;
 
-    const hr = pushAndSmooth(HR_BUFFER, hrRaw) || 0;
-    const spo2 = (spo2Raw > 0) ? pushAndSmooth(SP_BUFFER, spo2Raw) : -1;
-    const gsr = pushAndSmooth(GSR_BUFFER, gsrRaw) || 0;
+    // Update UI
+    valHR.textContent = hrRaw > 0 ? hrRaw : '--';
+    valSp.textContent = (spo2Raw > 0) ? spo2Raw : '--';
+    valGSR.textContent = gsrRaw >= 0 ? gsrRaw : '--';
 
-    valHR.textContent = hr > 0 ? Math.round(hr) : '--';
-    valSp.textContent = (spo2 > 0) ? Math.round(spo2) : '--';
-    valGSR.textContent = gsr >= 0 ? Math.round(gsr) : '--';
+    // Add to charts
+    if (hrRaw > 0 && hrRaw < 220) updateChart(hrChart, hrRaw);
+    if (spo2Raw > 0 && spo2Raw <= 100) updateChart(spChart, spo2Raw);
+    if (gsrRaw >= 0) updateChart(gsrChart, gsrRaw);
+    
+    // --- Store raw values for final calculation ---
+    liveHrReadings.push(hrRaw);
+    liveGsrReadings.push(gsrRaw);
+    liveSpo2Readings.push(spo2Raw);
 
-    if (hr > 0 && !valHR.classList.contains('pulsing')) {
+    // Pulse animation
+    if (hrRaw > 0 && !valHR.classList.contains('pulsing')) {
         valHR.classList.add('pulsing');
         valHR.addEventListener('animationend', () => {
             valHR.classList.remove('pulsing');
         }, { once: true });
     }
-
-    if (hr > 0 && hr < 220) updateChart(hrChart, Math.round(hr));
-    if (spo2 > 0 && spo2 <= 100) updateChart(spChart, Math.round(spo2));
-    if (gsr >= 0) updateChart(gsrChart, Math.round(gsr));
 
     detectFlatSpO2(spo2Raw);
 
@@ -940,7 +935,6 @@ function calculateStressLevel(hr_avg, gsr_avg, age, gender, temp) {
     }
 
     // --- 2. Calculate HR Score ---
-    // How many bpm *above* their expected baseline is the user?
     const hr_delta = hr_avg - baselineHR;
     let hr_score = 0;
     if (hr_delta > 25) hr_score = 100; // e.g., 72 -> 97+
@@ -953,7 +947,6 @@ function calculateStressLevel(hr_avg, gsr_avg, age, gender, temp) {
     else overview += `Your heart rate was in a calm range. `;
 
     // --- 3. Calculate GSR Score (and apply temp modifier) ---
-    // GSR is highly variable. We'll use rough thresholds.
     // (These values are in kOhms from a typical 10-bit ADC, ~0-1023)
     // A *higher* gsr_avg value means *lower* stress (more resistance).
     // A *lower* gsr_avg value means *higher* stress (less resistance, more sweat).
@@ -975,7 +968,6 @@ function calculateStressLevel(hr_avg, gsr_avg, age, gender, temp) {
     else overview += `Your skin activity appears low and calm.`;
 
     // --- 4. Final Weighted Score ---
-    // We weigh HR slightly more as it's more stable than non-baselined GSR.
     const final_score = (hr_score * 0.6) + (gsr_score * 0.4);
 
     // --- 5. Determine Level ---
@@ -1003,15 +995,8 @@ function detectFlatSpO2(spo2Raw){
       <ul style="margin:6px 0 0 18px">
         <li>Fully cover sensor with finger; moderate pressure.</li>
         <li>Reduce ambient light; cover sensor housing.</li>
-        <li>Try a different finger or warm finger if cold.</li>
       </ul>
     </li>`;
-    try {
-      if (commandCharacteristic){
-        const cmd = JSON.stringify({ action: 'recalibrate', hint: 'increase_ir' });
-        commandCharacteristic.writeValue(textEncoder.encode(cmd)).catch(()=>{/*non-fatal*/});
-      }
-    } catch(e){ /*ignore*/ }
     spFlatCount = 0; 
   }
 }
@@ -1220,7 +1205,6 @@ My question is: ${userQuestion}` : userQuestion;
     appendChatMessage('assistant', text);
     
     const parts = text.split('\n').filter(s => s.trim().length > 0);
-    // Put AI suggestions in the list, but *don't* overwrite the overview
     suggestList.innerHTML = parts.map(s => `<li>${escapeHtml(s)}</li>`).join('');
 
   } catch (err) {
@@ -1265,28 +1249,53 @@ closeSosModal.addEventListener('click', ()=> document.getElementById('sos-modal'
 resourcesBtn.addEventListener('click', () => resourcesModal.classList.add('active'));
 closeResourcesModal.addEventListener('click', () => resourcesModal.classList.remove('active'));
 
-// --- MODIFIED: Profile button logic ---
 profileBtn.addEventListener('click', () => {
-    // Set up the modal for just editing
     profileTitle.textContent = 'Your Profile';
     saveProfileBtn.textContent = 'Save & Close';
-    document.body.dataset.startTestOnSave = 'false'; // Clear flag
+    document.body.dataset.startTestOnSave = 'false';
     profileModal.classList.add('active');
 });
 
 closeProfileModal.addEventListener('click', () => {
     profileModal.classList.remove('active');
-    document.body.dataset.startTestOnSave = 'false'; // Clear flag
+    document.body.dataset.startTestOnSave = 'false';
 });
 
-saveProfileBtn.addEventListener('click', () => {
+saveProfileBtn.addEventListener('click', async () => {
     saveProfile();
     profileModal.classList.remove('active');
     
-    // Check the flag to see if we should start the test
     if (document.body.dataset.startTestOnSave === 'true') {
-      document.body.dataset.startTestOnSave = 'false'; // Reset flag
-      startTest(); // Run the BLE connection logic
+      document.body.dataset.startTestOnSave = 'false';
+      
+      // --- NEW: Start the test by sending the START command ---
+      try {
+        const temp = parseInt(roomTempInput.value || '30', 10);
+        let irThr = 20000;
+        if (temp < 20) irThr = 15000;
+        else if (temp >= 28) irThr = 25000;
+
+        // Clear old data
+        liveHrReadings = [];
+        liveGsrReadings = [];
+        liveSpo2Readings = [];
+        [hrChart, spChart, gsrChart].forEach(c => { if (c) { c.data.labels = []; c.data.datasets[0].data = []; c.update(); } });
+        analysisSection.style.display = 'none';
+        
+        // Send start command
+        const command = JSON.stringify({ 
+            command: "start",
+            irThreshold: irThr 
+        });
+        await commandCharacteristic.writeValue(textEncoder.encode(command));
+        
+        // Start the webpage timer
+        startJsTimer();
+        
+      } catch (err) {
+        console.error("Failed to send START command", err);
+        setBLEStatus('Command Failed', 'bad');
+      }
     }
 });
 
