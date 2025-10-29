@@ -14,21 +14,38 @@
   <style>
     /*
      * ========================================
-     * FINAL STYLING: MODERN DARK "GLASS" THEME
+     * STYLING WITH LIGHT/DARK MODE
      * ========================================
      */
+     
+    /* 1. DEFAULT DARK MODE (as :root) */
     :root {
       --bg: #020617; /* Dark Navy Blue */
       --card-bg: rgba(255, 255, 255, 0.05);
       --card-border: rgba(255, 255, 255, 0.1);
       --text: #e2e8f0;
-      --text-body: #94a3b8; /* Lighter body text */
+      --text-body: #94a3b8;
       --text-muted: #94a3b8;
+      --input-bg: rgba(0, 0, 0, 0.2);
+      
       --accent: #22d3ee; /* Cyan */
-
       --good: #4ade80;
       --warn: #facc15;
       --bad: #f87171;
+    }
+
+    /* 2. LIGHT MODE (activated by class on <body>) */
+    body.light-mode {
+      --bg: #f0f2f5; /* Light grayish-blue (not white) */
+      --card-bg: rgba(255, 255, 255, 0.7);
+      --card-border: rgba(0, 0, 0, 0.1);
+      --text: #1e293b; /* Dark Slate */
+      --text-body: #334155; /* Medium Slate */
+      --text-muted: #64748b; /* Light Slate */
+      --input-bg: rgba(255, 255, 255, 0.5);
+
+      --accent: #0891b2; /* Darker Cyan */
+      /* --good, --warn, --bad can stay the same */
     }
 
     * { box-sizing: border-box; }
@@ -41,6 +58,12 @@
       background-image: radial-gradient(circle at 10% 20%, rgba(34, 211, 238, 0.15), transparent 50%),
                         radial-gradient(circle at 80% 90%, rgba(139, 92, 246, 0.1), transparent 50%);
       background-attachment: fixed;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    /* Hide light-mode background gradients */
+    body.light-mode {
+        background-image: none;
     }
 
     .wrap {
@@ -81,6 +104,10 @@
       box-shadow: 0 8px 32px rgba(2, 6, 23, 0.3);
       transition: all 0.3s ease;
     }
+    
+    body.light-mode .card {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
 
     .card-title {
       font-size: 20px;
@@ -120,11 +147,21 @@
       padding: 12px 16px;
       border-radius: 10px;
       border: 1px solid var(--card-border);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--input-bg);
       color: var(--text);
       font-size: 16px;
       font-family: 'Inter', sans-serif;
     }
+    /* Fix for number input spin buttons */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    
     button {
       cursor: pointer;
       transition: all 0.2s ease;
@@ -144,10 +181,16 @@
       background: #334155;
       color: var(--text);
     }
+    body.light-mode button.secondary {
+        background: #e2e8f0;
+        color: #334155;
+    }
     button.secondary:hover { background: #475569; }
+    body.light-mode button.secondary:hover { background: #cbd5e1; }
+    
     button.sos {
       background: var(--bad);
-      color: var(--text);
+      color: #fff; /* Always white text on red */
       font-weight: 700;
       border: none;
       padding: 8px 16px;
@@ -161,6 +204,27 @@
       transform: none;
       box-shadow: none;
     }
+    
+    /* Theme Toggle Button */
+    .theme-toggle {
+        background: var(--input-bg);
+        border: 1px solid var(--card-border);
+        width: 44px; /* Fixed width */
+        height: 44px; /* Fixed height */
+        padding: 10px;
+        border-radius: 10px;
+    }
+    .theme-toggle:hover {
+        background: var(--card-border);
+    }
+    .theme-toggle svg {
+        stroke: var(--text-muted);
+    }
+    /* Logic to show/hide icons */
+    .theme-toggle #theme-icon-moon { display: none; }
+    body.light-mode .theme-toggle #theme-icon-sun { display: none; }
+    body.light-mode .theme-toggle #theme-icon-moon { display: inline-block; }
+
 
     /* Vitals Card */
     .vitals-grid {
@@ -178,6 +242,10 @@
       background: rgba(0, 0, 0, 0.15);
       padding: 20px;
       border-radius: 12px;
+    }
+    body.light-mode .vital {
+        background: #f8fafc;
+        border: 1px solid var(--card-border);
     }
     .vital-label {
       font-size: 14px;
@@ -217,6 +285,10 @@
       border-radius: 12px;
       text-align: center;
     }
+    body.light-mode .status-box {
+        background: #f8fafc;
+        border: 1px solid var(--card-border);
+    }
     .status-box #statusText {
       font-size: 18px;
       font-weight: 600;
@@ -249,6 +321,14 @@
     .level-LOW { background: linear-gradient(90deg, var(--good), #86efac); }
     .level-MODERATE { background: linear-gradient(90deg, var(--warn), #fde047); }
     .level-HIGH { background: linear-gradient(90deg, var(--bad), #fca5a5); }
+    
+    body.light-mode #finalLevel {
+        color: var(--text);
+        text-shadow: none;
+    }
+    body.light-mode .level-LOW { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    body.light-mode .level-MODERATE { background: #fefce8; color: #854d0e; border: 1px solid #fde047; }
+    body.light-mode .level-HIGH { background: #ffe4e6; color: #9f1239; border: 1px solid #fca5a5; }
 
     #suggestList {
       padding-left: 20px;
@@ -261,6 +341,10 @@
       font-size: 15px;
       line-height: 1.6;
       color: var(--text-body);
+    }
+    body.light-mode #suggestList li {
+        background: #f8fafc;
+        border: 1px solid var(--card-border);
     }
     #suggestList li strong { color: var(--accent); }
 
@@ -276,7 +360,7 @@
       font-size: 20px;
       font-weight: 600;
       animation: breathe 10s infinite ease-in-out;
-      animation-play-state: paused; /* MODIFIED: Start paused */
+      animation-play-state: paused;
       margin: 20px auto 15px auto;
     }
     .breather-text {
@@ -284,9 +368,8 @@
       font-weight: 500;
       color: var(--text-body);
       text-align: center;
-      height: 40px; /* MODIFIED: Added height to prevent layout shift */
+      height: 40px;
     }
-    /* NEW: Timer for breather */
     .breather-timer {
       font-size: 18px;
       font-weight: 600;
@@ -358,6 +441,10 @@
       visibility: hidden;
       transition: all 0.3s ease;
     }
+    body.light-mode .modal-overlay {
+        background: rgba(240, 242, 245, 0.6); /* Light bg for overlay */
+    }
+    
     .modal-overlay.active {
       opacity: 1;
       visibility: visible;
@@ -411,10 +498,18 @@
       border: 1px solid transparent;
       transition: all 0.2s ease;
     }
+    body.light-mode .article-item a {
+        background: #f8fafc;
+        border: 1px solid var(--card-border);
+    }
     .article-item a:hover {
       border-color: var(--card-border);
       background: rgba(0, 0, 0, 0.25);
       transform: translateY(-2px);
+    }
+    body.light-mode .article-item a:hover {
+        border-color: var(--accent);
+        background: #fff;
     }
     .article-item a strong {
       color: var(--text);
@@ -444,6 +539,10 @@
         <div id="bleStatus" style="color: var(--text-muted); font-weight: 500;">
           Status: <span style="color: var(--bad); font-weight: 600;">Disconnected</span>
         </div>
+        <button id="themeToggleBtn" class="theme-toggle" title="Toggle theme">
+          <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 18.36l1.42-1.42M18.36 4.22l1.42-1.42"/></svg>
+          <svg id="theme-icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
         <button id="sosBtn" class="sos">SOS</button>
       </div>
     </header>
@@ -597,7 +696,7 @@
       <div class="breather">
         <div class="breather-circle" id="breather-circle-text">Inhale...</div>
         <div class="breather-text" id="breather-text">Follow the circle for 1 minute.</div>
-        <div class="breather-timer">60s</div>
+        <div class="breather-timer" id="breather-timer">60s</div>
       </div>
     </div>
   </div>
@@ -606,7 +705,7 @@
 <script>
 /*
  * ========================================
- * FINAL JAVASCRIPT
+ * JAVASCRIPT
  * ========================================
 */
 
@@ -642,6 +741,9 @@ const heartIcon = document.getElementById('heartIcon');
 const historyList = document.getElementById('history-list');
 const getLocationBtn = document.getElementById('getLocationBtn');
 const roomTempInput = document.getElementById('roomTemp');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const sunIcon = document.getElementById('theme-icon-sun');
+const moonIcon = document.getElementById('theme-icon-moon');
 
 // Modal Elements
 const sosBtn = document.getElementById('sosBtn');
@@ -649,10 +751,10 @@ const sosModal = document.getElementById('sos-modal');
 const closeSosModal = document.getElementById('close-sos-modal');
 const breatherModal = document.getElementById('breather-modal');
 const closeBreatherModal = document.getElementById('close-breather-modal');
+const breatherCircle = document.getElementById('breather-circle-text');
 const breatherCircleText = document.getElementById('breather-circle-text');
-// MODIFIED: Added breatherText and breatherTimer
 const breatherText = document.getElementById('breather-text');
-let breatherTimer; // Will be assigned in 'load' event
+const breatherTimer = document.getElementById('breather-timer');
 
 // --- Fallback Suggestions ---
 const staticSuggestions = {
@@ -713,8 +815,8 @@ function createCharts() {
         x: { display: false, grid: { display: false } },
         y: {
           display: true,
-          ticks: { color: 'var(--text-muted)' },
-          grid: { color: 'var(--card-border)' }
+          ticks: { color: 'var(--text-muted)' }, // Uses CSS variable
+          grid: { color: 'var(--card-border)' }  // Uses CSS variable
         }
       }
     }
@@ -728,8 +830,13 @@ function createCharts() {
   spChart.options.scales.y.max = 100;
 }
 
+// *** MODIFIED ***
+// Allows 0 values to be plotted, but filters out undefined/null/-1
 function updateChart(chart, value) {
-  if (!chart || value === 0 || value === -1) return;
+  if (!chart || value === undefined || value === null || value === -1) {
+      return; // Do not plot invalid data
+  }
+  
   chart.data.labels.push('');
   chart.data.datasets[0].data.push(value);
 
@@ -843,37 +950,51 @@ startBtn.addEventListener('click', async () => {
   }
 });
 
-// Main data handler
+// *** MODIFIED ***
+// Main data handler with debugging
 function handleDataNotification(event) {
   const jsonString = textDecoder.decode(event.target.value);
 
   try {
     const data = JSON.parse(jsonString);
 
-    const hr = data.hr || 0;
-    const spo2 = data.spo2 || -1;
-    const gsr = data.gsr || 0;
+    // *** IMPORTANT DEBUGGING STEP ***
+    // Open the console (F12) to see what your ESP32 is sending.
+    // The keys (like "hr", "spo2", "gsr", "status") MUST match.
+    console.log("Received data object from ESP32:", data);
+    
+    // Safer assignments: use 'undefined' check
+    const hr = data.hr !== undefined ? data.hr : 0;
+    const spo2 = data.spo2 !== undefined ? data.spo2 : -1;
+    const gsr = data.gsr !== undefined ? data.gsr : 0;
+    const status = data.status; // Get status
 
+    // Update text values
     valHR.textContent = hr > 0 ? hr.toFixed(0) : '--';
     valSp.textContent = spo2 > 0 ? spo2 : '--';
     valGSR.textContent = gsr > 0 ? gsr.toFixed(0) : '--';
 
+    // Animate heart
     if (hr > 40) {
       heartIcon.style.animationDuration = `${(60 / hr).toFixed(2)}s`;
     }
 
+    // Update charts
     updateChart(hrChart, hr);
     updateChart(spChart, spo2);
     updateChart(gsrChart, gsr);
 
-    statusText.textContent = data.status || 'UNKNOWN';
+    statusText.textContent = status || 'UNKNOWN';
 
-    if (data.status === "MEASURING") {
+    // Check status from the data object
+    if (status === "MEASURING") {
       countText.textContent = data.timeLeft ? Math.ceil(data.timeLeft / 1000) : '0';
       analysisSection.style.display = 'none';
     }
-
-    if (data.status === "DONE") {
+    
+    // Check if status is "DONE" to save history
+    if (status === "DONE") {
+      console.log("Session 'DONE'. Saving history..."); // Debug log
       countText.textContent = 0;
       analysisSection.style.display = 'block';
       const level = data.finalLevel || 'ERROR';
@@ -892,7 +1013,7 @@ function handleDataNotification(event) {
     }
 
   } catch (error) {
-    console.error('Error parsing JSON:', jsonString, error);
+    console.error('Error parsing JSON from ESP32. Raw string:', jsonString, error);
   }
 }
 
@@ -971,7 +1092,7 @@ Please provide analysis, suggestions, and find online therapy resources in India
     }
   } catch (error) {
     console.error("Error getting AI suggestions:", error);
-    renderStaticSuggestions(level); // MODIFIED: Fallback
+    renderStaticSuggestions(level);
   }
 }
 
@@ -998,16 +1119,15 @@ function renderAISuggestions(level, response) {
   addBreatherButtonListener();
 }
 
-// MODIFIED: Removed the "AI failed" message for a seamless fallback
 function renderStaticSuggestions(level) {
-  suggestList.innerHTML = ''; // Start with a clean list
+  suggestList.innerHTML = ''; // Start clean
   const suggestions = staticSuggestions[level] || staticSuggestions.MODERATE;
   let html = suggestions.map(s => `<li>${s}</li>`).join('');
 
   if (level === 'HIGH' || level === 'MODERATE') {
     html += `<li><button id="open-breather-btn" class="secondary" style="width: 100%; margin-top: 10px;">🧘 Start Calming Exercise</button></li>`;
   }
-  suggestList.innerHTML = html; // Set the HTML directly
+  suggestList.innerHTML = html;
 
   addBreatherButtonListener();
 }
@@ -1017,7 +1137,6 @@ function addBreatherButtonListener() {
   if (openBreatherBtn) {
     openBreatherBtn.addEventListener('click', () => {
       breatherModal.classList.add('active');
-      breatherCircleText.style.animationPlayState = 'running'; // Start animation
       startBreatherAnimation();
     });
   }
@@ -1057,7 +1176,7 @@ function setBLEStatus(message, color) {
   span.style.color = color;
 }
 
-// --- MODIFIED: More Engaging Breathing Animation ---
+// --- Breathing Animation ---
 let breatherInterval;
 let breatherTimerInterval;
 let breatherTimeout;
@@ -1067,39 +1186,30 @@ function startBreatherAnimation() {
     if (breatherTimerInterval) clearInterval(breatherTimerInterval);
     if (breatherTimeout) clearTimeout(breatherTimeout);
 
-    if (!breatherTimer) breatherTimer = document.querySelector('.breather-timer'); // Ensure it's assigned
-
     let secondsLeft = 60;
     const encouragements = [
-        "You're doing great.",
-        "Focus on your breath.",
-        "Let the tension go.",
-        "Be present in this moment.",
-        "Relax your shoulders.",
-        "Just breathe."
+        "You're doing great.", "Focus on your breath.", "Let the tension go.",
+        "Be present.", "Relax your shoulders.", "Just breathe."
     ];
 
-    // Start animation
-    breatherCircleText.style.animationPlayState = 'running';
+    breatherCircle.style.animationPlayState = 'running';
     breatherCircleText.textContent = 'Inhale...';
     breatherText.textContent = "Let's reset with this 1-minute exercise.";
     breatherTimer.textContent = `${secondsLeft}s`;
 
-    // Text animation (Inhale/Exhale) - 10s cycle
     setTimeout(() => {
          breatherCircleText.textContent = 'Exhale...';
          breatherText.textContent = encouragements[Math.floor(Math.random() * encouragements.length)];
-    }, 5000); // 5s inhale
+    }, 5000); 
 
     breatherInterval = setInterval(() => {
         breatherCircleText.textContent = 'Inhale...';
         breatherText.textContent = encouragements[Math.floor(Math.random() * encouragements.length)];
         setTimeout(() => {
             breatherCircleText.textContent = 'Exhale...';
-        }, 5000); // 5s inhale, 5s exhale
-    }, 10000); // 10s total cycle
+        }, 5000); 
+    }, 10000); 
 
-    // Timer countdown
     breatherTimerInterval = setInterval(() => {
         secondsLeft--;
         breatherTimer.textContent = `${secondsLeft}s`;
@@ -1108,9 +1218,8 @@ function startBreatherAnimation() {
         }
     }, 1000);
 
-    // Auto-close after 60 seconds
     breatherTimeout = setTimeout(() => {
-        stopBreatherAnimation(true); // Pass 'true' to signal completion
+        stopBreatherAnimation(true); 
     }, 60000);
 }
 
@@ -1119,27 +1228,28 @@ function stopBreatherAnimation(completed = false) {
     if (breatherTimerInterval) clearInterval(breatherTimerInterval);
     if (breatherTimeout) clearTimeout(breatherTimeout);
 
-    breatherCircleText.style.animationPlayState = 'paused'; // Always pause animation
+    breatherCircle.style.animationPlayState = 'paused'; 
 
     if (completed) {
         breatherCircleText.textContent = 'Done!';
         breatherText.textContent = "Great job. You completed the exercise!";
         breatherTimer.textContent = '👍';
         
-        // Wait 2s then close
         setTimeout(() => {
-            breatherModal.classList.remove('active');
-            // Reset for next time after closing
-            breatherCircleText.textContent = 'Inhale...';
-            breatherText.textContent = 'Follow the circle for 1 minute.';
-            breatherTimer.textContent = '60s';
+            if (breatherModal.classList.contains('active')) {
+                breatherModal.classList.remove('active');
+                resetBreather();
+            }
         }, 2000);
     } else {
-        // Reset text immediately if closed manually
-        breatherCircleText.textContent = 'Inhale...';
-        breatherText.textContent = 'Follow the circle for 1 minute.';
-        if(breatherTimer) breatherTimer.textContent = '60s';
+        resetBreather();
     }
+}
+
+function resetBreather() {
+    breatherCircleText.textContent = 'Inhale...';
+    breatherText.textContent = 'Follow the circle for 1 minute.';
+    breatherTimer.textContent = '60s';
 }
 // --- End of Breathing Animation ---
 
@@ -1174,14 +1284,52 @@ function renderHistory() {
   `).join('');
 }
 
+// --- Theme Toggle Logic ---
+themeToggleBtn.addEventListener('click', () => {
+    document.body.classList.toggle('light-mode');
+    
+    // Save preference to localStorage
+    const theme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
+    localStorage.setItem('theme', theme);
+    
+    // Update chart colors (they need to re-read the CSS variables)
+    updateChartColors();
+});
+
+function applySavedTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+    } else {
+        document.body.classList.remove('light-mode');
+    }
+    // No need to update charts here, createCharts() will run after
+}
+
+// Function to update chart colors after theme switch
+function updateChartColors() {
+    // Get the computed style of the body to find the *current* variable values
+    const computedStyle = getComputedStyle(document.body);
+    const tickColor = computedStyle.getPropertyValue('--text-muted');
+    const gridColor = computedStyle.getPropertyValue('--card-border');
+
+    [hrChart, spChart, gsrChart].forEach(chart => {
+        if (chart) {
+            chart.options.scales.y.ticks.color = tickColor;
+            chart.options.scales.y.grid.color = gridColor;
+            chart.update('none'); // 'none' to update without animation
+        }
+    });
+}
+
+
 // --- Initial Load & Modal Listeners ---
 window.addEventListener('load', () => {
+  applySavedTheme(); // Apply theme before creating charts
   createCharts();
   renderHistory();
   
-  // MODIFIED: Assign timer and set animation state
-  breatherTimer = document.querySelector('.breather-timer');
-  breatherCircleText.style.animationPlayState = 'paused';
+  breatherCircle.style.animationPlayState = 'paused';
 
   // SOS Modal
   sosBtn.addEventListener('click', () => sosModal.classList.add('active'));
@@ -1190,7 +1338,7 @@ window.addEventListener('load', () => {
   // Breather Modal
   closeBreatherModal.addEventListener('click', () => {
     breatherModal.classList.remove('active');
-    stopBreatherAnimation(false); // MODIFIED: Pass false
+    stopBreatherAnimation(false);
   });
 
   // Close modal on overlay click
@@ -1199,7 +1347,7 @@ window.addEventListener('load', () => {
       if (e.target === modal) {
         modal.classList.remove('active');
         if (modal === breatherModal) {
-          stopBreatherAnimation(false); // MODIFIED: Pass false
+          stopBreatherAnimation(false);
         }
       }
     });
