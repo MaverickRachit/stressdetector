@@ -91,7 +91,6 @@
     input[type=number]:focus, input[type=text]:focus, select:focus { border-color: var(--accent); outline: none; }
     select option { background: var(--bg); color: var(--text); }
 
-    /* --- Back to 3 columns --- */
     .vitals-grid{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
     @media(max-width:760px){ .vitals-grid{grid-template-columns:1fr 1fr 1fr; } }
     @media(max-width:500px){ .vitals-grid{grid-template-columns:1fr; } } /* Stack on very small screens */
@@ -381,7 +380,7 @@ const overviewText = document.getElementById('overviewText');
 const valHR = document.getElementById('valHR');
 const valSp = document.getElementById('valSp');
 const valGSR = document.getElementById('valGSR');
-// const valTemp = document.getElementById('valTemp'); // Removed live temp display
+// valTemp removed
 const suggestList = document.getElementById('suggestList');
 const historyList = document.getElementById('history-list');
 const getLocationBtn = document.getElementById('getLocationBtn');
@@ -602,7 +601,6 @@ function createCharts(){
   const bad = css.getPropertyValue('--bad').trim() || '#f87171';
   const accent = css.getPropertyValue('--accent').trim() || '#22d3ee';
   const warn = css.getPropertyValue('--warn').trim() || '#facc15';
-  // Removed 'good' as temp chart is removed
 
   function cfg(label, color){
     return {
@@ -675,14 +673,13 @@ getLocationBtn.addEventListener('click', () => {
 async function fetchWeather(position){
   try{
     const {latitude,longitude} = position.coords;
-    // --- FIX: Corrected API URL ---
     const api = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m`;
     const r = await fetch(api);
     if (!r.ok) throw new Error(`Weather API error: ${r.status}`);
     const data = await r.json();
     if (data.current && typeof data.current.temperature_2m === 'number'){
       roomTempInput.value = Math.round(data.current.temperature_2m);
-      console.log("Weather fetched, temp set to:", roomTempInput.value); // Log success
+      console.log("Weather fetched, temp set to:", roomTempInput.value);
     } else {
         console.warn("Weather data received but temperature not found:", data);
     }
@@ -708,7 +705,7 @@ async function connectToDevice() {
       setBLEStatus('Requesting device...', 'warn');
       bleDevice = await navigator.bluetooth.requestDevice({
           filters: [{ services: [SERVICE_UUID.toLowerCase()] }],
-          // optionalServices: [SERVICE_UUID.toLowerCase()] // Optional services not strictly needed here
+          // optionalServices: [SERVICE_UUID.toLowerCase()] // Optional
        });
       if (!bleDevice) throw new Error("No device selected.");
       bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
@@ -740,13 +737,9 @@ async function connectToDevice() {
           setBLEStatus('Connection Error', 'bad');
       }
       if (bleDevice && bleDevice.gatt.connected) {
-          try { await bleDevice.gatt.disconnect(); } catch (e) { /* Ignore disconnect error */ }
+          try { await bleDevice.gatt.disconnect(); } catch (e) { console.warn("Disconnect failed:", e); }
       }
-      // Reset BLE variables
-      dataCharacteristic = null;
-      commandCharacteristic = null;
-      gattServer = null;
-      bleDevice = null;
+      dataCharacteristic = null; commandCharacteristic = null; gattServer = null; bleDevice = null;
    }
   finally {
       startBtn.disabled = false;
@@ -777,7 +770,7 @@ async function stopTest() {
       testTimerInterval = null;
   }
   try {
-    if (commandCharacteristic && bleDevice && bleDevice.gatt.connected) { // Check connection before sending stop
+    if (commandCharacteristic && bleDevice && bleDevice.gatt.connected) {
         const command = JSON.stringify({ command: "stop" });
         await commandCharacteristic.writeValue(textEncoder.encode(command));
         console.log("STOP command sent.");
@@ -786,13 +779,18 @@ async function stopTest() {
     }
   } catch (err) { console.warn("Failed to send STOP command", err); }
 
-  const hr_avg = calculateAverage(liveHrReadings.filter(hr => hr > 35 && hr < 220));
-  const gsr_avg = calculateAverage(liveGsrReadings.filter(gsr => gsr > 0));
-  const spo2_avg = calculateAverage(liveSpo2Readings.filter(sp => sp > 80 && sp <= 100));
-  const finger_temp_avg = calculateAverage(liveFingerTempReadings.filter(t => t > 5 && t < 50));
+  // Filter readings rigorously before averaging
+  const validHrs = liveHrReadings.filter(hr => hr > 35 && hr < 220);
+  const validGsrs = liveGsrReadings.filter(gsr => gsr > 0); // Assuming 0 is invalid/no contact
+  const validSpo2s = liveSpo2Readings.filter(sp => sp > 80 && sp <= 100);
+  const validTemps = liveFingerTempReadings.filter(t => t > 5 && t < 50);
+
+  const hr_avg = calculateAverage(validHrs);
+  const gsr_avg = calculateAverage(validGsrs);
+  const spo2_avg = calculateAverage(validSpo2s);
+  const finger_temp_avg = calculateAverage(validTemps);
 
   let finger_temp_trend = 0;
-  const validTemps = liveFingerTempReadings.filter(t => t > 5 && t < 50);
   if (validTemps.length >= 10) {
       const quarter = Math.floor(validTemps.length / 4);
       const firstQuarterAvg = calculateAverage(validTemps.slice(0, quarter));
@@ -827,7 +825,7 @@ async function stopTest() {
     name: nameInput.value || '—',
     age: ageInput.value || '—'
   });
-  renderStaticSuggestions(level);
+  renderStaticSuggestions(level); // Render suggestions based on the final level
 }
 
 function calculateAverage(arr) {
@@ -847,12 +845,10 @@ function onDisconnected(){
       testTimerInterval = null;
   }
   analysisSection.style.display = 'none';
-  // Fully reset BLE state
   dataCharacteristic = null;
   commandCharacteristic = null;
   gattServer = null;
-  // Don't nullify bleDevice here, keep the reference for potential reconnects if needed
-  // bleDevice = null;
+  // bleDevice reference kept for potential reconnects triggered by user action (e.g., clicking connect again)
   startBtn.textContent = 'Connect & Start Test';
   console.log("BLE Disconnected");
 }
@@ -887,7 +883,6 @@ function setBLEStatus(message, level){
   Data handling
   ========================= */
 function handleDataNotification(event){
-  // Minimal check for connection status; mostly rely on onDisconnected
   if (!bleDevice || !bleDevice.gatt.connected) return;
 
   if (bleStatusText.textContent === 'Connected') { setBLEStatus('Receiving...', 'good'); }
@@ -900,7 +895,7 @@ function handleDataNotification(event){
     const gsrRaw = Number(data.gsr) || 0;
     const tempFingerRaw = Number(data.temp_finger) || 0;
 
-    // --- Add console log for debugging HR ---
+    // --- Debug log for HR ---
     // console.log('Received HR:', hrRaw);
 
     valHR.textContent = hrRaw > 0 ? hrRaw : '--';
@@ -908,15 +903,13 @@ function handleDataNotification(event){
     valGSR.textContent = gsrRaw >= 0 ? gsrRaw : '--';
     // valTemp removed
 
-    // Add to charts if visible
     if (chartToggle.checked) {
-        if (hrRaw > 0 && hrRaw < 220) updateChart(hrChart, hrRaw);
+        if (hrRaw > 35 && hrRaw < 220) updateChart(hrChart, hrRaw); // Added lower bound check
         if (spo2Raw > 80 && spo2Raw <= 100) updateChart(spChart, spo2Raw);
         if (gsrRaw >= 0) updateChart(gsrChart, gsrRaw);
         // tempChart removed
     }
 
-    // Only store data if the test timer is running
     if (testTimerInterval) {
         liveHrReadings.push(hrRaw);
         liveGsrReadings.push(gsrRaw);
@@ -945,6 +938,7 @@ function handleDataNotification(event){
 function calculateStressLevel(hr_avg, gsr_avg, age, gender, temp, finger_temp_trend) {
     console.log(`Calculating stress with: HR:${hr_avg.toFixed(1)}, GSR:${gsr_avg.toFixed(1)}, Age:${age}, Gender:${gender}, RoomTemp:${temp}, TempTrend:${finger_temp_trend.toFixed(2)}`);
     let overview = "";
+    const finger_temp_avg = calculateAverage(liveFingerTempReadings.filter(t => t > 5 && t < 50)); // Calculate avg temp again for overview
 
     // 1. Get HR Baseline
     let baselineHR = 70;
@@ -957,34 +951,51 @@ function calculateStressLevel(hr_avg, gsr_avg, age, gender, temp, finger_temp_tr
     if (hr_avg <= 0) hr_score = 0;
     else if (hr_delta > 20) hr_score = 100; else if (hr_delta > 12) hr_score = 70; else if (hr_delta > 4) hr_score = 40; else hr_score = 10;
     if (hr_avg <= 0) overview += `Could not reliably determine average heart rate. `;
-    else if (hr_delta > 15) overview += `Your heart rate was notably elevated for your profile. `; else if (hr_delta > 5) overview += `Your heart rate was slightly elevated. `; else overview += `Your heart rate was in a calm range. `;
+    else if (hr_delta > 15) overview += `Your heart rate was notably elevated (${Math.round(hr_avg)} bpm) for your profile. `; else if (hr_delta > 5) overview += `Your heart rate was slightly elevated (${Math.round(hr_avg)} bpm). `; else overview += `Your heart rate (${Math.round(hr_avg)} bpm) was in a calm range. `;
 
     // 3. Calculate GSR Score
     let gsr_mod = 0;
     if (temp > 28) gsr_mod = 50; if (temp < 20) gsr_mod = -50;
-    const gsr_modified = gsr_avg + gsr_mod;
+    const gsr_modified = gsr_avg + gsr_mod; // Apply temp adjustment
     let gsr_score = 0;
+    // --- ADJUSTED GSR Thresholds (Lower numbers = higher resistance = calmer) ---
+    // These thresholds are EXAMPLES - they depend heavily on your specific GSR sensor circuit and ADC range (0-4095)
+    // You WILL need to calibrate these by testing calm vs. stressed states.
+    const gsr_high_stress_threshold = 2000; // Example: Resistance < 2000 (arbitrary units) = HIGH
+    const gsr_mod_stress_threshold = 2800;  // Example: Resistance < 2800 = MODERATE
+    const gsr_low_stress_threshold = 3500;  // Example: Resistance < 3500 = LOW-MID
+
     if (gsr_avg <= 0) gsr_score = 0;
-    else if (gsr_modified < 350) gsr_score = 100; else if (gsr_modified < 500) gsr_score = 70; else if (gsr_modified < 650) gsr_score = 40; else gsr_score = 10;
+    else if (gsr_modified < gsr_high_stress_threshold) gsr_score = 100; // High conductance/Low Resistance
+    else if (gsr_modified < gsr_mod_stress_threshold) gsr_score = 70;
+    else if (gsr_modified < gsr_low_stress_threshold) gsr_score = 40;
+    else gsr_score = 10; // Low conductance/High Resistance
+
     if (gsr_avg <= 0) overview += `Could not reliably determine average skin conductance. `;
     else if (gsr_score >= 70) overview += `Skin conductance was high (indicating arousal). `; else if (gsr_score >= 40) overview += `Skin conductance showed some arousal. `; else overview += `Skin activity appears low. `;
 
     // 4. Temperature Trend Modifier & Overview Update
     let temp_modifier = 0;
-    const avgFingerTemp = calculateAverage(liveFingerTempReadings.filter(t => t > 5 && t < 50)); // Recalculate avg for overview
-    if ((hr_score >= 70 || gsr_score >= 70) && finger_temp_trend < -0.3) {
-        temp_modifier = 15;
-        overview += `Finger temperature dropped significantly (avg ${avgFingerTemp.toFixed(1)}°C), suggesting stress-related vasoconstriction.`;
-    }
-    else if ((hr_score >= 40 || gsr_score >= 40) && finger_temp_trend < -0.15) {
-        temp_modifier = 5;
-        overview += `Finger temperature decreased slightly (avg ${avgFingerTemp.toFixed(1)}°C).`;
-    }
-    else if (finger_temp_trend > 0.1) {
-         overview += `Finger temperature was stable or increased (avg ${avgFingerTemp.toFixed(1)}°C).`;
+    let temp_overview = `Finger sensor temp avg ${finger_temp_avg > 0 ? finger_temp_avg.toFixed(1)+'°C' : 'N/A'}. `;
+
+    if (finger_temp_avg > 0) { // Only add trend info if average temp was valid
+        if ((hr_score >= 70 || gsr_score >= 70) && finger_temp_trend < -0.3) {
+            temp_modifier = 15;
+            temp_overview += `Temperature dropped significantly, suggesting stress-related vasoconstriction.`;
+        }
+        else if ((hr_score >= 40 || gsr_score >= 40) && finger_temp_trend < -0.15) {
+            temp_modifier = 5;
+            temp_overview += `Temperature decreased slightly.`;
+        }
+        else if (finger_temp_trend > 0.1) {
+             temp_overview += `Temperature was stable or increased.`;
+        } else {
+             temp_overview += `Temperature remained relatively stable.`;
+        }
     } else {
-         overview += `Finger temperature remained relatively stable (avg ${avgFingerTemp.toFixed(1)}°C).`;
+        temp_overview += `Finger temperature readings were unreliable.`
     }
+    overview += temp_overview; // Append temp info
 
     // 5. Final Weighted Score
     const final_score = (hr_score * 0.55) + (gsr_score * 0.35) + temp_modifier;
@@ -1003,13 +1014,90 @@ function calculateStressLevel(hr_avg, gsr_avg, age, gender, temp, finger_temp_tr
 }
 /* ========================= */
 
-function detectFlatSpO2(spo2Raw){ /* Flat SpO2 detection code */ }
-const staticSuggestions = { /* Suggestions object */ };
-function renderStaticSuggestions(level){ /* Render suggestions code */ }
-function saveSession(sessionData){ /* Save session code */ }
-function renderHistory(){ /* Render history code */ }
-resetHistoryBtn.addEventListener('click', ()=>{ /* Reset history code */ });
-renderHistory();
+function detectFlatSpO2(spo2Raw){
+  if (typeof spo2Raw !== 'number') return;
+  if (spo2Raw === spLast && spo2Raw > 80){
+    spFlatCount++;
+  } else {
+    spFlatCount = 0;
+    spLast = spo2Raw;
+  }
+  if (spFlatCount >= SP_FLAT_LIMIT){
+    if(analysisSection.style.display === 'none'){
+        // Only show if results aren't already displayed
+        if (suggestList) suggestList.innerHTML = `<li>⚠️ SpO₂ is not varying — sensor may not detect pulse. Tips: <ul style="margin:6px 0 0 18px"><li>Ensure full finger coverage & moderate pressure.</li><li>Reduce ambient light.</li></ul></li>`;
+    }
+    spFlatCount = 0;
+  }
+}
+
+/* =========================
+  Local suggestions & history
+  ========================= */
+const staticSuggestions = {
+  LOW: [ "😌 Calm state detected. Maintain hydration.", "🧘 Try a short mindfulness exercise.", "☀️ Keep up the healthy habits!" ],
+  MODERATE: [ "⚠️ Slight stress. Try '4-7-8' breathing.", "🚶 Take a 5-minute walk or stretch.", "🤔 Identify potential minor stressors." ],
+  HIGH: [ "🛑 High stress detected. Pause & breathe deeply.", "🧘‍♀️ Use the '5-4-3-2-1' grounding technique.", "🗣 Consider talking to someone you trust." ],
+   ERROR: [ "❓ Unable to get reliable readings. Ensure good sensor contact.", "💡 Try cleaning the sensor surfaces.", "🔄 Check connection and try again." ]
+};
+
+function renderStaticSuggestions(level){
+  if (!suggestList) return; // Guard
+  suggestList.innerHTML = '';
+  const suggestions = staticSuggestions[level] || staticSuggestions.MODERATE;
+  suggestions.forEach(s => {
+    const li = document.createElement('li');
+    li.innerHTML = s;
+    suggestList.appendChild(li);
+  });
+}
+
+function saveSession(sessionData){
+  try {
+    let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    history.unshift(sessionData);
+    if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    renderHistory(); // Update display after saving
+  } catch (e) {
+      console.error("Error saving session to localStorage:", e);
+  }
+}
+function renderHistory(){
+  if (!historyList) return; // Guard
+  try {
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    if (!history.length){
+      historyList.innerHTML = `<li style="text-align:center;color:var(--text-body);padding:12px">No sessions recorded yet.</li>`; return;
+    }
+    historyList.innerHTML = history.map(h => `
+      <li class="history-item">
+        <div style="flex:1">
+          <div style="font-weight:700">${h.name || '—'}</div>
+          <div class="muted" style="font-size:12px">${h.date}</div>
+        </div>
+        <div style="min-width:100px;text-align:right">
+           <div style="font-weight:700">${h.level}</div>
+           <div class="muted" style="font-size:12px">HR:${h.hr} ${h.temp_finger !== '--' ? `Temp:${h.temp_finger}°C` : ''}</div>
+        </div>
+      </li>
+    `).join('');
+  } catch(e) {
+      console.error("Error rendering history from localStorage:", e);
+      historyList.innerHTML = `<li style="text-align:center;color:var(--bad);padding:12px">Error loading history.</li>`;
+  }
+}
+resetHistoryBtn.addEventListener('click', ()=>{
+    if (confirm("Are you sure you want to clear all session history?")) {
+        try {
+            localStorage.removeItem(HISTORY_KEY);
+            renderHistory();
+        } catch (e) {
+            console.error("Error clearing history:", e);
+        }
+    }
+});
+renderHistory(); // Initial render on load
 
 /* =========================
   Profile Management
@@ -1036,7 +1124,7 @@ function saveProfile() {
     if (p.gender) genderInput.value = p.gender;
   } catch (e) {
     console.error("Error loading profile from localStorage:", e);
-    localStorage.removeItem('nw_profile'); // Clear potentially corrupted data
+    localStorage.removeItem('nw_profile');
   }
 })();
 
@@ -1044,23 +1132,120 @@ function saveProfile() {
   Breathing exercise
   ========================= */
 let breathInterval = null, breathRunning = false;
-function startBreathing(cycles = 6, inhale = 3, hold = 0, exhale = 4){ /* Breathing start logic */ }
-function stopBreathing(){ /* Breathing stop logic */ }
-openBreathBtn.addEventListener('click', ()=> { /* Open breather modal */ });
-closeBreatherModal.addEventListener('click', ()=> { /* Close breather modal */ });
-breathStartBtn.addEventListener('click', ()=> { /* Start breather */ });
+function startBreathing(cycles = 6, inhale = 3, hold = 0, exhale = 4){
+  stopBreathing();
+  breathRunning = true;
+  let step = 0; let cycleCount = 0;
+  breathCircle.style.transition = `transform ${inhale}s cubic-bezier(.2,.9,.3,1), opacity .2s`;
+  breathCircle.textContent = 'Inhale';
+  breathCircle.style.transform = 'scale(1)';
+  breathCyclesLabel.textContent = cycles;
+  breathDesc.textContent = `Follow the circle for ${cycles} cycles`;
+
+  breathInterval = setTimeout(function loop(){
+    if (!breathRunning) return;
+    if (step === 0){
+        step = 2;
+        breathCircle.textContent = 'Exhale';
+        breathCircle.style.transition = `transform ${exhale}s ease-out`;
+        breathCircle.style.transform = 'scale(.6)';
+        breathInterval = setTimeout(loop, exhale*1000);
+    } else if (step === 2){
+      cycleCount++;
+      if (cycleCount >= cycles){ stopBreathing(); return; }
+      step = 0;
+      breathCircle.textContent = 'Inhale';
+      breathCircle.style.transition = `transform ${inhale}s cubic-bezier(.2,.9,.3,1)`;
+      breathCircle.style.transform = 'scale(1)';
+      breathInterval = setTimeout(loop, inhale*1000);
+    }
+  }, inhale*1000);
+}
+function stopBreathing(){
+    if (breathInterval) clearTimeout(breathInterval);
+    breathInterval = null; breathRunning = false;
+    breathCircle.style.transform = 'scale(.6)';
+    breathCircle.textContent = 'Stopped';
+}
+// --- FIX: Added listener ---
+openBreathBtn.addEventListener('click', ()=> {
+    breatherModal.classList.add('active');
+    setAmbientAudio(true);
+});
+closeBreatherModal.addEventListener('click', ()=> {
+    breatherModal.classList.remove('active');
+    stopBreathing();
+    setAmbientAudio(false);
+});
+breathStartBtn.addEventListener('click', ()=> {
+  const val = Number(breathSpeed.value);
+  if (val === 8) startBreathing(6,4,0,6); else if (val === 6) startBreathing(6,3,0,4); else startBreathing(8,2,0,3);
+});
 breathStopBtn.addEventListener('click', stopBreathing);
 
 /* =========================
   Gemini integration (AI)
   ========================= */
-async function fetchWithBackoff(url, options, retries = 3, delay = 1000){ /* Fetch retry logic */ }
-async function askGeminiAnalysis(userQuestion='Please analyze my last session and give tips.'){ /* Gemini API call */ }
+async function fetchWithBackoff(url, options, retries = 3, delay = 1000){
+  try {
+    const resp = await fetch(url, options);
+    if (!resp.ok && retries > 0 && (resp.status === 429 || resp.status >= 500)) {
+      await new Promise(r => setTimeout(r, delay));
+      return fetchWithBackoff(url, options, retries - 1, delay * 2);
+    }
+    return resp;
+  } catch (err) {
+    if (retries > 0){
+      await new Promise(r => setTimeout(r, delay));
+      return fetchWithBackoff(url, options, retries - 1, delay * 2);
+    }
+    throw err;
+  }
+}
+async function askGeminiAnalysis(userQuestion='Please analyze my last session and give tips.'){
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
+    appendChatMessage('system', 'Gemini API key not set. Cannot provide AI suggestions.');
+    return;
+  }
+  appendChatMessage('user', userQuestion);
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  const last = history[0] || null;
+  const systemPrompt = `You are a compassionate wellness assistant. Provide concise, actionable advice based on sensor readings. Keep your analysis to 2-3 sentences and provide 3-4 very short, actionable bullet points as suggestions.`;
+  // Include temp in prompt
+  const userPrompt = last ? `My name is ${last.name || 'not given'} and my age is ${last.age || 'not given'}. My last session data was: Stress Level: ${last.level}, Avg HR: ${last.hr} bpm, Avg SpO2: ${last.spo2} %, Avg GSR: ${last.gsr} (raw value), Avg Finger Temp: ${last.temp_finger}°C. My question is: ${userQuestion}` : userQuestion;
+  const payload = { contents: [{ parts: [{ text: userPrompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, generationConfig: { temperature: 0.5, maxOutputTokens: 450 } };
+  try {
+    appendChatMessage('system', 'Thinking...');
+    const resp = await fetchWithBackoff(GEMINI_BASE + GEMINI_API_KEY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }, 3, 1000);
+    if (!resp.ok) throw new Error(`Gemini error ${resp.status}`);
+    const result = await resp.json();
+    const candidate = result.candidates?.[0];
+    if (candidate?.finishReason && candidate.finishReason !== 'STOP'){
+        throw new Error(`Gemini response stopped: ${candidate.finishReason}`);
+    }
+    const text = candidate?.content?.parts?.[0]?.text || JSON.stringify(result);
+    appendChatMessage('assistant', text);
+    const parts = text.split('\n').filter(s => s.trim().length > 0);
+    if (suggestList) suggestList.innerHTML = parts.map(s => `<li>${escapeHtml(s)}</li>`).join(''); // Update suggestions list
+  } catch (err) {
+    console.error('Gemini error:', err);
+    appendChatMessage('assistant', `Sorry — AI analysis failed (${err.message}). Displaying standard suggestions.`);
+    const lastLevel = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')[0]?.level || 'MODERATE';
+    renderStaticSuggestions(lastLevel); // Ensure static suggestions are shown
+  }
+}
 
 /* =========================
   Chat helpers
   ========================= */
-function appendChatMessage(who, text){ /* Append message to chat */ }
+function appendChatMessage(who, text){
+  const div = document.createElement('div');
+  if (who === 'user') div.style.textAlign = 'right', div.innerHTML = `<div style="display:inline-block;background:var(--accent);color:var(--bg);padding:8px;border-radius:8px;margin:6px">${escapeHtml(text)}</div>`;
+  else if (who === 'assistant') div.innerHTML = `<div style="display:inline-block;background:var(--glass);color:var(--text);padding:8px;border-radius:8px;margin:6px">${text.replace(/\n/g, '<br>')}</div>`;
+  else div.innerHTML = `<div style="display:inline-block;color:var(--text-body);padding:6px;margin:6px">${escapeHtml(text)}</div>`;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
 function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 chatFab.addEventListener('click', ()=> chatPanel.classList.toggle('active'));
 closeChatBtn.addEventListener('click', ()=> chatPanel.classList.remove('active'));
@@ -1084,7 +1269,6 @@ askGeminiBtn.addEventListener('click', ()=> {
 sosBtn.addEventListener('click', ()=> sosModal.classList.add('active'));
 closeSosModal.addEventListener('click', ()=> sosModal.classList.remove('active'));
 
-// --- FIX: Resources listener ---
 resourcesBtn.addEventListener('click', () => resourcesModal.classList.add('active'));
 closeResourcesModal.addEventListener('click', () => resourcesModal.classList.remove('active'));
 
@@ -1097,15 +1281,14 @@ profileBtn.addEventListener('click', () => {
 
 closeProfileModal.addEventListener('click', () => {
     profileModal.classList.remove('active');
-    document.body.dataset.startTestOnSave = 'false'; // Explicitly clear flag
+    document.body.dataset.startTestOnSave = 'false';
 });
 
-// --- FIX: Simplified save/start logic ---
 saveProfileBtn.addEventListener('click', async () => {
-    saveProfile(); // Always save the latest data
+    saveProfile(); // Always save
     const shouldStartTest = document.body.dataset.startTestOnSave === 'true';
-    profileModal.classList.remove('active'); // Always close modal
-    document.body.dataset.startTestOnSave = 'false'; // Always reset flag after handling
+    profileModal.classList.remove('active'); // Always close
+    document.body.dataset.startTestOnSave = 'false'; // Always reset flag
 
     if (shouldStartTest) {
       console.log("Attempting to send START command...");
@@ -1116,23 +1299,23 @@ saveProfileBtn.addEventListener('click', async () => {
              alert("Device is not connected. Please connect first.");
              return;
         }
-
         const temp = parseInt(roomTempInput.value || '30', 10);
         let irThr = 20000;
         if (temp < 20) irThr = 15000; else if (temp >= 28) irThr = 25000;
 
-        // Clear old data
+        // Clear old data and UI
         liveHrReadings = []; liveGsrReadings = []; liveSpo2Readings = []; liveFingerTempReadings = [];
         [hrChart, spChart, gsrChart].forEach(c => { if (c && c.data) { c.data.labels = []; c.data.datasets[0].data = []; c.update('none'); } });
         analysisSection.style.display = 'none'; overviewText.style.display = 'none';
         finalLevelText.textContent = '--'; finalLevelText.className = '';
+        valHR.textContent = '--'; valSp.textContent = '--'; valGSR.textContent = '--'; // Reset live values
 
         const command = JSON.stringify({ command: "start", irThreshold: irThr });
         console.log("Sending command:", command);
         await commandCharacteristic.writeValue(textEncoder.encode(command));
         console.log("START command sent successfully.");
 
-        startJsTimer(); // Start JS timer only after command sent
+        startJsTimer();
         console.log("JavaScript timer started.");
 
       } catch (err) {
@@ -1153,10 +1336,7 @@ function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
   Final note / warning about API keys
   ========================= */
 if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
-    console.warn("************************************************************");
     console.warn("GEMINI_API_KEY is not set!");
-    console.warn("Paste your key at the top of the <script> block in this HTML file.");
-    console.warn("************************************************************");
 } else {
     console.log("NeuroWell dashboard loaded. Gemini key is set.");
 }
