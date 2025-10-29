@@ -366,7 +366,7 @@ const CHAR_DATA_UUID    = "beb5483e-36e1-4688-b7f5-ea07361b26a8"; // Use lowerca
 const CHAR_COMMAND_UUID = "a88a02e0-8422-42b0-a555-5203361a832a"; // Use lowercase
 const TEST_DURATION_S = 40;
 
-const GEMINI_BASE = "https.generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
+const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key="; // Updated model
 const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
 /* ========================= */
 
@@ -472,47 +472,57 @@ let ambientAudioPlaying = false;
 
 function initAmbientAudio(){
   if (ambientAudioCtx) return;
-  ambientAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  ambientMasterGain = ambientAudioCtx.createGain();
-  ambientMasterGain.gain.value = 0.0;
-  ambientMasterGain.connect(ambientAudioCtx.destination);
-  droneOsc = ambientAudioCtx.createOscillator();
-  droneOsc.type = 'sine';
-  droneOsc.frequency.value = 110;
-  const droneGain = ambientAudioCtx.createGain();
-  droneGain.gain.value = 0.0;
-  ambientLfo = ambientAudioCtx.createOscillator();
-  ambientLfo.type = 'sine';
-  ambientLfo.frequency.value = 0.08;
-  const lfoGain = ambientAudioCtx.createGain();
-  lfoGain.gain.value = 0.25;
-  ambientLfo.connect(lfoGain);
-  lfoGain.connect(droneGain.gain);
-  droneOsc.connect(droneGain);
-  droneGain.connect(ambientMasterGain);
-  const hp = ambientAudioCtx.createBiquadFilter();
-  hp.type = 'highpass';
-  hp.frequency.value = 20;
-  const lp = ambientAudioCtx.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.frequency.value = 1200;
-  droneGain.connect(hp);
-  hp.connect(lp);
-  lp.connect(ambientMasterGain);
-  droneOsc.start();
-  ambientLfo.start();
+  try {
+    ambientAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    ambientMasterGain = ambientAudioCtx.createGain();
+    ambientMasterGain.gain.value = 0.0;
+    ambientMasterGain.connect(ambientAudioCtx.destination);
+    droneOsc = ambientAudioCtx.createOscillator();
+    droneOsc.type = 'sine';
+    droneOsc.frequency.value = 110;
+    const droneGain = ambientAudioCtx.createGain();
+    droneGain.gain.value = 0.0;
+    ambientLfo = ambientAudioCtx.createOscillator();
+    ambientLfo.type = 'sine';
+    ambientLfo.frequency.value = 0.08;
+    const lfoGain = ambientAudioCtx.createGain();
+    lfoGain.gain.value = 0.25;
+    ambientLfo.connect(lfoGain);
+    lfoGain.connect(droneGain.gain);
+    droneOsc.connect(droneGain);
+    droneGain.connect(ambientMasterGain);
+    const hp = ambientAudioCtx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 20;
+    const lp = ambientAudioCtx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 1200;
+    droneGain.connect(hp);
+    hp.connect(lp);
+    lp.connect(ambientMasterGain);
+    droneOsc.start();
+    ambientLfo.start();
+  } catch (e) {
+    console.error("Failed to initialize ambient audio:", e);
+    ambientAudioCtx = null; // Prevent further attempts if failed
+  }
 }
 
 function setAmbientAudio(play) {
-    if (!ambientAudioCtx) initAmbientAudio();
-    if (play && !ambientAudioPlaying) {
-        ambientAudioCtx.resume().then(() => {
-            ambientMasterGain.gain.exponentialRampToValueAtTime(0.22, ambientAudioCtx.currentTime + 1.2);
-            ambientAudioPlaying = true;
-        });
-    } else if (!play && ambientAudioPlaying) {
-        ambientMasterGain.gain.exponentialRampToValueAtTime(0.0001, ambientAudioCtx.currentTime + 1.0);
-        ambientAudioPlaying = false;
+    if (!ambientAudioCtx) initAmbientAudio(); // Attempt init if not already
+    if (!ambientAudioCtx) return; // Exit if init failed
+    try {
+        if (play && !ambientAudioPlaying) {
+            ambientAudioCtx.resume().then(() => {
+                ambientMasterGain.gain.exponentialRampToValueAtTime(0.22, ambientAudioCtx.currentTime + 1.2);
+                ambientAudioPlaying = true;
+            });
+        } else if (!play && ambientAudioPlaying) {
+            ambientMasterGain.gain.exponentialRampToValueAtTime(0.0001, ambientAudioCtx.currentTime + 1.0);
+            ambientAudioPlaying = false;
+        }
+    } catch (e) {
+        console.error("Error setting ambient audio state:", e);
     }
 }
 
@@ -523,60 +533,72 @@ let hbInterval = null;
 
 function initHeartbeatAudio() {
     if (hbAudioCtx) return;
-    hbAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    hbMasterGain = hbAudioCtx.createGain();
-    hbMasterGain.gain.value = 0.0; // Start silent
-    hbMasterGain.connect(hbAudioCtx.destination);
+    try {
+        hbAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        hbMasterGain = hbAudioCtx.createGain();
+        hbMasterGain.gain.value = 0.0; // Start silent
+        hbMasterGain.connect(hbAudioCtx.destination);
+    } catch (e) {
+        console.error("Failed to initialize heartbeat audio:", e);
+        hbAudioCtx = null;
+    }
 }
 
 function playHeartbeatSound() {
     if (!hbAudioCtx) return;
-    const now = hbAudioCtx.currentTime;
-
-    // Thump 1 (BA)
-    const thumpOsc1 = hbAudioCtx.createOscillator();
-    thumpOsc1.type = 'sine';
-    thumpOsc1.frequency.setValueAtTime(70, now);
-    thumpOsc1.frequency.exponentialRampToValueAtTime(50, now + 0.1);
-    const thumpGain1 = hbAudioCtx.createGain();
-    thumpGain1.gain.setValueAtTime(0, now);
-    thumpGain1.gain.linearRampToValueAtTime(0.5, now + 0.02);
-    thumpGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-    thumpOsc1.connect(thumpGain1).connect(hbMasterGain);
-    thumpOsc1.start(now);
-    thumpOsc1.stop(now + 0.15);
-
-    // Thump 2 (DUM)
-    const dumpTime = now + 0.12;
-    const thumpOsc2 = hbAudioCtx.createOscillator();
-    thumpOsc2.type = 'sine';
-    thumpOsc2.frequency.setValueAtTime(60, dumpTime);
-    thumpOsc2.frequency.exponentialRampToValueAtTime(40, dumpTime + 0.15);
-    const thumpGain2 = hbAudioCtx.createGain();
-    thumpGain2.gain.setValueAtTime(0, dumpTime);
-    thumpGain2.gain.linearRampToValueAtTime(0.4, dumpTime + 0.02);
-    thumpGain2.gain.exponentialRampToValueAtTime(0.001, dumpTime + 0.15);
-    thumpOsc2.connect(thumpGain2).connect(hbMasterGain);
-    thumpOsc2.start(dumpTime);
-    thumpOsc2.stop(dumpTime + 0.2);
+    try {
+        const now = hbAudioCtx.currentTime;
+        // Thump 1 (BA)
+        const thumpOsc1 = hbAudioCtx.createOscillator();
+        thumpOsc1.type = 'sine';
+        thumpOsc1.frequency.setValueAtTime(70, now);
+        thumpOsc1.frequency.exponentialRampToValueAtTime(50, now + 0.1);
+        const thumpGain1 = hbAudioCtx.createGain();
+        thumpGain1.gain.setValueAtTime(0, now);
+        thumpGain1.gain.linearRampToValueAtTime(0.5, now + 0.02);
+        thumpGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        thumpOsc1.connect(thumpGain1).connect(hbMasterGain);
+        thumpOsc1.start(now);
+        thumpOsc1.stop(now + 0.15);
+        // Thump 2 (DUM)
+        const dumpTime = now + 0.12;
+        const thumpOsc2 = hbAudioCtx.createOscillator();
+        thumpOsc2.type = 'sine';
+        thumpOsc2.frequency.setValueAtTime(60, dumpTime);
+        thumpOsc2.frequency.exponentialRampToValueAtTime(40, dumpTime + 0.15);
+        const thumpGain2 = hbAudioCtx.createGain();
+        thumpGain2.gain.setValueAtTime(0, dumpTime);
+        thumpGain2.gain.linearRampToValueAtTime(0.4, dumpTime + 0.02);
+        thumpGain2.gain.exponentialRampToValueAtTime(0.001, dumpTime + 0.15);
+        thumpOsc2.connect(thumpGain2).connect(hbMasterGain);
+        thumpOsc2.start(dumpTime);
+        thumpOsc2.stop(dumpTime + 0.2);
+    } catch (e) {
+        console.error("Error playing heartbeat sound:", e);
+    }
 }
 
 hbToggle.addEventListener('click', () => {
     if (!hbAudioCtx) initHeartbeatAudio();
+    if (!hbAudioCtx) return; // Exit if init failed
 
     hbAudioPlaying = !hbAudioPlaying;
-    if (hbAudioPlaying) {
-        hbAudioCtx.resume().then(() => {
-            hbMasterGain.gain.exponentialRampToValueAtTime(0.3, hbAudioCtx.currentTime + 1.0);
-            playHeartbeatSound(); // Play one immediately
-            hbInterval = setInterval(playHeartbeatSound, 850); // ~70 bpm
-            hbLabel.textContent = 'HB On';
-        });
-    } else {
-        hbMasterGain.gain.exponentialRampToValueAtTime(0.0001, hbAudioCtx.currentTime + 1.0);
-        if (hbInterval) clearInterval(hbInterval);
-        hbInterval = null;
-        hbLabel.textContent = 'HB Off';
+    try {
+        if (hbAudioPlaying) {
+            hbAudioCtx.resume().then(() => {
+                hbMasterGain.gain.exponentialRampToValueAtTime(0.3, hbAudioCtx.currentTime + 1.0);
+                playHeartbeatSound();
+                hbInterval = setInterval(playHeartbeatSound, 850);
+                hbLabel.textContent = 'HB On';
+            });
+        } else {
+            hbMasterGain.gain.exponentialRampToValueAtTime(0.0001, hbAudioCtx.currentTime + 1.0);
+            if (hbInterval) clearInterval(hbInterval);
+            hbInterval = null;
+            hbLabel.textContent = 'HB Off';
+        }
+    } catch (e) {
+        console.error("Error toggling heartbeat audio:", e);
     }
 });
 
@@ -614,26 +636,31 @@ function createCharts(){
       }
     };
   }
+  try {
+    hrChart = new Chart(document.getElementById('hrChart'), cfg('Heart Rate', bad));
+    spChart = new Chart(document.getElementById('spChart'), cfg('SpO2', accent));
+    gsrChart = new Chart(document.getElementById('gsrChart'), cfg('GSR', warn));
+    tempChart = new Chart(document.getElementById('tempChart'), cfg('Finger Temp', good));
 
-  hrChart = new Chart(document.getElementById('hrChart'), cfg('Heart Rate', bad));
-  spChart = new Chart(document.getElementById('spChart'), cfg('SpO2', accent));
-  gsrChart = new Chart(document.getElementById('gsrChart'), cfg('GSR', warn));
-  tempChart = new Chart(document.getElementById('tempChart'), cfg('Finger Temp', good)); // <-- NEW
-
-  spChart.options.scales.y.min = 80; spChart.options.scales.y.max = 100;
-  // tempChart.options.scales.y.min = 20; tempChart.options.scales.y.max = 40; // Optional
+    spChart.options.scales.y.min = 80; spChart.options.scales.y.max = 100;
+  } catch(e) {
+    console.error("Error creating charts:", e);
+  }
 }
 function updateChart(chart, value){
   if(!chart || !chart.data || value === null || typeof value === 'undefined') return;
-  if (!document.getElementById('chartToggle').checked) return;
-
-  chart.data.labels.push('');
-  chart.data.datasets[0].data.push(value);
-  if (chart.data.labels.length > MAX_POINTS){
-      chart.data.labels.shift();
-      chart.data.datasets[0].data.shift();
+  if (!chartToggle.checked) return; // Use the variable directly
+  try {
+    chart.data.labels.push('');
+    chart.data.datasets[0].data.push(value);
+    if (chart.data.labels.length > MAX_POINTS){
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+    }
+    chart.update('none');
+  } catch(e) {
+      console.warn("Error updating chart:", e);
   }
-  chart.update('none');
 }
 window.addEventListener('load', createCharts);
 
@@ -643,18 +670,35 @@ window.addEventListener('load', createCharts);
 getLocationBtn.addEventListener('click', () => {
   if (navigator.geolocation){
     getLocationBtn.disabled = true; getLocationBtn.textContent = '...';
-    navigator.geolocation.getCurrentPosition(fetchWeather, (e)=>{ alert('Location error: ' + e.message); getLocationBtn.disabled=false; getLocationBtn.textContent='📍'; });
-  } else alert('Geolocation not supported.');
+    navigator.geolocation.getCurrentPosition(
+        fetchWeather,
+        (e)=>{
+            alert('Location error: ' + e.message);
+            getLocationBtn.disabled=false; getLocationBtn.textContent='📍';
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 } // Added options
+    );
+  } else alert('Geolocation not supported by this browser.');
 });
 async function fetchWeather(position){
   try{
     const {latitude,longitude} = position.coords;
-    const api = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
-    const r = await fetch(api); const data = await r.json();
-    if (data.current_weather && typeof data.current_weather.temperature === 'number'){
-      roomTempInput.value = Math.round(data.current_weather.temperature);
+    // --- FIX: Corrected API URL ---
+    const api = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m`;
+    const r = await fetch(api);
+    if (!r.ok) throw new Error(`Weather API error: ${r.status}`);
+    const data = await r.json();
+    if (data.current && typeof data.current.temperature_2m === 'number'){
+      roomTempInput.value = Math.round(data.current.temperature_2m);
+    } else {
+        console.warn("Weather data received but temperature not found:", data);
     }
-  }catch(e){ console.error(e) } finally { getLocationBtn.disabled=false; getLocationBtn.textContent='📍'; }
+  }catch(e){
+      console.error("Fetch weather error:", e);
+      alert("Could not fetch weather data. Please enter temperature manually.");
+  } finally {
+      getLocationBtn.disabled=false; getLocationBtn.textContent='📍';
+  }
 }
 
 /* =========================
@@ -664,9 +708,16 @@ async function fetchWeather(position){
 async function connectToDevice() {
   startBtn.disabled = true; startBtn.textContent = 'Connecting...';
   try {
+    if (!navigator.bluetooth) {
+        throw new Error("Web Bluetooth is not available on this browser/device.");
+    }
     if (!bleDevice || !bleDevice.gatt.connected) {
       setBLEStatus('Requesting device...', 'warn');
-      bleDevice = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID.toLowerCase()] }], optionalServices: [SERVICE_UUID.toLowerCase()] });
+      bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ services: [SERVICE_UUID.toLowerCase()] }],
+          optionalServices: [SERVICE_UUID.toLowerCase()]
+       });
+      if (!bleDevice) throw new Error("No device selected."); // Handle cancellation
       bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
       setBLEStatus('Connecting...', 'warn');
       gattServer = await bleDevice.gatt.connect();
@@ -679,14 +730,26 @@ async function connectToDevice() {
       dataCharacteristic.addEventListener('characteristicvaluechanged', handleDataNotification);
       setBLEStatus('Connected', 'good');
     }
+    // Setup and show profile modal only AFTER successful connection
     profileTitle.textContent = 'Profile for New Test';
     saveProfileBtn.textContent = 'Save & Start Test';
     document.body.dataset.startTestOnSave = 'true';
     profileModal.classList.add('active');
+    console.log("connectToDevice successful, opening profile modal for test start.");
+
   } catch (err) {
-      console.error('BLE Err', err);
-      setBLEStatus('Error', 'bad');
+      console.error('BLE Error:', err);
+      // Provide more specific feedback to the user
+      if (err.message.includes("No device selected") || err.name === 'NotFoundError') {
+          setBLEStatus('Pairing Cancelled', 'warn');
+      } else if (err.message.includes("available")) {
+           setBLEStatus('BLE Not Supported', 'bad');
+           alert("Web Bluetooth is not supported or enabled on this browser. Please use Chrome, Edge, or Opera.");
+      } else {
+          setBLEStatus('Connection Error', 'bad');
+      }
       if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
+      bleDevice = null; // Reset device object on error
    }
   finally {
       startBtn.disabled = false;
@@ -712,18 +775,26 @@ function startJsTimer() {
 
 async function stopTest() {
   statusText.textContent = 'CALCULATING...'; countText.textContent = '0';
+  if (testTimerInterval) { // Ensure timer is cleared if stopTest is called early
+      clearInterval(testTimerInterval);
+      testTimerInterval = null;
+  }
   try {
-    const command = JSON.stringify({ command: "stop" });
-    await commandCharacteristic.writeValue(textEncoder.encode(command));
+    if (commandCharacteristic) { // Check if characteristic exists
+        const command = JSON.stringify({ command: "stop" });
+        await commandCharacteristic.writeValue(textEncoder.encode(command));
+    } else {
+        console.warn("Stop command not sent: Characteristic unavailable.");
+    }
   } catch (err) { console.warn("Failed to send STOP command", err); }
 
-  const hr_avg = calculateAverage(liveHrReadings.filter(hr => hr > 35 && hr < 220)); // Added upper bound filter
+  const hr_avg = calculateAverage(liveHrReadings.filter(hr => hr > 35 && hr < 220));
   const gsr_avg = calculateAverage(liveGsrReadings.filter(gsr => gsr > 0));
-  const spo2_avg = calculateAverage(liveSpo2Readings.filter(sp => sp > 80 && sp <= 100)); // Added upper bound filter
-  const finger_temp_avg = calculateAverage(liveFingerTempReadings.filter(t => t > 5 && t < 50)); // Added plausible range filter
+  const spo2_avg = calculateAverage(liveSpo2Readings.filter(sp => sp > 80 && sp <= 100));
+  const finger_temp_avg = calculateAverage(liveFingerTempReadings.filter(t => t > 5 && t < 50));
 
   let finger_temp_trend = 0;
-  const validTemps = liveFingerTempReadings.filter(t => t > 5 && t < 50); // Filter before calculating trend
+  const validTemps = liveFingerTempReadings.filter(t => t > 5 && t < 50);
   if (validTemps.length >= 10) {
       const quarter = Math.floor(validTemps.length / 4);
       const firstQuarterAvg = calculateAverage(validTemps.slice(0, quarter));
@@ -744,7 +815,7 @@ async function stopTest() {
 
   analysisSection.style.display = 'block';
   finalLevelText.textContent = level;
-  finalLevelText.className = `level-${level}`;
+  finalLevelText.className = `level-${level}`; // Apply class correctly
   overviewText.textContent = overview;
   overviewText.style.display = 'block';
 
@@ -753,7 +824,7 @@ async function stopTest() {
     hr: hr_avg > 0 ? Math.round(hr_avg) : '--',
     spo2: spo2_avg > 0 ? Math.round(spo2_avg) : '--',
     gsr: gsr_avg >= 0 ? Math.round(gsr_avg) : '--',
-    temp_finger: finger_temp_avg > 0 ? finger_temp_avg.toFixed(1) : '--', // Save temp avg
+    temp_finger: finger_temp_avg > 0 ? finger_temp_avg.toFixed(1) : '--',
     date: new Date().toLocaleString('en-IN'),
     name: nameInput.value || '—',
     age: ageInput.value || '—'
@@ -778,13 +849,18 @@ function onDisconnected(){
       testTimerInterval = null;
   }
   analysisSection.style.display = 'none';
+  // Reset characteristic objects
+  dataCharacteristic = null;
+  commandCharacteristic = null;
+  gattServer = null;
   bleDevice = null;
   startBtn.textContent = 'Connect & Start Test';
+  console.log("BLE Disconnected");
 }
 
 let statusTimeout = null;
 function setBLEStatus(message, level){
-  if (!bleStatusText) return; // Guard against early errors
+  if (!bleStatusText) return;
   bleStatusText.textContent = message;
   let colorVar = '--bad';
   if (level === 'good') colorVar = '--good';
@@ -792,15 +868,16 @@ function setBLEStatus(message, level){
   bleStatusText.style.color = getComputedStyle(document.documentElement).getPropertyValue(colorVar);
 
   if(message === 'Receiving...'){
-    bleStatus.classList.add('pulse-receiving');
-    if(statusTimeout) clearTimeout(statusTimeout);
-    statusTimeout = setTimeout(() => {
-        // Only revert if still connected and receiving
-        if(bleDevice && bleDevice.gatt.connected) {
-             setBLEStatus('Connected', 'good');
-        }
-        bleStatus.classList.remove('pulse-receiving');
-    }, 500);
+    if (!bleStatus.classList.contains('pulse-receiving')) { // Prevent stacking timeouts
+        bleStatus.classList.add('pulse-receiving');
+        if(statusTimeout) clearTimeout(statusTimeout);
+        statusTimeout = setTimeout(() => {
+            if(bleDevice && bleDevice.gatt.connected) {
+                 setBLEStatus('Connected', 'good');
+            }
+            bleStatus.classList.remove('pulse-receiving');
+        }, 500);
+    }
   } else {
     if(statusTimeout) clearTimeout(statusTimeout);
     bleStatus.classList.remove('pulse-receiving');
@@ -824,17 +901,20 @@ function handleDataNotification(event){
     valHR.textContent = hrRaw > 0 ? hrRaw : '--';
     valSp.textContent = (spo2Raw > 0) ? spo2Raw : '--';
     valGSR.textContent = gsrRaw >= 0 ? gsrRaw : '--';
-    valTemp.textContent = tempFingerRaw > 5 ? tempFingerRaw.toFixed(1) : '--'; // Only show plausible temps
+    valTemp.textContent = tempFingerRaw > 5 ? tempFingerRaw.toFixed(1) : '--';
 
     if (hrRaw > 0 && hrRaw < 220) updateChart(hrChart, hrRaw);
     if (spo2Raw > 80 && spo2Raw <= 100) updateChart(spChart, spo2Raw);
     if (gsrRaw >= 0) updateChart(gsrChart, gsrRaw);
     if (tempFingerRaw > 5 && tempFingerRaw < 50) updateChart(tempChart, tempFingerRaw.toFixed(1));
 
-    liveHrReadings.push(hrRaw);
-    liveGsrReadings.push(gsrRaw);
-    liveSpo2Readings.push(spo2Raw);
-    liveFingerTempReadings.push(tempFingerRaw);
+    // Only store data if the test timer is running
+    if (testTimerInterval) {
+        liveHrReadings.push(hrRaw);
+        liveGsrReadings.push(gsrRaw);
+        liveSpo2Readings.push(spo2Raw);
+        liveFingerTempReadings.push(tempFingerRaw);
+    }
 
     if (hrRaw > 0 && !valHR.classList.contains('pulsing')) {
         valHR.classList.add('pulsing');
@@ -916,22 +996,15 @@ function calculateStressLevel(hr_avg, gsr_avg, age, gender, temp, finger_temp_tr
 
 function detectFlatSpO2(spo2Raw){
   if (typeof spo2Raw !== 'number') return;
-  if (spo2Raw === spLast && spo2Raw > 80){ // Only count if value is plausible
+  if (spo2Raw === spLast && spo2Raw > 80){
     spFlatCount++;
   } else {
     spFlatCount = 0;
     spLast = spo2Raw;
   }
-
   if (spFlatCount >= SP_FLAT_LIMIT){
-    // Update suggestList only if analysis section is not already visible
     if(analysisSection.style.display === 'none'){
-        suggestList.innerHTML = `<li>⚠️ SpO₂ is not varying — sensor may not detect pulse. Tips:
-          <ul style="margin:6px 0 0 18px">
-            <li>Fully cover sensor with finger; moderate pressure.</li>
-            <li>Reduce ambient light; cover sensor housing.</li>
-          </ul>
-        </li>`;
+        suggestList.innerHTML = `<li>⚠️ SpO₂ is not varying — sensor may not detect pulse. Tips: <ul style="margin:6px 0 0 18px"><li>Ensure full finger coverage & moderate pressure.</li><li>Reduce ambient light.</li></ul></li>`;
     }
     spFlatCount = 0;
   }
@@ -941,31 +1014,15 @@ function detectFlatSpO2(spo2Raw){
   Local suggestions & history
   ========================= */
 const staticSuggestions = {
-  LOW: [
-    "😌 You're in a calm state. Great job. Take a moment to acknowledge this feeling.",
-    "🧘 Try a simple 3-minute mindfulness exercise to maintain this calm.",
-    "💧 Remember to stay hydrated. A glass of water can help maintain balance."
-  ],
-  MODERATE: [
-    "⚠️ Slight stress detected. Try the '4-7-8' breathing technique: inhale for 4s, hold for 7s, exhale for 8s. Repeat 3 times.",
-    "🚶 Take a 5-minute walk, focusing on your surroundings. Notice 3 things you can see and 2 things you can hear.",
-    "🥤 Drink some water. Dehydration can sometimes mimic or contribute to feelings of stress."
-  ],
-  HIGH: [
-    "🛑 High stress detected. Please pause what you are doing. Your well-being is the priority.",
-    "🧘‍♀️ Use the '5-4-3-2-1' grounding technique: Name 5 things you see, 4 things you feel, 3 things you hear, 2 things you smell, and 1 thing you taste.",
-    "🗣 If possible, step away from your current situation for a few minutes. A change of scenery can help."
-  ],
-   ERROR: [ // Suggestions for error state
-    "❓ Unable to get reliable readings. Please ensure the sensors have good contact with your skin.",
-    "💡 Try cleaning the sensor surfaces gently.",
-    "🔄 Check Bluetooth connection and try the test again."
-   ]
+  LOW: [ "😌 Calm state detected. Maintain hydration.", "🧘 Try a short mindfulness exercise.", "☀️ Keep up the healthy habits!" ],
+  MODERATE: [ "⚠️ Slight stress. Try '4-7-8' breathing.", "🚶 Take a 5-minute walk or stretch.", "🤔 Identify potential minor stressors." ],
+  HIGH: [ "🛑 High stress detected. Pause & breathe deeply.", "🧘‍♀️ Use the '5-4-3-2-1' grounding technique.", "🗣 Consider talking to someone you trust." ],
+   ERROR: [ "❓ Unable to get reliable readings. Ensure good sensor contact.", "💡 Try cleaning the sensor surfaces.", "🔄 Check connection and try again." ]
 };
 
 function renderStaticSuggestions(level){
   suggestList.innerHTML = '';
-  const suggestions = staticSuggestions[level] || staticSuggestions.MODERATE; // Fallback to moderate
+  const suggestions = staticSuggestions[level] || staticSuggestions.MODERATE;
   suggestions.forEach(s => {
     const li = document.createElement('li');
     li.innerHTML = s;
@@ -985,7 +1042,6 @@ function renderHistory(){
   if (!history.length){
     historyList.innerHTML = `<li style="text-align:center;color:var(--text-body);padding:12px">No sessions recorded yet.</li>`; return;
   }
-  // Display avg temp in history if available
   historyList.innerHTML = history.map(h => `
     <li class="history-item">
       <div style="flex:1">
@@ -999,26 +1055,40 @@ function renderHistory(){
     </li>
   `).join('');
 }
-resetHistoryBtn.addEventListener('click', ()=>{ localStorage.removeItem(HISTORY_KEY); renderHistory(); });
+resetHistoryBtn.addEventListener('click', ()=>{
+    if (confirm("Are you sure you want to clear all session history?")) {
+        localStorage.removeItem(HISTORY_KEY);
+        renderHistory();
+    }
+});
 renderHistory();
 
 /* =========================
   Profile Management
   ========================= */
 function saveProfile() {
-    localStorage.setItem('nw_profile', JSON.stringify({
-        name: nameInput.value||'',
-        age: ageInput.value||'',
-        gender: genderInput.value||''
-    }));
+    try {
+        localStorage.setItem('nw_profile', JSON.stringify({
+            name: nameInput.value||'',
+            age: ageInput.value||'',
+            gender: genderInput.value||''
+        }));
+        console.log("Profile saved:", localStorage.getItem('nw_profile'));
+    } catch (e) {
+        console.error("Error saving profile to localStorage:", e);
+    }
 }
 [nameInput, ageInput, genderInput].forEach(el => el.addEventListener('change', saveProfile));
 
 (() => {
-  const p = JSON.parse(localStorage.getItem('nw_profile') || '{}');
-  if (p.name) nameInput.value = p.name;
-  if (p.age) ageInput.value = p.age;
-  if (p.gender) genderInput.value = p.gender;
+  try {
+    const p = JSON.parse(localStorage.getItem('nw_profile') || '{}');
+    if (p.name) nameInput.value = p.name;
+    if (p.age) ageInput.value = p.age;
+    if (p.gender) genderInput.value = p.gender;
+  } catch (e) {
+    console.error("Error loading profile from localStorage:", e);
+  }
 })();
 
 /* =========================
@@ -1078,11 +1148,26 @@ breathStopBtn.addEventListener('click', stopBreathing);
 /* =========================
   Gemini integration (AI)
   ========================= */
-async function fetchWithBackoff(url, options, retries = 3, delay = 1000){ /* fetch with retry logic */ }
+async function fetchWithBackoff(url, options, retries = 3, delay = 1000){
+  try {
+    const resp = await fetch(url, options);
+    if (!resp.ok && retries > 0 && (resp.status === 429 || resp.status >= 500)) {
+      await new Promise(r => setTimeout(r, delay));
+      return fetchWithBackoff(url, options, retries - 1, delay * 2);
+    }
+    return resp;
+  } catch (err) {
+    if (retries > 0){
+      await new Promise(r => setTimeout(r, delay));
+      return fetchWithBackoff(url, options, retries - 1, delay * 2);
+    }
+    throw err;
+  }
+}
 async function askGeminiAnalysis(userQuestion='Please analyze my last session and give tips.'){
   if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
     appendChatMessage('system', 'Gemini API key not set. Cannot provide AI suggestions.');
-    return; // Don't replace existing suggestions if AI fails here
+    return;
   }
   appendChatMessage('user', userQuestion);
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
@@ -1096,15 +1181,18 @@ async function askGeminiAnalysis(userQuestion='Please analyze my last session an
     if (!resp.ok) throw new Error(`Gemini error ${resp.status}`);
     const result = await resp.json();
     const candidate = result.candidates?.[0];
+    // Check for safety ratings or blocked content
+    if (candidate?.finishReason && candidate.finishReason !== 'STOP'){
+        throw new Error(`Gemini response stopped: ${candidate.finishReason}`);
+    }
     const text = candidate?.content?.parts?.[0]?.text || JSON.stringify(result);
+
     appendChatMessage('assistant', text);
-    // Overwrite the static suggestions with AI suggestions
     const parts = text.split('\n').filter(s => s.trim().length > 0);
     suggestList.innerHTML = parts.map(s => `<li>${escapeHtml(s)}</li>`).join('');
   } catch (err) {
-    console.error('Gemini error', err);
-    appendChatMessage('assistant', 'Sorry — the AI analysis failed. Displaying standard suggestions.');
-    // If AI fails, ensure static suggestions are shown (they should be already, but belt-and-suspenders)
+    console.error('Gemini error:', err);
+    appendChatMessage('assistant', `Sorry — AI analysis failed (${err.message}). Displaying standard suggestions.`);
     const lastLevel = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')[0]?.level || 'MODERATE';
     renderStaticSuggestions(lastLevel);
   }
@@ -1113,23 +1201,96 @@ async function askGeminiAnalysis(userQuestion='Please analyze my last session an
 /* =========================
   Chat helpers
   ========================= */
-function appendChatMessage(who, text){ /* append message code */ }
+function appendChatMessage(who, text){
+  const div = document.createElement('div');
+  if (who === 'user') div.style.textAlign = 'right', div.innerHTML = `<div style="display:inline-block;background:var(--accent);color:var(--bg);padding:8px;border-radius:8px;margin:6px">${escapeHtml(text)}</div>`;
+  else if (who === 'assistant') div.innerHTML = `<div style="display:inline-block;background:var(--glass);color:var(--text);padding:8px;border-radius:8px;margin:6px">${text.replace(/\n/g, '<br>')}</div>`;
+  else div.innerHTML = `<div style="display:inline-block;color:var(--text-body);padding:6px;margin:6px">${escapeHtml(text)}</div>`;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
 function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 chatFab.addEventListener('click', ()=> chatPanel.classList.toggle('active'));
 closeChatBtn.addEventListener('click', ()=> chatPanel.classList.remove('active'));
-sendChatBtn.addEventListener('click', ()=> { /* send chat code */ });
-askGeminiBtn.addEventListener('click', ()=> { /* ask gemini code */ });
+sendChatBtn.addEventListener('click', ()=> {
+    const q = chatInput.value.trim();
+    if (!q) return;
+    askGeminiAnalysis(q);
+    chatInput.value = '';
+ });
+askGeminiBtn.addEventListener('click', ()=> {
+    analysisSection.style.display = 'block'; // Ensure section is visible
+    askGeminiAnalysis('Please analyze my last session and give tips.');
+ });
 
 /* =========================
   Modal UI listeners
   ========================= */
-sosBtn.addEventListener('click', ()=> document.getElementById('sos-modal').classList.add('active'));
-closeSosModal.addEventListener('click', ()=> document.getElementById('sos-modal').classList.remove('active'));
+sosBtn.addEventListener('click', ()=> sosModal.classList.add('active'));
+closeSosModal.addEventListener('click', ()=> sosModal.classList.remove('active'));
+
+// --- FIX: Added listener for resources ---
 resourcesBtn.addEventListener('click', () => resourcesModal.classList.add('active'));
 closeResourcesModal.addEventListener('click', () => resourcesModal.classList.remove('active'));
-profileBtn.addEventListener('click', () => { /* profile button code */ });
-closeProfileModal.addEventListener('click', () => { /* close profile code */ });
-saveProfileBtn.addEventListener('click', async () => { /* save profile & maybe start test code */ });
+
+profileBtn.addEventListener('click', () => {
+    profileTitle.textContent = 'Your Profile';
+    saveProfileBtn.textContent = 'Save & Close';
+    document.body.dataset.startTestOnSave = 'false';
+    profileModal.classList.add('active');
+});
+
+closeProfileModal.addEventListener('click', () => {
+    profileModal.classList.remove('active');
+    document.body.dataset.startTestOnSave = 'false';
+});
+
+// --- FIX: Corrected logic for saving and potentially starting test ---
+saveProfileBtn.addEventListener('click', async () => {
+    console.log("Save Profile button clicked."); // Debug log 1
+    saveProfile(); // Always save
+    console.log("Profile data saved."); // Debug log 2
+    profileModal.classList.remove('active'); // Always close
+    console.log("Profile modal closed."); // Debug log 3
+
+    const shouldStartTest = document.body.dataset.startTestOnSave === 'true';
+    console.log("Should start test?", shouldStartTest); // Debug log 4
+    document.body.dataset.startTestOnSave = 'false'; // Reset flag *after* checking
+
+    if (shouldStartTest) {
+      console.log("Attempting to send START command..."); // Debug log 5
+      try {
+        if (!commandCharacteristic) {
+             console.error("BLE Command Characteristic not available! Cannot start test.");
+             setBLEStatus('Error: Not Connected', 'bad');
+             return;
+        }
+
+        const temp = parseInt(roomTempInput.value || '30', 10);
+        let irThr = 20000;
+        if (temp < 20) irThr = 15000; else if (temp >= 28) irThr = 25000;
+
+        // Clear old data arrays and charts
+        liveHrReadings = []; liveGsrReadings = []; liveSpo2Readings = []; liveFingerTempReadings = [];
+        [hrChart, spChart, gsrChart, tempChart].forEach(c => { if (c && c.data) { c.data.labels = []; c.data.datasets[0].data = []; c.update('none'); } });
+        analysisSection.style.display = 'none'; overviewText.style.display = 'none';
+        finalLevelText.textContent = '--'; finalLevelText.className = '';
+
+        const command = JSON.stringify({ command: "start", irThreshold: irThr });
+        console.log("Sending command:", command); // Debug log 6
+        await commandCharacteristic.writeValue(textEncoder.encode(command));
+        console.log("START command sent successfully."); // Debug log 7
+
+        startJsTimer(); // Start JS timer only after command sent
+        console.log("JavaScript timer started."); // Debug log 8
+
+      } catch (err) {
+        console.error("Failed to send START command or start timer", err);
+        setBLEStatus('Command Failed', 'bad');
+      }
+    }
+});
+
 
 /* =========================
   Utility helpers
@@ -1139,8 +1300,14 @@ function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 /* =========================
   Final note / warning about API keys
   ========================= */
-if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") { /* warning code */ }
-else { console.log("NeuroWell dashboard loaded. Gemini key is set."); }
+if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
+    console.warn("************************************************************");
+    console.warn("GEMINI_API_KEY is not set!");
+    console.warn("Paste your key at the top of the <script> block in this HTML file.");
+    console.warn("************************************************************");
+} else {
+    console.log("NeuroWell dashboard loaded. Gemini key is set.");
+}
 
 </script>
 </body>
