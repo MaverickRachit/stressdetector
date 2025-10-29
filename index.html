@@ -18,7 +18,6 @@
      * ========================================
      */
      
-    /* 1. DEFAULT DARK MODE (as :root) */
     :root {
       --bg: #020617; /* Dark Navy Blue */
       --card-bg: rgba(255, 255, 255, 0.05);
@@ -34,7 +33,6 @@
       --bad: #f87171;
     }
 
-    /* 2. LIGHT MODE (activated by class on <body>) */
     body.light-mode {
       --bg: #f0f2f5; /* Light grayish-blue (not white) */
       --card-bg: rgba(255, 255, 255, 0.7);
@@ -43,9 +41,7 @@
       --text-body: #334155; /* Medium Slate */
       --text-muted: #64748b; /* Light Slate */
       --input-bg: rgba(255, 255, 255, 0.5);
-
       --accent: #0891b2; /* Darker Cyan */
-      /* --good, --warn, --bad can stay the same */
     }
 
     * { box-sizing: border-box; }
@@ -61,7 +57,6 @@
       transition: background-color 0.3s ease, color 0.3s ease;
     }
     
-    /* Hide light-mode background gradients */
     body.light-mode {
         background-image: none;
     }
@@ -142,7 +137,10 @@
       font-weight: 500;
       margin-bottom: 8px;
     }
-    input[type=number], button {
+    input[type=number], 
+    input[type=text],
+    input[type=email],
+    button {
       width: 100%;
       padding: 12px 16px;
       border-radius: 10px;
@@ -220,7 +218,6 @@
     .theme-toggle svg {
         stroke: var(--text-muted);
     }
-    /* Logic to show/hide icons */
     .theme-toggle #theme-icon-moon { display: none; }
     body.light-mode .theme-toggle #theme-icon-sun { display: none; }
     body.light-mode .theme-toggle #theme-icon-moon { display: inline-block; }
@@ -348,6 +345,17 @@
     }
     #suggestList li strong { color: var(--accent); }
 
+    /* NEW: Email Button */
+    #email-results-container {
+        margin-top: 20px;
+    }
+    #sendEmailBtn {
+        width: 100%;
+        text-align: center;
+        text-decoration: none;
+        display: block;
+    }
+
     /* Breathing Pacemaker */
     .breather-circle {
       width: 150px;
@@ -442,7 +450,7 @@
       transition: all 0.3s ease;
     }
     body.light-mode .modal-overlay {
-        background: rgba(240, 242, 245, 0.6); /* Light bg for overlay */
+        background: rgba(240, 242, 245, 0.6);
     }
     
     .modal-overlay.active {
@@ -479,6 +487,19 @@
       color: var(--accent);
     }
 
+    /* NEW: User Info Modal Form */
+    .user-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .user-form-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 10px;
+    }
+    
     /* Article List */
     .article-list {
       list-style: none;
@@ -541,7 +562,7 @@
         </div>
         <button id="themeToggleBtn" class="theme-toggle" title="Toggle theme">
           <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 18.36l1.42-1.42M18.36 4.22l1.42-1.42"/></svg>
-          <svg id="theme-icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg id="theme-icon-moon" xmlns="http://www.w3.org/2s00/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         </button>
         <button id="sosBtn" class="sos">SOS</button>
       </div>
@@ -618,6 +639,7 @@
             <div class="card-title" style="padding-bottom: 0; margin-bottom: 20px;">Analysis & AI Suggestions</div>
             <div id="finalLevel" class="">--</div>
             <ol id="suggestList"></ol>
+            <div id="email-results-container"></div>
           </div>
         </div>
         
@@ -660,30 +682,10 @@
     <div class="modal-content card">
       <div class="card-title">
         Emergency Helplines (India)
-        <button id="close-sos-modal" style="width: auto; padding: 5px 10px; font-weight: 700;">X</button>
+        <button id="close-sos-modal" class="secondary" style="width: auto; padding: 5px 10px; font-weight: 700;">X</button>
       </div>
       <div class="helpline-list">
-        <div class="helpline">
-          <div class="helpline-name">Ambulance</div>
-          <div class="helpline-number">102 / 108</div>
         </div>
-        <div class="helpline">
-          <div class="helpline-name">Police</div>
-          <div class="helpline-number">100 / 112</div>
-        </div>
-        <div class="helpline">
-          <div class="helpline-name">National Mental Health</div>
-          <div class="helpline-number">1800-599-0019</div>
-        </div>
-        <div class="helpline">
-          <div class="helpline-name">KIRAN (Mental Health)</div>
-          <div class="helpline-number">1800-599-0019</div>
-        </div>
-        <div class="helpline">
-          <div class="helpline-name">Senior Citizen Helpline</div>
-          <div class="helpline-number">14567</div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -691,12 +693,39 @@
     <div class="modal-content card">
       <div class="card-title">
         Calming Exercise
-        <button id="close-breather-modal" style="width: auto; padding: 5px 10px; font-weight: 700;">X</button>
+        <button id="close-breather-modal" class="secondary" style="width: auto; padding: 5px 10px; font-weight: 700;">X</button>
       </div>
       <div class="breather">
         <div class="breather-circle" id="breather-circle-text">Inhale...</div>
         <div class="breather-text" id="breather-text">Follow the circle for 1 minute.</div>
         <div class="breather-timer" id="breather-timer">60s</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="user-info-modal">
+    <div class="modal-content card">
+      <div class="card-title">
+        User Details (Optional)
+      </div>
+      <div class="user-form">
+        <div>
+          <label for="userName">Name</label>
+          <input type="text" id="userNameInput" placeholder="e.g., Rohan">
+        </div>
+        <div>
+          <label for="userAge">Age</label>
+          <input type="number" id="userAgeInput" placeholder="e.g., 25">
+        </div>
+        <div>
+          <label for="userEmail">Email</label>
+          <input type="email" id="userEmailInput" placeholder="e.g., rohan@example.com">
+        </div>
+        
+        <div class="user-form-buttons">
+            <button id="skipUserBtn" class="secondary">Skip</button>
+            <button id="saveUserBtn" class="primary">Save & Start Test</button>
+        </div>
       </div>
     </div>
   </div>
@@ -709,14 +738,14 @@
  * ========================================
 */
 
-// --- BLE UUIDs (Must match ESP32) ---
+// --- BLE UUIDs ---
 const SERVICE_UUID    = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const CHAR_DATA_UUID    = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 const CHAR_COMMAND_UUID = "a88a02e0-8422-42b0-a555-5203361a832a";
 
-// --- Gemini API URL (Uses v1beta) ---
+// --- Gemini API URL ---
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
-const API_KEY = ""; // No key needed when run in this environment
+const API_KEY = "";
 
 // --- Global BLE Objects ---
 let bleDevice = null;
@@ -725,6 +754,11 @@ let dataCharacteristic = null;
 let commandCharacteristic = null;
 const textDecoder = new TextDecoder('utf-8');
 const textEncoder = new TextEncoder();
+
+// --- NEW: Global User Info ---
+let userName = '';
+let userAge = '';
+let userEmail = '';
 
 // --- UI Elements ---
 const startBtn = document.getElementById('startBtn');
@@ -744,6 +778,7 @@ const roomTempInput = document.getElementById('roomTemp');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 const sunIcon = document.getElementById('theme-icon-sun');
 const moonIcon = document.getElementById('theme-icon-moon');
+const emailResultsContainer = document.getElementById('email-results-container');
 
 // Modal Elements
 const sosBtn = document.getElementById('sosBtn');
@@ -755,6 +790,15 @@ const breatherCircle = document.getElementById('breather-circle-text');
 const breatherCircleText = document.getElementById('breather-circle-text');
 const breatherText = document.getElementById('breather-text');
 const breatherTimer = document.getElementById('breather-timer');
+
+// NEW: User Info Modal Elements
+const userInfoModal = document.getElementById('user-info-modal');
+const saveUserBtn = document.getElementById('saveUserBtn');
+const skipUserBtn = document.getElementById('skipUserBtn');
+const userNameInput = document.getElementById('userNameInput');
+const userAgeInput = document.getElementById('userAgeInput');
+const userEmailInput = document.getElementById('userEmailInput');
+
 
 // --- Fallback Suggestions ---
 const staticSuggestions = {
@@ -788,16 +832,7 @@ let hrChart, spChart, gsrChart;
 function createCharts() {
   const chartConfig = (label, color) => ({
     type: 'line',
-    data: {
-      labels: [],
-      datasets: [{
-        label: label,
-        data: [],
-        borderColor: color,
-        borderWidth: 4,
-        pointRadius: 0,
-        tension: 0.4,
-        fill: true,
+    data: { labels: [], datasets: [{ label: label, data: [], borderColor: color, borderWidth: 4, pointRadius: 0, tension: 0.4, fill: true,
         backgroundColor: (ctx) => {
           const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
           gradient.addColorStop(0, `${color}80`);
@@ -807,17 +842,10 @@ function createCharts() {
       }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 500, easing: 'easeOutQuart' },
-      plugins: { legend: { display: false } },
+      responsive: true, maintainAspectRatio: false, animation: { duration: 500, easing: 'easeOutQuart' }, plugins: { legend: { display: false } },
       scales: {
         x: { display: false, grid: { display: false } },
-        y: {
-          display: true,
-          ticks: { color: 'var(--text-muted)' }, // Uses CSS variable
-          grid: { color: 'var(--card-border)' }  // Uses CSS variable
-        }
+        y: { display: true, ticks: { color: 'var(--text-muted)' }, grid: { color: 'var(--card-border)' } }
       }
     }
   });
@@ -830,16 +858,12 @@ function createCharts() {
   spChart.options.scales.y.max = 100;
 }
 
-// *** MODIFIED ***
-// Allows 0 values to be plotted, but filters out undefined/null/-1
 function updateChart(chart, value) {
   if (!chart || value === undefined || value === null || value === -1) {
       return; // Do not plot invalid data
   }
-  
   chart.data.labels.push('');
   chart.data.datasets[0].data.push(value);
-
   if (chart.data.labels.length > MAX_CHART_POINTS) {
     chart.data.labels.shift();
     chart.data.datasets[0].data.shift();
@@ -857,25 +881,21 @@ getLocationBtn.addEventListener('click', () => {
     alert("Geolocation is not supported by this browser.");
   }
 });
-
 async function fetchWeather(position) {
   const { latitude, longitude } = position.coords;
   const weatherApiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
-
   try {
     const response = await fetch(weatherApiUrl);
     const data = await response.json();
     if (data.current_weather && data.current_weather.temperature) {
       roomTempInput.value = Math.round(data.current_weather.temperature);
     }
-  } catch (error) {
-    console.error("Error fetching weather:", error);
+  } catch (error) { console.error("Error fetching weather:", error);
   } finally {
     getLocationBtn.disabled = false;
     getLocationBtn.textContent = '📍';
   }
 }
-
 function handleLocationError(error) {
   console.error("Error getting location:", error.message);
   alert(`Error: ${error.message}. Please enter temperature manually.`);
@@ -884,9 +904,36 @@ function handleLocationError(error) {
 }
 
 
-// --- Web Bluetooth Logic ---
-startBtn.addEventListener('click', async () => {
+// --- MODIFIED: Web Bluetooth Logic ---
+
+// Start button now opens the user info modal
+startBtn.addEventListener('click', () => {
+    userInfoModal.classList.add('active');
+});
+
+// User info modal "Save" button
+saveUserBtn.addEventListener('click', () => {
+    userName = userNameInput.value;
+    userAge = userAgeInput.value;
+    userEmail = userEmailInput.value;
+    userInfoModal.classList.remove('active');
+    initiateBleConnection(); // Start the connection
+});
+
+// User info modal "Skip" button
+skipUserBtn.addEventListener('click', () => {
+    // Clear any previous user info
+    userName = '';
+    userAge = '';
+    userEmail = '';
+    userInfoModal.classList.remove('active');
+    initiateBleConnection(); // Start the connection
+});
+
+// This function now contains the original startBtn logic
+async function initiateBleConnection() {
   startBtn.disabled = true;
+  startBtn.textContent = 'Connecting...';
 
   try {
     if (!bleDevice || !bleDevice.gatt.connected) {
@@ -927,6 +974,7 @@ startBtn.addEventListener('click', async () => {
     finalLevelText.textContent = '--';
     finalLevelText.className = '';
     suggestList.innerHTML = '';
+    emailResultsContainer.innerHTML = ''; // Clear email button
 
     [hrChart, spChart, gsrChart].forEach(chart => {
       if (chart) {
@@ -947,61 +995,51 @@ startBtn.addEventListener('click', async () => {
     if (bleDevice) bleDevice.gatt.disconnect();
   } finally {
     startBtn.disabled = false;
+    startBtn.textContent = 'Connect & Start Test'; // Reset button text
   }
-});
+}
 
-// *** MODIFIED ***
-// Main data handler with debugging
+// Main data handler
 function handleDataNotification(event) {
   const jsonString = textDecoder.decode(event.target.value);
-
   try {
     const data = JSON.parse(jsonString);
-
-    // *** IMPORTANT DEBUGGING STEP ***
-    // Open the console (F12) to see what your ESP32 is sending.
-    // The keys (like "hr", "spo2", "gsr", "status") MUST match.
-    console.log("Received data object from ESP32:", data);
+    // console.log("Received data object from ESP32:", data);
     
-    // Safer assignments: use 'undefined' check
     const hr = data.hr !== undefined ? data.hr : 0;
     const spo2 = data.spo2 !== undefined ? data.spo2 : -1;
     const gsr = data.gsr !== undefined ? data.gsr : 0;
-    const status = data.status; // Get status
+    const status = data.status;
 
-    // Update text values
     valHR.textContent = hr > 0 ? hr.toFixed(0) : '--';
     valSp.textContent = spo2 > 0 ? spo2 : '--';
     valGSR.textContent = gsr > 0 ? gsr.toFixed(0) : '--';
 
-    // Animate heart
     if (hr > 40) {
       heartIcon.style.animationDuration = `${(60 / hr).toFixed(2)}s`;
     }
 
-    // Update charts
     updateChart(hrChart, hr);
     updateChart(spChart, spo2);
     updateChart(gsrChart, gsr);
 
     statusText.textContent = status || 'UNKNOWN';
 
-    // Check status from the data object
     if (status === "MEASURING") {
       countText.textContent = data.timeLeft ? Math.ceil(data.timeLeft / 1000) : '0';
       analysisSection.style.display = 'none';
     }
     
-    // Check if status is "DONE" to save history
     if (status === "DONE") {
-      console.log("Session 'DONE'. Saving history..."); // Debug log
+      console.log("Session 'DONE'. Saving history...");
       countText.textContent = 0;
       analysisSection.style.display = 'block';
       const level = data.finalLevel || 'ERROR';
       finalLevelText.textContent = level;
       finalLevelText.className = `level-${level}`;
 
-      getAISuggestions(level, data.hr, data.spo2, data.gsr, parseInt(roomTempInput.value || '30'));
+      // MODIFIED: Pass user info to AI
+      getAISuggestions(level, data.hr, data.spo2, data.gsr, parseInt(roomTempInput.value || '30'), userName, userAge);
 
       saveSession({
         level: level,
@@ -1017,9 +1055,10 @@ function handleDataNotification(event) {
   }
 }
 
-// --- Gemini AI Suggestions ---
-async function getAISuggestions(level, hr, spo2, gsr, temp) {
+// --- MODIFIED: Gemini AI Suggestions (now accepts user info) ---
+async function getAISuggestions(level, hr, spo2, gsr, temp, name, age) {
   suggestList.innerHTML = `<li>🧠 Analyzing results and generating personalized AI suggestions...</li>`;
+  emailResultsContainer.innerHTML = ''; // Clear email button
 
   const systemPrompt = `You are an empathetic and professional wellness assistant. A user has just completed a stress test. Their results are provided.
 You MUST:
@@ -1028,7 +1067,10 @@ You MUST:
 3.  Use Google Search to find 2-3 top-rated online counseling or therapy services available in India.
 4.  Return the response ONLY in the specified JSON format.`;
 
+  // MODIFIED: User prompt now includes optional name and age
   const userPrompt = `My stress test results:
+- User Name: ${name || 'Not provided'}
+- User Age: ${age || 'Not provided'}
 - Stress Level: ${level}
 - Avg Heart Rate: ${hr.toFixed(0)} bpm
 - Avg SpO2: ${spo2}%
@@ -1040,20 +1082,9 @@ Please provide analysis, suggestions, and find online therapy resources in India
     type: "OBJECT",
     properties: {
       "analysis": { "type": "STRING", "description": "A brief, 1-2 sentence analysis of the user's stress level." },
-      "suggestions": {
-        type: "ARRAY",
-        items: { "type": "STRING" },
-        description: "A list of 3-4 actionable suggestions with emojis."
-      },
+      "suggestions": { type: "ARRAY", items: { "type": "STRING" }, description: "A list of 3-4 actionable suggestions with emojis." },
       "resources": {
-        type: "ARRAY",
-        items: {
-          type: "OBJECT",
-          properties: {
-            "name": { "type": "STRING", "description": "The name of the counseling service." },
-            "uri": { "type": "STRING", "description": "The website URL for the service." }
-          }
-        },
+        type: "ARRAY", items: { type: "OBJECT", properties: { "name": { "type": "STRING" }, "uri": { "type": "STRING" } } },
         description: "A list of online therapy/counseling resources found via Google Search, available in India."
       }
     },
@@ -1064,11 +1095,7 @@ Please provide analysis, suggestions, and find online therapy resources in India
     contents: [{ parts: [{ text: userPrompt }] }],
     systemInstruction: { parts: [{ text: systemPrompt }] },
     tools: [{ "google_search": {} }],
-    generationConfig: {
-      responseMimeType: "application/json",
-      responseSchema: schema,
-      temperature: 0.7
-    }
+    generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.7 }
   };
 
   try {
@@ -1079,7 +1106,6 @@ Please provide analysis, suggestions, and find online therapy resources in India
     });
 
     if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
-
     const result = await response.json();
     const candidate = result.candidates?.[0];
 
@@ -1087,18 +1113,20 @@ Please provide analysis, suggestions, and find online therapy resources in India
       const jsonText = candidate.content.parts[0].text;
       const aiResponse = JSON.parse(jsonText);
       renderAISuggestions(level, aiResponse);
+      // NEW: Create email button with AI response
+      createEmailButton(level, aiResponse, null, hr, spo2, gsr);
     } else {
       throw new Error("Invalid AI response structure.");
     }
   } catch (error) {
     console.error("Error getting AI suggestions:", error);
-    renderStaticSuggestions(level);
+    // MODIFIED: Pass vitals to fallback
+    renderStaticSuggestions(level, hr, spo2, gsr);
   }
 }
 
 function renderAISuggestions(level, response) {
   let html = '';
-
   if (response.analysis) {
     html += `<li><p>${response.analysis.replace(/\n/g, '<br>')}</p></li>`;
   }
@@ -1115,12 +1143,12 @@ function renderAISuggestions(level, response) {
     ).join('');
   }
   suggestList.innerHTML = html;
-
   addBreatherButtonListener();
 }
 
-function renderStaticSuggestions(level) {
-  suggestList.innerHTML = ''; // Start clean
+// MODIFIED: Now accepts vitals to pass to email button
+function renderStaticSuggestions(level, hr, spo2, gsr) {
+  suggestList.innerHTML = '';
   const suggestions = staticSuggestions[level] || staticSuggestions.MODERATE;
   let html = suggestions.map(s => `<li>${s}</li>`).join('');
 
@@ -1128,8 +1156,10 @@ function renderStaticSuggestions(level) {
     html += `<li><button id="open-breather-btn" class="secondary" style="width: 100%; margin-top: 10px;">🧘 Start Calming Exercise</button></li>`;
   }
   suggestList.innerHTML = html;
-
   addBreatherButtonListener();
+  
+  // NEW: Create email button with fallback suggestions
+  createEmailButton(level, null, suggestions, hr, spo2, gsr);
 }
 
 function addBreatherButtonListener() {
@@ -1140,6 +1170,52 @@ function addBreatherButtonListener() {
       startBreatherAnimation();
     });
   }
+}
+
+// --- NEW: Email Button Function ---
+function createEmailButton(level, aiResponse, fallbackSuggestions, hr, spo2, gsr) {
+    // 1. If no email was provided, do nothing.
+    if (!userEmail) {
+        emailResultsContainer.innerHTML = ''; // Ensure it's empty
+        return;
+    }
+
+    // 2. Prepare Subject
+    const subject = `Your NeuroWell 2.0 Stress Result: ${level}`;
+
+    // 3. Prepare Body
+    let body = `Hello ${userName || 'user'},\n\nHere are the results from your recent stress test:\n\n`;
+    body += `====================\n`;
+    body += `STRESS LEVEL: ${level}\n`;
+    body += `====================\n\n`;
+    body += `Vitals (Average):\n`;
+    body += `•  Heart Rate: ${hr.toFixed(0)} bpm\n`;
+    body += `•  SpO2: ${spo2}%\n`;
+    body += `•  GSR: ${gsr.toFixed(0)}\n\n`;
+    body += `-------------------\nSUGGESTIONS:\n-------------------\n\n`;
+
+    // 4. Add suggestions (from AI or fallback)
+    if (aiResponse) {
+        if (aiResponse.analysis) {
+            body += `Analysis: ${aiResponse.analysis}\n\n`;
+        }
+        aiResponse.suggestions.forEach(s => {
+            body += `•  ${s.replace(/<[^>]*>/g, '')}\n`; // Add suggestion (strip any HTML)
+        });
+    } else if (fallbackSuggestions) {
+        fallbackSuggestions.forEach(s => {
+            body += `•  ${s.replace(/\*\*/g, '')}\n`; // Add suggestion (strip markdown **)
+        });
+    }
+
+    body += `\n\n-------------------\n`;
+    body += `Disclaimer: This tool is not a medical device. These results are not a diagnosis. Please consult a healthcare professional for any health concerns.\n`;
+
+    // 5. Create mailto link
+    const mailtoLink = `mailto:${userEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    // 6. Add the button to the page
+    emailResultsContainer.innerHTML = `<a href="${mailtoLink}" target="_blank" id="sendEmailBtn" class="secondary">✉️ Send Results to Your Email</a>`;
 }
 
 // Utility for retrying fetch
@@ -1168,6 +1244,14 @@ function onDisconnected() {
   analysisSection.style.display = 'none';
   bleDevice = null;
   startBtn.textContent = 'Connect & Start Test';
+  
+  // NEW: Clear user info on disconnect
+  userName = '';
+  userAge = '';
+  userEmail = '';
+  userNameInput.value = '';
+  userAgeInput.value = '';
+  userEmailInput.value = '';
 }
 
 function setBLEStatus(message, color) {
@@ -1185,56 +1269,38 @@ function startBreatherAnimation() {
     if (breatherInterval) clearInterval(breatherInterval);
     if (breatherTimerInterval) clearInterval(breatherTimerInterval);
     if (breatherTimeout) clearTimeout(breatherTimeout);
-
     let secondsLeft = 60;
-    const encouragements = [
-        "You're doing great.", "Focus on your breath.", "Let the tension go.",
-        "Be present.", "Relax your shoulders.", "Just breathe."
-    ];
-
+    const encouragements = ["You're doing great.", "Focus on your breath.", "Let the tension go.", "Be present.", "Relax your shoulders.", "Just breathe."];
     breatherCircle.style.animationPlayState = 'running';
     breatherCircleText.textContent = 'Inhale...';
     breatherText.textContent = "Let's reset with this 1-minute exercise.";
     breatherTimer.textContent = `${secondsLeft}s`;
-
     setTimeout(() => {
          breatherCircleText.textContent = 'Exhale...';
          breatherText.textContent = encouragements[Math.floor(Math.random() * encouragements.length)];
     }, 5000); 
-
     breatherInterval = setInterval(() => {
         breatherCircleText.textContent = 'Inhale...';
         breatherText.textContent = encouragements[Math.floor(Math.random() * encouragements.length)];
-        setTimeout(() => {
-            breatherCircleText.textContent = 'Exhale...';
-        }, 5000); 
+        setTimeout(() => { breatherCircleText.textContent = 'Exhale...'; }, 5000); 
     }, 10000); 
-
     breatherTimerInterval = setInterval(() => {
         secondsLeft--;
         breatherTimer.textContent = `${secondsLeft}s`;
-        if (secondsLeft <= 0) {
-            clearInterval(breatherTimerInterval);
-        }
+        if (secondsLeft <= 0) { clearInterval(breatherTimerInterval); }
     }, 1000);
-
-    breatherTimeout = setTimeout(() => {
-        stopBreatherAnimation(true); 
-    }, 60000);
+    breatherTimeout = setTimeout(() => { stopBreatherAnimation(true); }, 60000);
 }
 
 function stopBreatherAnimation(completed = false) {
     if (breatherInterval) clearInterval(breatherInterval);
     if (breatherTimerInterval) clearInterval(breatherTimerInterval);
     if (breatherTimeout) clearTimeout(breatherTimeout);
-
     breatherCircle.style.animationPlayState = 'paused'; 
-
     if (completed) {
         breatherCircleText.textContent = 'Done!';
         breatherText.textContent = "Great job. You completed the exercise!";
         breatherTimer.textContent = '👍';
-        
         setTimeout(() => {
             if (breatherModal.classList.contains('active')) {
                 breatherModal.classList.remove('active');
@@ -1245,14 +1311,11 @@ function stopBreatherAnimation(completed = false) {
         resetBreather();
     }
 }
-
 function resetBreather() {
     breatherCircleText.textContent = 'Inhale...';
     breatherText.textContent = 'Follow the circle for 1 minute.';
     breatherTimer.textContent = '60s';
 }
-// --- End of Breathing Animation ---
-
 
 // --- Session History (localStorage) ---
 const HISTORY_KEY = 'stressHistory';
@@ -1267,7 +1330,6 @@ function saveSession(sessionData) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
   renderHistory();
 }
-
 function renderHistory() {
   let history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
   if (history.length === 0) {
@@ -1287,15 +1349,10 @@ function renderHistory() {
 // --- Theme Toggle Logic ---
 themeToggleBtn.addEventListener('click', () => {
     document.body.classList.toggle('light-mode');
-    
-    // Save preference to localStorage
     const theme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
     localStorage.setItem('theme', theme);
-    
-    // Update chart colors (they need to re-read the CSS variables)
     updateChartColors();
 });
-
 function applySavedTheme() {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'light') {
@@ -1303,29 +1360,24 @@ function applySavedTheme() {
     } else {
         document.body.classList.remove('light-mode');
     }
-    // No need to update charts here, createCharts() will run after
 }
-
-// Function to update chart colors after theme switch
 function updateChartColors() {
-    // Get the computed style of the body to find the *current* variable values
     const computedStyle = getComputedStyle(document.body);
     const tickColor = computedStyle.getPropertyValue('--text-muted');
     const gridColor = computedStyle.getPropertyValue('--card-border');
-
     [hrChart, spChart, gsrChart].forEach(chart => {
         if (chart) {
             chart.options.scales.y.ticks.color = tickColor;
             chart.options.scales.y.grid.color = gridColor;
-            chart.update('none'); // 'none' to update without animation
-        }
+            chart.update('none');
+S        }
     });
 }
 
 
 // --- Initial Load & Modal Listeners ---
 window.addEventListener('load', () => {
-  applySavedTheme(); // Apply theme before creating charts
+  applySavedTheme();
   createCharts();
   renderHistory();
   
@@ -1342,7 +1394,7 @@ window.addEventListener('load', () => {
   });
 
   // Close modal on overlay click
-  [sosModal, breatherModal].forEach(modal => {
+  [sosModal, breatherModal, userInfoModal].forEach(modal => {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
         modal.classList.remove('active');
