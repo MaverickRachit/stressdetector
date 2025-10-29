@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>NeuroWell 2.0 — Dashboard (BLE + Gemini + Ambient)</title>
 
-  <script src="https://cdn.jsdelivr/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +14,6 @@
   <style>
     :root{
       --bg: #020617;
-      /* --- REFINED: Cleaner "glass" effect --- */
       --card-bg: rgba(255,255,255,0.05);
       --card-border: rgba(255,255,255,0.1);
       --text: #e6eef8;
@@ -39,15 +38,12 @@
     body{
       margin:0;
       font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-      /* --- REFINED: More subtle background --- */
       background: radial-gradient(circle at 10% 20%, rgba(34,211,238,0.05), transparent 30%), radial-gradient(circle at 80% 90%, rgba(139,92,246,0.03), transparent 35%), var(--bg);
       color:var(--text-body);
-      /* --- NEW: Crisper font rendering --- */
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
       text-rendering: optimizeLegibility;
       font-synthesis: none;
-      
       transition: background-color .25s ease, color .25s ease;
       padding:14px;
     }
@@ -63,7 +59,6 @@
 
     .btn {
       padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700;
-      /* --- NEW: Smooth button transitions --- */
       transition: all .2s ease;
     }
     .btn:hover { opacity: 0.85; transform: translateY(-2px); }
@@ -71,7 +66,6 @@
     
     .btn.primary{
       background:var(--accent);color:var(--bg);
-      /* --- NEW: Primary button glow --- */
       box-shadow: 0 4px 22px rgba(34,211,238,0.25);
     }
     .btn.primary:hover{ box-shadow: 0 6px 26px rgba(34,211,238,0.4); }
@@ -85,7 +79,6 @@
     .card{
       background:var(--card-bg); border-radius:12px; padding:16px; border:1px solid var(--card-border);
       box-shadow: 0 10px 30px rgba(2,6,23,0.28);
-      /* --- REFINED: "Float" hover animation --- */
       transition: transform .2s ease, box-shadow .2s ease;
     }
     .card:hover{ 
@@ -96,17 +89,20 @@
     .config-grid{display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:center}
     @media(max-width:640px){ .config-grid{grid-template-columns:1fr; } }
     label{display:block;color:var(--text-body);font-size:13px;margin-bottom:6px;font-weight:600}
-    input[type=number], input[type=text]{padding:10px;border-radius:8px;border:1px solid var(--card-border);background:transparent;color:var(--text);width:100%;transition: border-color .2s ease;}
-    input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); outline: none; }
+    input[type=number], input[type=text], select {
+      padding:10px;border-radius:8px;border:1px solid var(--card-border);
+      background:transparent;color:var(--text);width:100%;transition: border-color .2s ease;
+    }
+    input[type=number]:focus, input[type=text]:focus, select:focus { border-color: var(--accent); outline: none; }
+    /* Fix for dark-mode select options */
+    select option { background: var(--bg); color: var(--text); }
 
     .vitals-grid{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
     @media(max-width:760px){ .vitals-grid{grid-template-columns:1fr 1fr 1fr; } }
     .vital{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:14px;border-radius:12px;text-align:center}
-    /* --- REFINED: Typography for impact --- */
     .vital-label{font-size:12px;color:var(--text-body);display:flex;align-items:center;gap:8px;justify-content:center;font-weight: 600;}
     .vital-value{font-size:40px;font-weight:800;color:var(--text);margin-top:6px}
 
-    /* Heartbeat animation */
     @keyframes pulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.15); }
@@ -133,7 +129,6 @@
     .history-item{display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid var(--card-border)}
     .muted{color:var(--text-body);font-size:13px}
     
-    /* --- NEW: Modal Animation --- */
     @keyframes modalPopIn {
       from { opacity: 0; transform: scale(0.95); }
       to { opacity: 1; transform: scale(1); }
@@ -141,7 +136,6 @@
     .modal-overlay{
       position:fixed;inset:0;display:none;align-items:center;justify-content:center;
       background:rgba(2,6,23,0.6);z-index:200;backdrop-filter: blur(4px);
-      /* Base styles for fade */
       opacity: 0; visibility: hidden;
       transition: opacity .2s ease, visibility .2s ease;
     }
@@ -152,10 +146,8 @@
     .modal{
       width:92%;max-width:520px;background:var(--card-bg);padding:16px;
       border-radius:12px;border:1px solid var(--card-border);
-      /* Apply pop-in animation */
       animation: modalPopIn 0.2s ease-out forwards;
     }
-    /* Hide modal content initially */
     .modal-overlay:not(.active) .modal {
       display: none;
     }
@@ -167,7 +159,6 @@
       transform:scale(.6);opacity:.9;border:6px solid rgba(255,255,255,0.04);transition:transform 1s ease;
     }
 
-    /* chat bubble */
     .chat-floating{
       position:fixed;right:20px;bottom:22px;width:56px;height:56px;border-radius:50%;
       display:grid;place-items:center;background:var(--accent);color:var(--bg);z-index:400;cursor:pointer;box-shadow:0 10px 30px rgba(2,6,23,0.4);
@@ -184,7 +175,6 @@
     .audio-toggle:hover { border-color: var(--text-body); color: var(--text); }
     .small{font-size:12px}
 
-    /* --- NEW: Data receiving pulse --- */
     @keyframes receivingPulse {
       0% { color: var(--accent); }
       50% { color: var(--good); }
@@ -207,6 +197,7 @@
         <div id="bleStatus" class="muted">Status: <span style="color:var(--bad);font-weight:800" id="bleStatusText">Disconnected</span></div>
         <button id="profileBtn" class="btn ghost small">Profile</button>
         <button id="resourcesBtn" class="btn ghost small">Resources</button>
+        <div class="audio-toggle" id="hbToggle" title="Toggle Heartbeat Sound">❤️ <span id="hbLabel" class="small">HB Off</span></div>
         <div class="audio-toggle" id="themeToggle" title="Toggle Light / Dark">🌙 <span id="themeLabel" class="small">Dark</span></div>
         <button id="sosBtn" class="btn sos">SOS</button>
       </div>
@@ -342,7 +333,7 @@
     
     <div class="modal-overlay" id="profile-modal"><div class="modal card">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-weight:700">Your Profile</div>
+        <div style="font-weight:700" id="profile-title">Your Profile</div>
         <button id="close-profile-modal" class="btn ghost">X</button>
       </div>
       <div style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
@@ -350,11 +341,23 @@
             <label style="font-weight:700;color:var(--text);">Name</label>
             <input id="userName" placeholder="Enter name" />
         </div>
-        <div>
-            <label style="font-weight:700;color:var(--text);">Age</label>
-            <input id="userAge" type="number" placeholder="Enter age" style="width:120px" />
+        <div style="display:flex; gap: 12px;">
+            <div style="flex:1;">
+                <label style="font-weight:700;color:var(--text);">Age</label>
+                <input id="userAge" type="number" placeholder="Enter age" />
+            </div>
+             <div style="flex:1;">
+                <label style="font-weight:700;color:var(--text);">Gender</label>
+                <select id="userGender">
+                    <option value="">Select...</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer_not_to_say">Prefer not to say</option>
+                </select>
+            </div>
         </div>
-        <div class="muted" id="profileNote" style="margin-top:8px;">Optional: entering name & age helps personalize suggestions. You can skip.</div>
+        <div class="muted" id="profileNote" style="margin-top:8px;">Optional: this info is sent to the device to help calibrate results.</div>
         <button id="save-profile-btn" class="btn primary" style="align-self:flex-end">Save & Close</button>
       </div>
     </div></div>
@@ -374,16 +377,6 @@
           <li style="background:var(--glass);padding:12px;border-radius:8px;">
             <div style="font-weight:700;color:var(--text)">5-Minute Mindfulness Exercises</div>
             <div class="muted" style="font-size:12px; margin-top:4px;">Simple exercises you can do at your desk to recalibrate.</div>
-            <a href="#" onclick="alert('Placeholder: This would link to a real article.')" style="color:var(--accent);font-size:12px;font-weight:700;margin-top:6px;display:inline-block;">Read More</a>
-          </li>
-          <li style="background:var(--glass);padding:12px;border-radius:8px;">
-            <div style="font-weight:700;color:var(--text)">The Science of Deep Breathing</div>
-            <div class="muted" style="font-size:12px; margin-top:4px;">How diaphragmatic breathing calms your nervous system.</div>
-            <a href="#" onclick="alert('Placeholder: This would link to a real article.')" style="color:var(--accent);font-size:12px;font-weight:700;margin-top:6px;display:inline-block;">Read More</a>
-          </li>
-           <li style="background:var(--glass);padding:12px;border-radius:8px;">
-            <div style="font-weight:700;color:var(--text)">Journaling for Mental Clarity</div>
-            <div class="muted" style="font-size:12px; margin-top:4px;">Techniques for reducing stress through writing.</div>
             <a href="#" onclick="alert('Placeholder: This would link to a real article.')" style="color:var(--accent);font-size:12px;font-weight:700;margin-top:6px;display:inline-block;">Read More</a>
           </li>
         </ul>
@@ -417,8 +410,7 @@ const SERVICE_UUID    = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const CHAR_DATA_UUID    = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 const CHAR_COMMAND_UUID = "a88a02e0-8422-42b0-a555-5203361a832a";
 
-const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
-// !! IMPORTANT !! PASTE YOUR GEMINI API KEY HERE
+const GEMINI_BASE = "https.generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
 const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
 /* ========================= */
 
@@ -461,6 +453,7 @@ const breathCyclesLabel = document.getElementById('breathCycles');
 
 const profileBtn = document.getElementById('profileBtn');
 const profileModal = document.getElementById('profile-modal');
+const profileTitle = document.getElementById('profile-title');
 const closeProfileModal = document.getElementById('close-profile-modal');
 const saveProfileBtn = document.getElementById('save-profile-btn');
 
@@ -470,11 +463,16 @@ const closeResourcesModal = document.getElementById('close-resources-modal');
 
 const nameInput = document.getElementById('userName');
 const ageInput = document.getElementById('userAge');
+const genderInput = document.getElementById('userGender'); // <-- NEW
 const themeToggle = document.getElementById('themeToggle');
 const themeLabel = document.getElementById('themeLabel');
 const chartToggle = document.getElementById('chartToggle');
 const resetHistoryBtn = document.getElementById('resetHistoryBtn');
 const askGeminiBtn = document.getElementById('askGeminiBtn');
+
+/* --- NEW: Heartbeat Audio Refs --- */
+const hbToggle = document.getElementById('hbToggle');
+const hbLabel = document.getElementById('hbLabel');
 
 /* Gemini chat */
 const chatFab = document.getElementById('chatFab');
@@ -488,15 +486,12 @@ const sendChatBtn = document.getElementById('sendChatBtn');
 const MAX_POINTS = 40;
 let hrChart, spChart, gsrChart;
 
-/* --- NEW: Light smoothing re-introduced --- */
 const HR_BUFFER = [], SP_BUFFER = [], GSR_BUFFER = [];
-const SMOOTH_WINDOW = 3; // Small window for fast response + clean look
+const SMOOTH_WINDOW = 3; 
 
-/* flat SpO2 detection */
 let spLast = null, spFlatCount = 0;
 const SP_FLAT_LIMIT = 6;
 
-/* history key */
 const HISTORY_KEY = 'stressHistory';
 const MAX_HISTORY = 10;
 
@@ -515,60 +510,130 @@ themeToggle.addEventListener('click', () => {
 });
 applyTheme();
 
-/* audio: ambient background using WebAudio (no external file) */
-let audioCtx = null, masterGain = null, droneOsc = null, lfo = null;
-let audioPlaying = false;
+/* =========================
+  AUDIO SYSTEMS
+  ========================= */
 
-function initAudio(){
-  if (audioCtx) return;
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  masterGain = audioCtx.createGain();
-  masterGain.gain.value = 0.0;
-  masterGain.connect(audioCtx.destination);
+/* --- Ambient (Breathing) Audio --- */
+let ambientAudioCtx = null, ambientMasterGain = null, droneOsc = null, ambientLfo = null;
+let ambientAudioPlaying = false;
 
-  droneOsc = audioCtx.createOscillator();
+function initAmbientAudio(){
+  if (ambientAudioCtx) return;
+  ambientAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  ambientMasterGain = ambientAudioCtx.createGain();
+  ambientMasterGain.gain.value = 0.0;
+  ambientMasterGain.connect(ambientAudioCtx.destination);
+
+  droneOsc = ambientAudioCtx.createOscillator();
   droneOsc.type = 'sine';
   droneOsc.frequency.value = 110;
-  const droneGain = audioCtx.createGain();
+  const droneGain = ambientAudioCtx.createGain();
   droneGain.gain.value = 0.0;
 
-  lfo = audioCtx.createOscillator();
-  lfo.type = 'sine';
-  lfo.frequency.value = 0.08;
-  const lfoGain = audioCtx.createGain();
+  ambientLfo = ambientAudioCtx.createOscillator();
+  ambientLfo.type = 'sine';
+  ambientLfo.frequency.value = 0.08;
+  const lfoGain = ambientAudioCtx.createGain();
   lfoGain.gain.value = 0.25;
 
-  lfo.connect(lfoGain);
+  ambientLfo.connect(lfoGain);
   lfoGain.connect(droneGain.gain);
   droneOsc.connect(droneGain);
-  droneGain.connect(masterGain);
+  droneGain.connect(ambientMasterGain);
 
-  const hp = audioCtx.createBiquadFilter();
+  const hp = ambientAudioCtx.createBiquadFilter();
   hp.type = 'highpass';
   hp.frequency.value = 20;
-  const lp = audioCtx.createBiquadFilter();
+  const lp = ambientAudioCtx.createBiquadFilter();
   lp.type = 'lowpass';
   lp.frequency.value = 1200;
   droneGain.connect(hp);
   hp.connect(lp);
-  lp.connect(masterGain);
+  lp.connect(ambientMasterGain);
 
   droneOsc.start();
-  lfo.start();
+  ambientLfo.start();
 }
 
-function setAudio(play) {
-    if (!audioCtx) initAudio();
-    if (play && !audioPlaying) {
-        audioCtx.resume().then(() => {
-            masterGain.gain.exponentialRampToValueAtTime(0.22, audioCtx.currentTime + 1.2);
-            audioPlaying = true;
+function setAmbientAudio(play) {
+    if (!ambientAudioCtx) initAmbientAudio();
+    if (play && !ambientAudioPlaying) {
+        ambientAudioCtx.resume().then(() => {
+            ambientMasterGain.gain.exponentialRampToValueAtTime(0.22, ambientAudioCtx.currentTime + 1.2);
+            ambientAudioPlaying = true;
         });
-    } else if (!play && audioPlaying) {
-        masterGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.0);
-        audioPlaying = false;
+    } else if (!play && ambientAudioPlaying) {
+        ambientMasterGain.gain.exponentialRampToValueAtTime(0.0001, ambientAudioCtx.currentTime + 1.0);
+        ambientAudioPlaying = false;
     }
 }
+
+/* --- NEW: Heartbeat Audio --- */
+let hbAudioCtx = null, hbMasterGain = null, thumpOsc1 = null, thumpGain1 = null, thumpOsc2 = null, thumpGain2 = null;
+let hbAudioPlaying = false;
+let hbInterval = null;
+
+function initHeartbeatAudio() {
+    if (hbAudioCtx) return;
+    hbAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    hbMasterGain = hbAudioCtx.createGain();
+    hbMasterGain.gain.value = 0.0; // Start silent
+    hbMasterGain.connect(hbAudioCtx.destination);
+    
+    // Thump 1 (BA)
+    thumpOsc1 = hbAudioCtx.createOscillator();
+    thumpOsc1.type = 'sine';
+    thumpOsc1.frequency.value = 60; // Low thump
+    thumpGain1 = hbAudioCtx.createGain();
+    thumpGain1.gain.value = 0;
+    thumpOsc1.connect(thumpGain1).connect(hbMasterGain);
+    thumpOsc1.start();
+    
+    // Thump 2 (DUM)
+    thumpOsc2 = hbAudioCtx.createOscillator();
+    thumpOsc2.type = 'sine';
+    thumpOsc2.frequency.value = 50; // Slightly lower
+    thumpGain2 = hbAudioCtx.createGain();
+    thumpGain2.gain.value = 0;
+    thumpOsc2.connect(thumpGain2).connect(hbMasterGain);
+    thumpOsc2.start();
+}
+
+function playHeartbeatSound() {
+    if (!hbAudioCtx) return;
+    const now = hbAudioCtx.currentTime;
+    
+    // Ba
+    thumpGain1.gain.setValueAtTime(0, now);
+    thumpGain1.gain.linearRampToValueAtTime(0.5, now + 0.02); // Quick attack
+    thumpGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.1); // Fast decay
+    
+    // Dump (slightly after)
+    const dumpTime = now + 0.12;
+    thumpGain2.gain.setValueAtTime(0, dumpTime);
+    thumpGain2.gain.linearRampToValueAtTime(0.4, dumpTime + 0.02);
+    thumpGain2.gain.exponentialRampToValueAtTime(0.001, dumpTime + 0.15);
+}
+
+hbToggle.addEventListener('click', () => {
+    if (!hbAudioCtx) initHeartbeatAudio();
+    
+    hbAudioPlaying = !hbAudioPlaying;
+    if (hbAudioPlaying) {
+        hbAudioCtx.resume().then(() => {
+            hbMasterGain.gain.exponentialRampToValueAtTime(0.3, hbAudioCtx.currentTime + 1.0);
+            playHeartbeatSound(); // Play one immediately
+            hbInterval = setInterval(playHeartbeatSound, 850); // ~70 bpm
+            hbLabel.textContent = 'HB On';
+        });
+    } else {
+        hbMasterGain.gain.exponentialRampToValueAtTime(0.0001, hbAudioCtx.currentTime + 1.0);
+        if (hbInterval) clearInterval(hbInterval);
+        hbInterval = null;
+        hbLabel.textContent = 'HB Off';
+    }
+});
 
 /* =========================
   CHARTS
@@ -584,7 +649,6 @@ function createCharts(){
       type:'line',
       data:{labels:[],datasets:[{
         label, data:[], borderColor:color, 
-        /* --- REFINED: Sleeker charts --- */
         borderWidth:2.5, 
         pointRadius:0, 
         tension:0.4, 
@@ -637,7 +701,7 @@ getLocationBtn.addEventListener('click', () => {
 async function fetchWeather(position){
   try{
     const {latitude,longitude} = position.coords;
-    const api = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
+    const api = `https.api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
     const r = await fetch(api); const data = await r.json();
     if (data.current_weather && typeof data.current_weather.temperature === 'number'){
       roomTempInput.value = Math.round(data.current_weather.temperature);
@@ -648,8 +712,12 @@ async function fetchWeather(position){
 /* =========================
   BLE CONNECT & DATA
   ========================= */
-startBtn.addEventListener('click', async () => {
+
+// --- MODIFIED: Logic moved to its own function ---
+async function startTest() {
   startBtn.disabled = true;
+  startBtn.textContent = 'Connecting...';
+  
   try {
     if (!bleDevice || !bleDevice.gatt.connected) {
       setBLEStatus('Requesting device...', 'warn');
@@ -666,12 +734,17 @@ startBtn.addEventListener('click', async () => {
       await dataCharacteristic.startNotifications();
       dataCharacteristic.addEventListener('characteristicvaluechanged', handleDataNotification);
       setBLEStatus('Connected', 'good');
-      startBtn.textContent = 'Start 40s Test';
     }
-
+    
+    startBtn.textContent = 'Start 40s Test';
     statusText.textContent = 'STARTING';
+
+    // --- MODIFIED: Send all profile/sensor data to ESP32 ---
     const temp = parseInt(roomTempInput.value || '30', 10);
-    let irThr = 20000;
+    const age = parseInt(ageInput.value || '0', 10);
+    const gender = genderInput.value || 'unknown';
+    
+    let irThr = 20000; // Default
     if (temp < 20) irThr = 15000;
     else if (temp >= 28) irThr = 25000;
 
@@ -680,19 +753,42 @@ startBtn.addEventListener('click', async () => {
     finalLevelText.className = '';
     suggestList.innerHTML = '';
     
-    // Clear buffers
     [HR_BUFFER, SP_BUFFER, GSR_BUFFER].forEach(b => b.length = 0);
     [hrChart, spChart, gsrChart].forEach(c => { if (c) { c.data.labels = []; c.data.datasets[0].data = []; c.update(); } });
 
-    const command = JSON.stringify({ roomTemp: temp, irThreshold: irThr });
-    try { await commandCharacteristic.writeValue(textEncoder.encode(command)); } catch(e){ console.warn('Command write failed', e); }
+    // --- NEW: Send age and gender ---
+    const command = JSON.stringify({ 
+        roomTemp: temp, 
+        irThreshold: irThr,
+        age: age,
+        gender: gender
+    });
+    
+    console.log('Sending command to ESP32:', command); // For debugging
+    try { 
+      await commandCharacteristic.writeValue(textEncoder.encode(command)); 
+    } catch(e){ 
+      console.warn('Command write failed', e); 
+    }
 
     statusText.textContent = 'MEASURING';
   } catch (err) {
     console.error('BLE Err', err);
     setBLEStatus('Error', 'bad');
     if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
-  } finally { startBtn.disabled = false; }
+  } finally {
+    startBtn.disabled = false;
+    startBtn.textContent = 'Connect & Start Test';
+  }
+}
+
+// --- MODIFIED: This button now *only* opens the modal ---
+startBtn.addEventListener('click', () => {
+    // Set up the modal for starting a test
+    profileTitle.textContent = 'Profile for New Test';
+    saveProfileBtn.textContent = 'Save & Start Test';
+    document.body.dataset.startTestOnSave = 'true'; // Set flag
+    profileModal.classList.add('active');
 });
 
 function onDisconnected(){
@@ -712,17 +808,14 @@ function setBLEStatus(message, level){
   else if (level === 'warn') colorVar = '--warn';
   bleStatusText.style.color = getComputedStyle(document.documentElement).getPropertyValue(colorVar);
   
-  // --- NEW: Pulse animation for "Receiving" ---
   if(message === 'Receiving...'){
     bleStatus.classList.add('pulse-receiving');
     if(statusTimeout) clearTimeout(statusTimeout);
     statusTimeout = setTimeout(() => {
-        // Return to "Connected" after pulse
         setBLEStatus('Connected', 'good');
         bleStatus.classList.remove('pulse-receiving');
-    }, 500); // Animation duration
+    }, 500);
   } else {
-    // Clear timeout if status is set to something else (e.g., "Disconnected")
     if(statusTimeout) clearTimeout(statusTimeout);
     bleStatus.classList.remove('pulse-receiving');
   }
@@ -740,7 +833,6 @@ function pushAndSmooth(buffer, v){
 }
 
 function handleDataNotification(event){
-  // --- NEW: Visual feedback for data flow ---
   if (bleStatusText.textContent === 'Connected') {
       setBLEStatus('Receiving...', 'good');
   }
@@ -749,17 +841,14 @@ function handleDataNotification(event){
   try {
     const data = JSON.parse(jsonString);
 
-    // raw values
     const hrRaw = Number(data.hr) || 0;
     const spo2Raw = Number(data.spo2) || -1;
     const gsrRaw = Number(data.gsr) || 0;
 
-    // --- REFINED: Light smoothing ---
     const hr = pushAndSmooth(HR_BUFFER, hrRaw) || 0;
     const spo2 = (spo2Raw > 0) ? pushAndSmooth(SP_BUFFER, spo2Raw) : -1;
     const gsr = pushAndSmooth(GSR_BUFFER, gsrRaw) || 0;
 
-    // update UI
     valHR.textContent = hr > 0 ? Math.round(hr) : '--';
     valSp.textContent = (spo2 > 0) ? Math.round(spo2) : '--';
     valGSR.textContent = gsr >= 0 ? Math.round(gsr) : '--';
@@ -799,10 +888,9 @@ function handleDataNotification(event){
       renderStaticSuggestions(level);
     }
 
-    detectFlatSpO2(spo2Raw); // Use raw value for flat detection
+    detectFlatSpO2(spo2Raw);
 
   } catch (err) {
-    // --- NEW: Better debugging for "not resording" ---
     console.error('Data Parse Error! Check ESP32 JSON format.', err);
     console.error('Received problematic string:', jsonString);
   }
@@ -839,27 +927,9 @@ function detectFlatSpO2(spo2Raw){
   Local suggestions & history
   ========================= */
 const staticSuggestions = {
-  LOW: [
-    "😌 You're in a calm state. Great job. Take a moment to acknowledge this feeling.",
-    "🧘 Try a simple 3-minute mindfulness exercise to maintain this calm.",
-    "💧 Remember to stay hydrated. A glass of water can help maintain balance.",
-    "☀️ Your readings look good. Keep up the healthy habits!",
-    "🚶‍♀️ Consider a short, gentle walk to enjoy this state of low arousal."
-  ],
-  MODERATE: [
-    "⚠️ Slight stress detected. Try the '4-7-8' breathing technique: inhale for 4s, hold for 7s, exhale for 8s. Repeat 3 times.",
-    "🚶 Take a 5-minute walk, focusing on your surroundings. Notice 3 things you can see and 2 things you can hear.",
-    "👀 Try 'peripheral vision' exercise: focus on a point, then slowly widen your gaze to see as much of the room as possible without moving your eyes. Hold for 30 seconds.",
-    "🤔 Pause and identify one small thing that might be causing this tension. Can it be addressed quickly?",
-    "🥤 Drink some water. Dehydration can sometimes mimic or contribute to feelings of stress."
-  ],
-  HIGH: [
-    "🛑 High stress detected. Please pause what you are doing. Your well-being is the priority.",
-    "🧘‍♀️ Use the '5-4-3-2-1' grounding technique: Name 5 things you see, 4 things you feel, 3 things you hear, 2 things you smell, and 1 thing you taste.",
-    "🗣 If possible, step away from your current situation for a few minutes. A change of scenery can help.",
-    "🤝 This feeling is temporary. Consider talking to someone you trust about how you feel.",
-    "💪 Try 'Progressive Muscle Relaxation': Tense your shoulders up to your ears for 5 seconds, then release completely. Repeat 3 times."
-  ]
+  LOW: ["😌 You're calm. Keep hydrating and take short breaks.", "🧘 Try a 3–5 minute breathing routine."],
+  MODERATE: ["⚠ Slight stress detected. Try 4-4-6 breathing x3.", "🚶 Take a 5 minute walk or stretch."],
+  HIGH: ["🛑 High stress detected. Pause and focus on breathing.", "🗣 If persistent, contact someone you trust or a professional."]
 };
 
 function renderStaticSuggestions(level){
@@ -877,7 +947,6 @@ function renderStaticSuggestions(level){
   });
 }
 
-/* history saving */
 function saveSession(sessionData){
   let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
   history.unshift(sessionData);
@@ -900,27 +969,24 @@ function renderHistory(){
 resetHistoryBtn.addEventListener('click', ()=>{ localStorage.removeItem(HISTORY_KEY); renderHistory(); });
 renderHistory();
 
-/* persist simple profile */
+/* =========================
+  Profile Management
+  ========================= */
 function saveProfile() {
-    localStorage.setItem('nw_profile', JSON.stringify({ name: nameInput.value||'', age: ageInput.value||'' }));
+    localStorage.setItem('nw_profile', JSON.stringify({ 
+        name: nameInput.value||'', 
+        age: ageInput.value||'',
+        gender: genderInput.value||'' // <-- NEW
+    }));
 }
-[nameInput, ageInput].forEach(el => el.addEventListener('change', saveProfile));
+[nameInput, ageInput, genderInput].forEach(el => el.addEventListener('change', saveProfile));
 
+// Load saved profile on page load
 (() => {
   const p = JSON.parse(localStorage.getItem('nw_profile') || '{}');
-  let profileSet = false;
-  if (p.name) {
-    nameInput.value = p.name;
-    profileSet = true;
-  }
-  if (p.age) {
-    ageInput.value = p.age;
-    profileSet = true;
-  }
-  
-  if (!profileSet) {
-     profileModal.classList.add('active');
-  }
+  if (p.name) nameInput.value = p.name;
+  if (p.age) ageInput.value = p.age;
+  if (p.gender) genderInput.value = p.gender; // <-- NEW
 })();
 
 /* =========================
@@ -941,24 +1007,11 @@ function startBreathing(cycles = 6, inhale = 3, hold = 0, exhale = 4){
   breathInterval = setTimeout(function loop(){
     if (!breathRunning) return;
     if (step === 0){
-      if (hold > 0){
-        breathCircle.textContent = 'Hold';
-        breathCircle.style.transition = `transform ${hold}s linear`;
-        step = 1;
-        breathInterval = setTimeout(loop, hold*1000);
-      } else {
         step = 2;
         breathCircle.textContent = 'Exhale';
         breathCircle.style.transition = `transform ${exhale}s ease-out`;
         breathCircle.style.transform = 'scale(.6)';
         breathInterval = setTimeout(loop, exhale*1000);
-      }
-    } else if (step === 1){
-      step = 2;
-      breathCircle.textContent = 'Exhale';
-      breathCircle.style.transition = `transform ${exhale}s ease-out`;
-      breathCircle.style.transform = 'scale(.6)';
-      breathInterval = setTimeout(loop, exhale*1000);
     } else if (step === 2){
       cycleCount++;
       if (cycleCount >= cycles){ stopBreathing(); return; }
@@ -980,12 +1033,12 @@ function stopBreathing(){
 
 openBreathBtn.addEventListener('click', ()=> { 
     breatherModal.classList.add('active'); 
-    setAudio(true); 
+    setAmbientAudio(true); 
 });
 closeBreatherModal.addEventListener('click', ()=> { 
     breatherModal.classList.remove('active'); 
     stopBreathing(); 
-    setAudio(false);
+    setAmbientAudio(false);
 });
 breathStartBtn.addEventListener('click', ()=> {
   const val = Number(breathSpeed.value);
@@ -1061,7 +1114,6 @@ My question is: ${userQuestion}` : userQuestion;
     
     appendChatMessage('assistant', text);
     
-    // Parse response and put in MAIN suggestion box
     const parts = text.split('\n').filter(s => s.trim().length > 0);
     suggestList.innerHTML = parts.map(s => `<li>${escapeHtml(s)}</li>`).join('');
 
@@ -1093,26 +1145,43 @@ sendChatBtn.addEventListener('click', ()=> {
   chatInput.value = '';
 });
 
-/* quick Ask button */
 askGeminiBtn.addEventListener('click', ()=> {
     analysisSection.style.display = 'block';
     askGeminiAnalysis('Please analyze my last session and give tips.');
 });
 
 /* =========================
-  Small UI listeners
+  Modal UI listeners
   ========================= */
 sosBtn.addEventListener('click', ()=> document.getElementById('sos-modal').classList.add('active'));
-document.getElementById('close-sos-modal').addEventListener('click', ()=> document.getElementById('sos-modal').classList.remove('active'));
+closeSosModal.addEventListener('click', ()=> document.getElementById('sos-modal').classList.remove('active'));
 
 resourcesBtn.addEventListener('click', () => resourcesModal.classList.add('active'));
 closeResourcesModal.addEventListener('click', () => resourcesModal.classList.remove('active'));
 
-profileBtn.addEventListener('click', () => profileModal.classList.add('active'));
-closeProfileModal.addEventListener('click', () => profileModal.classList.remove('active'));
+// --- MODIFIED: Profile button logic ---
+profileBtn.addEventListener('click', () => {
+    // Set up the modal for just editing
+    profileTitle.textContent = 'Your Profile';
+    saveProfileBtn.textContent = 'Save & Close';
+    document.body.dataset.startTestOnSave = 'false'; // Clear flag
+    profileModal.classList.add('active');
+});
+
+closeProfileModal.addEventListener('click', () => {
+    profileModal.classList.remove('active');
+    document.body.dataset.startTestOnSave = 'false'; // Clear flag
+});
+
 saveProfileBtn.addEventListener('click', () => {
     saveProfile();
     profileModal.classList.remove('active');
+    
+    // Check the flag to see if we should start the test
+    if (document.body.dataset.startTestOnSave === 'true') {
+      document.body.dataset.startTestOnSave = 'false'; // Reset flag
+      startTest(); // Run the BLE connection logic
+    }
 });
 
 /* =========================
