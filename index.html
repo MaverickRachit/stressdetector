@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>NeuroWell 2.0 — Dashboard (BLE + Gemini + Ambient)</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,8 +14,9 @@
   <style>
     :root{
       --bg: #020617;
-      --card-bg: rgba(255,255,255,0.04);
-      --card-border: rgba(255,255,255,0.08);
+      /* --- REFINED: Cleaner "glass" effect --- */
+      --card-bg: rgba(255,255,255,0.05);
+      --card-border: rgba(255,255,255,0.1);
       --text: #e6eef8;
       --text-body:#aab7c6;
       --accent: #22d3ee;
@@ -25,7 +26,7 @@
     .light {
       --bg: #f6f8fb;
       --card-bg: rgba(255,255,255,0.95);
-      --card-border: rgba(13,18,25,0.06);
+      --card-border: rgba(13,18,25,0.08);
       --text: #0b1220;
       --text-body:#475569;
       --accent: #0ea5b7;
@@ -38,50 +39,72 @@
     body{
       margin:0;
       font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-      background: radial-gradient(circle at 10% 20%, rgba(34,211,238,0.07), transparent 35%), radial-gradient(circle at 80% 90%, rgba(139,92,246,0.04), transparent 40%), var(--bg);
+      /* --- REFINED: More subtle background --- */
+      background: radial-gradient(circle at 10% 20%, rgba(34,211,238,0.05), transparent 30%), radial-gradient(circle at 80% 90%, rgba(139,92,246,0.03), transparent 35%), var(--bg);
       color:var(--text-body);
-      -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+      /* --- NEW: Crisper font rendering --- */
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      text-rendering: optimizeLegibility;
+      font-synthesis: none;
+      
       transition: background-color .25s ease, color .25s ease;
       padding:14px;
     }
-    /* --- MODIFIED: Consistent gap --- */
     .wrap{max-width:1200px;margin:12px auto;padding:0 12px;display:flex;flex-direction:column;gap:16px}
 
     header.appbar{
       display:flex;align-items:center;justify-content:space-between;gap:12px;
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border:1px solid var(--card-border); padding:14px;border-radius:12px;backdrop-filter: blur(8px);
+      border:1px solid var(--card-border); padding:14px;border-radius:12px;backdrop-filter: blur(10px);
     }
     .title {display:flex;align-items:center;gap:10px;font-weight:700;color:var(--text);font-size:18px}
     .controls{display:flex;align-items:center;gap:10px;flex-wrap: wrap;justify-content: flex-end;}
 
-    .btn {padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
-    .btn.primary{background:var(--accent);color:var(--bg);box-shadow:0 6px 22px rgba(0,0,0,0.18)}
+    .btn {
+      padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700;
+      /* --- NEW: Smooth button transitions --- */
+      transition: all .2s ease;
+    }
+    .btn:hover { opacity: 0.85; transform: translateY(-2px); }
+    .btn:active { opacity: 1; transform: translateY(0); }
+    
+    .btn.primary{
+      background:var(--accent);color:var(--bg);
+      /* --- NEW: Primary button glow --- */
+      box-shadow: 0 4px 22px rgba(34,211,238,0.25);
+    }
+    .btn.primary:hover{ box-shadow: 0 6px 26px rgba(34,211,238,0.4); }
     .btn.ghost{background:transparent;border:1px solid var(--card-border);color:var(--text-body)}
     .btn.sos{background:var(--bad);color:#fff;border-radius:10px;padding:8px 12px}
     .btn.small{padding:8px 10px;font-size:12px}
 
-    /* --- MODIFIED: Consistent gap --- */
     .dashboard{display:grid;grid-template-columns:1fr;gap:16px;margin-top:6px}
     @media(min-width:1000px){ .dashboard{grid-template-columns:2fr 1fr} }
 
     .card{
       background:var(--card-bg); border-radius:12px; padding:16px; border:1px solid var(--card-border);
       box-shadow: 0 10px 30px rgba(2,6,23,0.28);
-      transition: transform .18s ease, box-shadow .18s ease;
+      /* --- REFINED: "Float" hover animation --- */
+      transition: transform .2s ease, box-shadow .2s ease;
     }
-    .card:hover{ transform:translateY(-6px) }
+    .card:hover{ 
+      transform:translateY(-4px);
+      box-shadow: 0 14px 35px rgba(2,6,23,0.35);
+    }
 
     .config-grid{display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:center}
     @media(max-width:640px){ .config-grid{grid-template-columns:1fr; } }
     label{display:block;color:var(--text-body);font-size:13px;margin-bottom:6px;font-weight:600}
-    input[type=number], input[type=text]{padding:10px;border-radius:8px;border:1px solid var(--card-border);background:transparent;color:var(--text);width:100%}
+    input[type=number], input[type=text]{padding:10px;border-radius:8px;border:1px solid var(--card-border);background:transparent;color:var(--text);width:100%;transition: border-color .2s ease;}
+    input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); outline: none; }
 
     .vitals-grid{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
     @media(max-width:760px){ .vitals-grid{grid-template-columns:1fr 1fr 1fr; } }
     .vital{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:14px;border-radius:12px;text-align:center}
-    .vital-label{font-size:13px;color:var(--text-body);display:flex;align-items:center;gap:8px;justify-content:center}
-    .vital-value{font-size:36px;font-weight:800;color:var(--text);margin-top:8px}
+    /* --- REFINED: Typography for impact --- */
+    .vital-label{font-size:12px;color:var(--text-body);display:flex;align-items:center;gap:8px;justify-content:center;font-weight: 600;}
+    .vital-value{font-size:40px;font-weight:800;color:var(--text);margin-top:6px}
 
     /* Heartbeat animation */
     @keyframes pulse {
@@ -109,10 +132,33 @@
     .history-list{list-style:none;padding:0;margin:0;max-height:260px;overflow:auto}
     .history-item{display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid var(--card-border)}
     .muted{color:var(--text-body);font-size:13px}
-
-    .modal-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6);z-index:200;backdrop-filter: blur(4px);}
-    .modal-overlay.active{display:flex}
-    .modal{width:92%;max-width:520px;background:var(--card-bg);padding:16px;border-radius:12px;border:1px solid var(--card-border)}
+    
+    /* --- NEW: Modal Animation --- */
+    @keyframes modalPopIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-overlay{
+      position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+      background:rgba(2,6,23,0.6);z-index:200;backdrop-filter: blur(4px);
+      /* Base styles for fade */
+      opacity: 0; visibility: hidden;
+      transition: opacity .2s ease, visibility .2s ease;
+    }
+    .modal-overlay.active{
+      display:flex;
+      opacity: 1; visibility: visible;
+    }
+    .modal{
+      width:92%;max-width:520px;background:var(--card-bg);padding:16px;
+      border-radius:12px;border:1px solid var(--card-border);
+      /* Apply pop-in animation */
+      animation: modalPopIn 0.2s ease-out forwards;
+    }
+    /* Hide modal content initially */
+    .modal-overlay:not(.active) .modal {
+      display: none;
+    }
 
     .breather-container{text-align:center;padding:18px}
     .breath-circle{
@@ -124,15 +170,29 @@
     /* chat bubble */
     .chat-floating{
       position:fixed;right:20px;bottom:22px;width:56px;height:56px;border-radius:50%;
-      display:grid;place-items:center;background:var(--accent);color:var(--bg);z-index:400;cursor:pointer;box-shadow:0 10px 30px rgba(2,6,23,0.4)
+      display:grid;place-items:center;background:var(--accent);color:var(--bg);z-index:400;cursor:pointer;box-shadow:0 10px 30px rgba(2,6,23,0.4);
+      transition: all .2s ease;
     }
+    .chat-floating:hover { transform: scale(1.1); box-shadow: 0 12px 35px rgba(34,211,238,0.5); }
+    
     .chat-panel{position:fixed;right:20px;bottom:90px;width:360px;max-width:92%;background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:12px;z-index:401;display:none;flex-direction:column;gap:8px}
     .chat-panel.active{display:flex}
     .chat-messages{max-height:300px;overflow:auto;padding:8px;border-radius:8px;background:transparent}
     .chat-input{display:flex;gap:8px}
 
-    .audio-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px;border-radius:999px;border:1px solid var(--card-border);cursor:pointer}
+    .audio-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px;border-radius:999px;border:1px solid var(--card-border);cursor:pointer; transition: all .2s ease;}
+    .audio-toggle:hover { border-color: var(--text-body); color: var(--text); }
     .small{font-size:12px}
+
+    /* --- NEW: Data receiving pulse --- */
+    @keyframes receivingPulse {
+      0% { color: var(--accent); }
+      50% { color: var(--good); }
+      100% { color: var(--accent); }
+    }
+    .pulse-receiving {
+      animation: receivingPulse 0.5s ease-out;
+    }
   </style>
 </head>
 <body>
@@ -176,14 +236,14 @@
         <div class="card">
           <div class="vitals-grid">
             <div class="vital">
-              <div class="vital-label">💓 Heart Rate</div>
-              <div id="valHR" class="vital-value">-- <span style="font-size:12px;color:var(--text-body)">bpm</span></div>
+              <div class="vital-label">💓 HEART RATE</div>
+              <div id="valHR" class="vital-value">-- <span style="font-size:14px;color:var(--text-body);font-weight:600;margin-left:4px;">bpm</span></div>
               <div style="height:120px;margin-top:12px" class="chart-wrap"><canvas id="hrChart"></canvas></div>
             </div>
 
             <div class="vital">
               <div class="vital-label">🩸 SpO₂</div>
-              <div id="valSp" class="vital-value">-- <span style="font-size:12px;color:var(--text-body)">%</span></div>
+              <div id="valSp" class="vital-value">-- <span style="font-size:14px;color:var(--text-body);font-weight:600;margin-left:4px;">%</span></div>
               <div style="height:120px;margin-top:12px" class="chart-wrap"><canvas id="spChart"></canvas></div>
             </div>
 
@@ -198,7 +258,7 @@
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div style="font-weight:700;color:var(--text)">Live Sensor Stream</div>
-            <div class="muted">Real-time graphs • Raw data</div>
+            <div class="muted">Real-time graphs • Light smoothing</div>
           </div>
 
           <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
@@ -370,6 +430,7 @@ const textDecoder = new TextDecoder('utf-8');
 const textEncoder = new TextEncoder();
 
 /* UI refs */
+const bleStatus = document.getElementById('bleStatus');
 const startBtn = document.getElementById('startBtn');
 const bleStatusText = document.getElementById('bleStatusText');
 const statusText = document.getElementById('statusText');
@@ -398,13 +459,11 @@ const breathStopBtn = document.getElementById('breathStopBtn');
 const breathSpeed = document.getElementById('breathSpeed');
 const breathCyclesLabel = document.getElementById('breathCycles');
 
-/* Profile Modal Refs */
 const profileBtn = document.getElementById('profileBtn');
 const profileModal = document.getElementById('profile-modal');
 const closeProfileModal = document.getElementById('close-profile-modal');
 const saveProfileBtn = document.getElementById('save-profile-btn');
 
-/* --- NEW: Resources Modal Refs --- */
 const resourcesBtn = document.getElementById('resourcesBtn');
 const resourcesModal = document.getElementById('resources-modal');
 const closeResourcesModal = document.getElementById('close-resources-modal');
@@ -428,6 +487,10 @@ const sendChatBtn = document.getElementById('sendChatBtn');
 /* Charts */
 const MAX_POINTS = 40;
 let hrChart, spChart, gsrChart;
+
+/* --- NEW: Light smoothing re-introduced --- */
+const HR_BUFFER = [], SP_BUFFER = [], GSR_BUFFER = [];
+const SMOOTH_WINDOW = 3; // Small window for fast response + clean look
 
 /* flat SpO2 detection */
 let spLast = null, spFlatCount = 0;
@@ -520,7 +583,12 @@ function createCharts(){
     return {
       type:'line',
       data:{labels:[],datasets:[{
-        label, data:[], borderColor:color, borderWidth:3, pointRadius:0, tension:0.35, fill:true,
+        label, data:[], borderColor:color, 
+        /* --- REFINED: Sleeker charts --- */
+        borderWidth:2.5, 
+        pointRadius:0, 
+        tension:0.4, 
+        fill:true,
         backgroundColor: (ctx)=>{
           const chart = ctx.chart;
           const gradient = chart.ctx.createLinearGradient(0,0,0,chart.height);
@@ -611,7 +679,9 @@ startBtn.addEventListener('click', async () => {
     finalLevelText.textContent = '--';
     finalLevelText.className = '';
     suggestList.innerHTML = '';
-
+    
+    // Clear buffers
+    [HR_BUFFER, SP_BUFFER, GSR_BUFFER].forEach(b => b.length = 0);
     [hrChart, spChart, gsrChart].forEach(c => { if (c) { c.data.labels = []; c.data.datasets[0].data = []; c.update(); } });
 
     const command = JSON.stringify({ roomTemp: temp, irThreshold: irThr });
@@ -633,25 +703,63 @@ function onDisconnected(){
   bleDevice = null;
   startBtn.textContent = 'Connect & Start Test';
 }
+
+let statusTimeout = null;
 function setBLEStatus(message, level){
   bleStatusText.textContent = message;
-  if (level === 'good') bleStatusText.style.color = getComputedStyle(document.documentElement).getPropertyValue('--good');
-  else if (level === 'warn') bleStatusText.style.color = getComputedStyle(document.documentElement).getPropertyValue('--warn');
-  else bleStatusText.style.color = getComputedStyle(document.documentElement).getPropertyValue('--bad');
+  let colorVar = '--bad';
+  if (level === 'good') colorVar = '--good';
+  else if (level === 'warn') colorVar = '--warn';
+  bleStatusText.style.color = getComputedStyle(document.documentElement).getPropertyValue(colorVar);
+  
+  // --- NEW: Pulse animation for "Receiving" ---
+  if(message === 'Receiving...'){
+    bleStatus.classList.add('pulse-receiving');
+    if(statusTimeout) clearTimeout(statusTimeout);
+    statusTimeout = setTimeout(() => {
+        // Return to "Connected" after pulse
+        setBLEStatus('Connected', 'good');
+        bleStatus.classList.remove('pulse-receiving');
+    }, 500); // Animation duration
+  } else {
+    // Clear timeout if status is set to something else (e.g., "Disconnected")
+    if(statusTimeout) clearTimeout(statusTimeout);
+    bleStatus.classList.remove('pulse-receiving');
+  }
 }
 
 /* =========================
-  Data handling
+  Data handling + smoothing
   ========================= */
+function pushAndSmooth(buffer, v){
+  if (typeof v !== 'number' || isNaN(v)) return null;
+  buffer.push(v);
+  if (buffer.length > SMOOTH_WINDOW) buffer.shift();
+  const sum = buffer.reduce((a,b)=>a+b,0);
+  return sum / buffer.length;
+}
+
 function handleDataNotification(event){
+  // --- NEW: Visual feedback for data flow ---
+  if (bleStatusText.textContent === 'Connected') {
+      setBLEStatus('Receiving...', 'good');
+  }
+  
   const jsonString = textDecoder.decode(event.target.value);
   try {
     const data = JSON.parse(jsonString);
 
-    const hr = Number(data.hr) || 0;
-    const spo2 = Number(data.spo2) || -1;
-    const gsr = Number(data.gsr) || 0;
+    // raw values
+    const hrRaw = Number(data.hr) || 0;
+    const spo2Raw = Number(data.spo2) || -1;
+    const gsrRaw = Number(data.gsr) || 0;
 
+    // --- REFINED: Light smoothing ---
+    const hr = pushAndSmooth(HR_BUFFER, hrRaw) || 0;
+    const spo2 = (spo2Raw > 0) ? pushAndSmooth(SP_BUFFER, spo2Raw) : -1;
+    const gsr = pushAndSmooth(GSR_BUFFER, gsrRaw) || 0;
+
+    // update UI
     valHR.textContent = hr > 0 ? Math.round(hr) : '--';
     valSp.textContent = (spo2 > 0) ? Math.round(spo2) : '--';
     valGSR.textContent = gsr >= 0 ? Math.round(gsr) : '--';
@@ -688,14 +796,15 @@ function handleDataNotification(event){
         name: nameInput.value || '—',
         age: ageInput.value || '—'
       });
-      // This is the default: show static suggestions on completion.
       renderStaticSuggestions(level);
     }
 
-    detectFlatSpO2(spo2);
+    detectFlatSpO2(spo2Raw); // Use raw value for flat detection
 
   } catch (err) {
-    console.error('Parse Err:', jsonString, err);
+    // --- NEW: Better debugging for "not resording" ---
+    console.error('Data Parse Error! Check ESP32 JSON format.', err);
+    console.error('Received problematic string:', jsonString);
   }
 }
 
@@ -797,7 +906,6 @@ function saveProfile() {
 }
 [nameInput, ageInput].forEach(el => el.addEventListener('change', saveProfile));
 
-/* --- MODIFIED: Auto-show profile modal on first load --- */
 (() => {
   const p = JSON.parse(localStorage.getItem('nw_profile') || '{}');
   let profileSet = false;
@@ -810,7 +918,6 @@ function saveProfile() {
     profileSet = true;
   }
   
-  // Auto-show profile modal if no profile is saved
   if (!profileSet) {
      profileModal.classList.add('active');
   }
@@ -912,6 +1019,8 @@ async function fetchWithBackoff(url, options, retries = 3, delay = 1000){
 async function askGeminiAnalysis(userQuestion='Please analyze my last session and give tips.') {
   if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
     appendChatMessage('system', 'Gemini API key not set. Paste your API key into the HTML file (at the top of the <script> block) to enable this feature.');
+    const lastLevel = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')[0]?.level || 'MODERATE';
+    renderStaticSuggestions(lastLevel);
     return;
   }
 
@@ -950,20 +1059,15 @@ My question is: ${userQuestion}` : userQuestion;
     const candidate = result.candidates?.[0];
     const text = candidate?.content?.parts?.[0]?.text || candidate?.content?.[0]?.text || JSON.stringify(result);
     
-    // Success: Put Gemini response in chat
     appendChatMessage('assistant', text);
     
-    // Also, parse the response and put it in the MAIN suggestion box
-    // This is a simple parser; a real app might want structured JSON
-    const parts = text.split('\n');
+    // Parse response and put in MAIN suggestion box
+    const parts = text.split('\n').filter(s => s.trim().length > 0);
     suggestList.innerHTML = parts.map(s => `<li>${escapeHtml(s)}</li>`).join('');
 
   } catch (err) {
     console.error('Gemini error', err);
-    // --- MODIFIED: Better fallback ---
-    // 1. Put error in chat
     appendChatMessage('assistant', 'Sorry — the AI analysis failed. Here are some general suggestions based on your results instead.');
-    // 2. Populate the MAIN suggestion box with static suggestions
     const lastLevel = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')[0]?.level || 'MODERATE';
     renderStaticSuggestions(lastLevel);
   }
@@ -991,7 +1095,7 @@ sendChatBtn.addEventListener('click', ()=> {
 
 /* quick Ask button */
 askGeminiBtn.addEventListener('click', ()=> {
-    analysisSection.style.display = 'block'; // Ensure it's visible
+    analysisSection.style.display = 'block';
     askGeminiAnalysis('Please analyze my last session and give tips.');
 });
 
@@ -1001,15 +1105,13 @@ askGeminiBtn.addEventListener('click', ()=> {
 sosBtn.addEventListener('click', ()=> document.getElementById('sos-modal').classList.add('active'));
 document.getElementById('close-sos-modal').addEventListener('click', ()=> document.getElementById('sos-modal').classList.remove('active'));
 
-/* --- NEW: Resources Modal Listeners --- */
 resourcesBtn.addEventListener('click', () => resourcesModal.classList.add('active'));
 closeResourcesModal.addEventListener('click', () => resourcesModal.classList.remove('active'));
 
-/* Profile Modal Listeners */
 profileBtn.addEventListener('click', () => profileModal.classList.add('active'));
 closeProfileModal.addEventListener('click', () => profileModal.classList.remove('active'));
 saveProfileBtn.addEventListener('click', () => {
-    saveProfile(); // Explicitly save on button click as well
+    saveProfile();
     profileModal.classList.remove('active');
 });
 
