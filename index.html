@@ -4,22 +4,25 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>NeuroWell 2.0 — Dashboard (BLE + Gemini + Ambient)</title>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
   <style>
     :root{
-      --bg: #020617; /* Dark background */
-      --card-bg: rgba(255,255,255,0.05); /* Slightly transparent card */
-      --card-border: rgba(255,255,255,0.1); /* Subtle border */
-      --text: #e6eef8; /* Light text */
-      --text-body:#aab7c6; /* Lighter body text */
-      --accent: #22d3ee; /* Cyan accent */
-      --good:#4ade80; --warn:#facc15; --bad:#f87171; /* Status colors */
-      --glass: rgba(255,255,255,0.03); /* Subtle glass effect */
+      --bg: #020617;
+      --card-bg: rgba(255,255,255,0.05);
+      --card-border: rgba(255,255,255,0.1);
+      --text: #e6eef8;
+      --text-body:#aab7c6;
+      --accent: #22d3ee;
+      --good:#4ade80; --warn:#facc15; --bad:#f87171;
+      --glass: rgba(255,255,255,0.03);
     }
-    .light { /* Light theme variables */
+    .light {
       --bg: #f6f8fb;
       --card-bg: rgba(255,255,255,0.95);
       --card-border: rgba(13,18,25,0.08);
@@ -60,7 +63,7 @@
     }
     .btn:hover { opacity: 0.85; transform: translateY(-2px); }
     .btn:active { opacity: 1; transform: translateY(0); }
-
+    
     .btn.primary{
       background:var(--accent);color:var(--bg);
       box-shadow: 0 4px 22px rgba(34,211,238,0.25);
@@ -78,11 +81,13 @@
       box-shadow: 0 10px 30px rgba(2,6,23,0.28);
       transition: transform .2s ease, box-shadow .2s ease;
     }
-    .card:hover{
+    .card:hover{ 
       transform:translateY(-4px);
       box-shadow: 0 14px 35px rgba(2,6,23,0.35);
     }
 
+    .config-grid{display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:center}
+    @media(max-width:640px){ .config-grid{grid-template-columns:1fr; } }
     label{display:block;color:var(--text-body);font-size:13px;margin-bottom:6px;font-weight:600}
     input[type=number], input[type=text], select {
       padding:10px;border-radius:8px;border:1px solid var(--card-border);
@@ -93,15 +98,20 @@
 
     .vitals-grid{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
     @media(max-width:760px){ .vitals-grid{grid-template-columns:1fr 1fr 1fr; } }
-    @media(max-width:500px){ .vitals-grid{grid-template-columns:1fr; } } /* Stack on very small screens */
     .vital{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:14px;border-radius:12px;text-align:center}
     .vital-label{font-size:12px;color:var(--text-body);display:flex;align-items:center;gap:8px;justify-content:center;font-weight: 600;}
     .vital-value{font-size:40px;font-weight:800;color:var(--text);margin-top:6px}
 
-    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
-    .vital-value.pulsing { animation: pulse 0.3s ease-out; }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+    .vital-value.pulsing {
+      animation: pulse 0.3s ease-out;
+    }
 
-    .chart-wrap{height:100px;background:transparent;border-radius:10px;padding:8px; margin-top: 10px;}
+    .chart-wrap{height:140px;background:transparent;border-radius:10px;padding:8px}
     canvas{width:100% !important;height:100% !important;display:block}
 
     .status-box{padding:12px;border-radius:10px;text-align:center;background:rgba(0,0,0,0.06)}
@@ -112,36 +122,76 @@
     .level-LOW{background:linear-gradient(90deg,var(--good),#86efac)}
     .level-MODERATE{background:linear-gradient(90deg,var(--warn),#fde047)}
     .level-HIGH{background:linear-gradient(90deg,var(--bad),#fca5a5)}
-    .level-ERROR{background:linear-gradient(90deg,#9ca3af,#e5e7eb); color: #4b5563;} /* Style for Error */
 
-
-    #overviewText{ font-size: 14px; color: var(--text); background: var(--glass); padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--card-border); }
-
+    #overviewText{
+      font-size: 14px;
+      color: var(--text);
+      background: var(--glass);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border: 1px solid var(--card-border);
+    }
+    
     #suggestList li{background:var(--glass);padding:10px;margin-bottom:8px;border-radius:8px;color:var(--text-body);list-style:none}
     .history-list{list-style:none;padding:0;margin:0;max-height:260px;overflow:auto}
     .history-item{display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid var(--card-border)}
     .muted{color:var(--text-body);font-size:13px}
-
-    @keyframes modalPopIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-    .modal-overlay{ position:fixed;inset:0;display:none;align-items:center;justify-content:center; background:rgba(2,6,23,0.6);z-index:200;backdrop-filter: blur(4px); opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility .2s ease; }
-    .modal-overlay.active{ display:flex; opacity: 1; visibility: visible; }
-    .modal{ width:92%;max-width:520px;background:var(--card-bg);padding:16px; border-radius:12px;border:1px solid var(--card-border); animation: modalPopIn 0.2s ease-out forwards; }
-    .modal-overlay:not(.active) .modal { display: none; }
+    
+    @keyframes modalPopIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-overlay{
+      position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+      background:rgba(2,6,23,0.6);z-index:200;backdrop-filter: blur(4px);
+      opacity: 0; visibility: hidden;
+      transition: opacity .2s ease, visibility .2s ease;
+    }
+    .modal-overlay.active{
+      display:flex;
+      opacity: 1; visibility: visible;
+    }
+    .modal{
+      width:92%;max-width:520px;background:var(--card-bg);padding:16px;
+      border-radius:12px;border:1px solid var(--card-border);
+      animation: modalPopIn 0.2s ease-out forwards;
+    }
+    .modal-overlay:not(.active) .modal {
+      display: none;
+    }
 
     .breather-container{text-align:center;padding:18px}
-    .breath-circle{ width:160px;height:160px;border-radius:50%;display:grid;place-items:center;margin:10px auto; background:linear-gradient(135deg,var(--accent),#8b5cf6);color:var(--bg);font-weight:800;font-size:18px; transform:scale(.6);opacity:.9;border:6px solid rgba(255,255,255,0.04);transition:transform 1s ease; }
+    .breath-circle{
+      width:160px;height:160px;border-radius:50%;display:grid;place-items:center;margin:10px auto;
+      background:linear-gradient(135deg,var(--accent),#8b5cf6);color:var(--bg);font-weight:800;font-size:18px;
+      transform:scale(.6);opacity:.9;border:6px solid rgba(255,255,255,0.04);transition:transform 1s ease;
+    }
 
-    .chat-floating{ position:fixed;right:20px;bottom:22px;width:56px;height:56px;border-radius:50%; display:grid;place-items:center;background:var(--accent);color:var(--bg);z-index:400;cursor:pointer;box-shadow:0 10px 30px rgba(2,6,23,0.4); transition: all .2s ease; }
+    .chat-floating{
+      position:fixed;right:20px;bottom:22px;width:56px;height:56px;border-radius:50%;
+      display:grid;place-items:center;background:var(--accent);color:var(--bg);z-index:400;cursor:pointer;box-shadow:0 10px 30px rgba(2,6,23,0.4);
+      transition: all .2s ease;
+    }
     .chat-floating:hover { transform: scale(1.1); box-shadow: 0 12px 35px rgba(34,211,238,0.5); }
+    
     .chat-panel{position:fixed;right:20px;bottom:90px;width:360px;max-width:92%;background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:12px;z-index:401;display:none;flex-direction:column;gap:8px}
     .chat-panel.active{display:flex}
     .chat-messages{max-height:300px;overflow:auto;padding:8px;border-radius:8px;background:transparent}
     .chat-input{display:flex;gap:8px}
+
     .audio-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px;border-radius:999px;border:1px solid var(--card-border);cursor:pointer; transition: all .2s ease;}
     .audio-toggle:hover { border-color: var(--text-body); color: var(--text); }
     .small{font-size:12px}
-    @keyframes receivingPulse { 0% { color: var(--accent); } 50% { color: var(--good); } 100% { color: var(--accent); } }
-    .pulse-receiving { animation: receivingPulse 0.5s ease-out; }
+
+    @keyframes receivingPulse {
+      0% { color: var(--accent); }
+      50% { color: var(--good); }
+      100% { color: var(--accent); }
+    }
+    .pulse-receiving {
+      animation: receivingPulse 0.5s ease-out;
+    }
   </style>
 </head>
 <body>
@@ -151,6 +201,7 @@
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.001A3 3 0 0 0 12 5zm0 14a3 3 0 1 0-5.997.001A3 3 0 0 0 12 19zm0-7a3 3 0 1 0 5.997-.001A3 3 0 0 0 12 12z"/></svg>
         NeuroWell 2.0
       </div>
+
       <div class="controls">
         <div id="bleStatus" class="muted">Status: <span style="color:var(--bad);font-weight:800" id="bleStatusText">Disconnected</span></div>
         <button id="profileBtn" class="btn ghost small">Profile</button>
@@ -163,8 +214,10 @@
 
     <div class="dashboard">
       <div class="main-col">
+
         <div class="card">
-             <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
               <div style="min-width:220px">
                 <label>Room Temperature (°C)</label>
                 <div style="display:flex;gap:8px">
@@ -172,10 +225,12 @@
                   <button id="getLocationBtn" class="btn ghost" title="Use my location">📍</button>
                 </div>
               </div>
+
               <div style="display:flex;gap:8px;align-items:center">
                 <button id="startBtn" class="btn primary">Connect & Start Test</button>
               </div>
             </div>
+          </div>
         </div>
 
         <div class="card">
@@ -183,19 +238,21 @@
             <div class="vital">
               <div class="vital-label">💓 HEART RATE</div>
               <div id="valHR" class="vital-value">-- <span style="font-size:14px;color:var(--text-body);font-weight:600;margin-left:4px;">bpm</span></div>
-              <div class="chart-wrap"><canvas id="hrChart"></canvas></div>
+              <div style="height:120px;margin-top:12px" class="chart-wrap"><canvas id="hrChart"></canvas></div>
             </div>
+
             <div class="vital">
               <div class="vital-label">🩸 SpO₂</div>
               <div id="valSp" class="vital-value">-- <span style="font-size:14px;color:var(--text-body);font-weight:600;margin-left:4px;">%</span></div>
-              <div class="chart-wrap"><canvas id="spChart"></canvas></div>
+              <div style="height:120px;margin-top:12px" class="chart-wrap"><canvas id="spChart"></canvas></div>
             </div>
+
             <div class="vital">
               <div class="vital-label">⚡ GSR</div>
               <div id="valGSR" class="vital-value">--</div>
-              <div class="chart-wrap"><canvas id="gsrChart"></canvas></div>
+              <div style="height:120px;margin-top:12px" class="chart-wrap"><canvas id="gsrChart"></canvas></div>
             </div>
-            </div>
+          </div>
         </div>
 
         <div class="card">
@@ -203,6 +260,7 @@
             <div style="font-weight:700;color:var(--text)">Live Sensor Stream</div>
             <div class="muted">Real-time graphs • Raw data stream</div>
           </div>
+
           <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
             <div style="flex:1;min-width:220px">
               <div class="status-box">
@@ -210,6 +268,7 @@
                 <div id="count">0<span style="font-size:12px;color:var(--text-body)">s</span></div>
               </div>
             </div>
+
             <div style="min-width:260px">
               <div style="display:flex;gap:8px;align-items:center">
                 <button id="openBreathBtn" class="btn ghost">🧘 Start Calming Exercise</button>
@@ -219,15 +278,17 @@
             </div>
           </div>
         </div>
+
       </div>
 
       <div class="side-col">
-         <div class="card">
+        <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div style="font-weight:700;color:var(--text)">Analysis & Suggestions</div>
             <div class="muted">AI-Assisted Suggestions</div>
           </div>
-          <div style="margin-top:12px" id="analysis-section" style="display:none;">
+
+          <div style="margin-top:12px" id="analysis-section">
             <div id="finalLevel" class="">--</div>
             <div id="overviewText" style="display:none;"></div>
             <ol id="suggestList"></ol>
@@ -236,6 +297,7 @@
             </div>
           </div>
         </div>
+
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div style="font-weight:700;color:var(--text)">Session History (Last 10)</div>
@@ -263,6 +325,7 @@
         <div style="font-weight:700">Calming Exercise</div>
         <button id="close-breather-modal" class="btn ghost">X</button>
       </div>
+
       <div class="breather-container" style="margin-top:16px">
         <div id="breathCircle" class="breath-circle">Inhale</div>
         <div id="breathDesc" class="muted">Follow the circle for <span id="breathCycles">6</span> cycles</div>
@@ -277,7 +340,7 @@
         </div>
       </div>
     </div></div>
-
+    
     <div class="modal-overlay" id="profile-modal"><div class="modal card">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="font-weight:700" id="profile-title">Your Profile</div>
@@ -321,14 +384,10 @@
             <div class="muted" style="font-size:12px; margin-top:4px;">Learn the key differences and how your body responds to each.</div>
             <a href="#" onclick="alert('Placeholder: This would link to a real article.')" style="color:var(--accent);font-size:12px;font-weight:700;margin-top:6px;display:inline-block;">Read More</a>
           </li>
-          <li style="background:var(--glass);padding:12px;border-radius:8px;">
-            <div style="font-weight:700;color:var(--text)">5-Minute Mindfulness Exercises</div>
-            <div class="muted" style="font-size:12px; margin-top:4px;">Simple exercises you can do at your desk to recalibrate.</div>
-            <a href="#" onclick="alert('Placeholder: This would link to a real article.')" style="color:var(--accent);font-size:12px;font-weight:700;margin-top:6px;display:inline-block;">Read More</a>
-          </li>
         </ul>
       </div>
     </div></div>
+
   </div>
 
   <div class="chat-floating" id="chatFab" title="Open Gemini Assistant">💬</div>
@@ -352,13 +411,13 @@
 /* =========================
   CONFIG / CONSTANTS
   ========================= */
-const SERVICE_UUID    = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"; // Use lowercase
-const CHAR_DATA_UUID    = "beb5483e-36e1-4688-b7f5-ea07361b26a8"; // Use lowercase
-const CHAR_COMMAND_UUID = "a88a02e0-8422-42b0-a555-5203361a832a"; // Use lowercase
-const TEST_DURATION_S = 40;
+const SERVICE_UUID    = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"; // <-- Lowercase Fixed
+const CHAR_DATA_UUID    = "beb5483e-36e1-4688-b7f5-ea07361b26a8"; // <-- Lowercase Fixed
+const CHAR_COMMAND_UUID = "a88a02e0-8422-42b0-a555-5203361a832a";
+const TEST_DURATION_S = 40; // Test duration in seconds
 
-const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=";
-const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
+const GEMINI_BASE = "https.generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
+const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
 /* ========================= */
 
 let bleDevice = null;
@@ -380,14 +439,15 @@ const overviewText = document.getElementById('overviewText');
 const valHR = document.getElementById('valHR');
 const valSp = document.getElementById('valSp');
 const valGSR = document.getElementById('valGSR');
-// valTemp removed
 const suggestList = document.getElementById('suggestList');
 const historyList = document.getElementById('history-list');
 const getLocationBtn = document.getElementById('getLocationBtn');
 const roomTempInput = document.getElementById('roomTemp');
+
 const sosBtn = document.getElementById('sosBtn');
 const sosModal = document.getElementById('sos-modal');
 const closeSosModal = document.getElementById('close-sos-modal');
+
 const openBreathBtn = document.getElementById('openBreathBtn');
 const breatherModal = document.getElementById('breather-modal');
 const closeBreatherModal = document.getElementById('close-breather-modal');
@@ -397,14 +457,17 @@ const breathStartBtn = document.getElementById('breathStartBtn');
 const breathStopBtn = document.getElementById('breathStopBtn');
 const breathSpeed = document.getElementById('breathSpeed');
 const breathCyclesLabel = document.getElementById('breathCycles');
+
 const profileBtn = document.getElementById('profileBtn');
 const profileModal = document.getElementById('profile-modal');
 const profileTitle = document.getElementById('profile-title');
 const closeProfileModal = document.getElementById('close-profile-modal');
 const saveProfileBtn = document.getElementById('save-profile-btn');
+
 const resourcesBtn = document.getElementById('resourcesBtn');
 const resourcesModal = document.getElementById('resources-modal');
 const closeResourcesModal = document.getElementById('close-resources-modal');
+
 const nameInput = document.getElementById('userName');
 const ageInput = document.getElementById('userAge');
 const genderInput = document.getElementById('userGender');
@@ -413,8 +476,11 @@ const themeLabel = document.getElementById('themeLabel');
 const chartToggle = document.getElementById('chartToggle');
 const resetHistoryBtn = document.getElementById('resetHistoryBtn');
 const askGeminiBtn = document.getElementById('askGeminiBtn');
+
 const hbToggle = document.getElementById('hbToggle');
 const hbLabel = document.getElementById('hbLabel');
+
+/* Gemini chat */
 const chatFab = document.getElementById('chatFab');
 const chatPanel = document.getElementById('chatPanel');
 const closeChatBtn = document.getElementById('closeChatBtn');
@@ -423,18 +489,18 @@ const chatInput = document.getElementById('chatInput');
 const sendChatBtn = document.getElementById('sendChatBtn');
 
 /* Charts */
-const MAX_POINTS = TEST_DURATION_S * 2; // Approx 2 points per second
-let hrChart, spChart, gsrChart; // Removed tempChart
+const MAX_POINTS = 40;
+let hrChart, spChart, gsrChart;
 
-/* Data collection arrays */
+/* --- NEW: Data collection arrays --- */
 let liveHrReadings = [];
 let liveGsrReadings = [];
 let liveSpo2Readings = [];
-let liveFingerTempReadings = [];
 let testTimerInterval = null;
 
 let spLast = null, spFlatCount = 0;
 const SP_FLAT_LIMIT = 6;
+
 const HISTORY_KEY = 'stressHistory';
 const MAX_HISTORY = 10;
 
@@ -463,57 +529,47 @@ let ambientAudioPlaying = false;
 
 function initAmbientAudio(){
   if (ambientAudioCtx) return;
-  try {
-    ambientAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    ambientMasterGain = ambientAudioCtx.createGain();
-    ambientMasterGain.gain.value = 0.0;
-    ambientMasterGain.connect(ambientAudioCtx.destination);
-    droneOsc = ambientAudioCtx.createOscillator();
-    droneOsc.type = 'sine';
-    droneOsc.frequency.value = 110;
-    const droneGain = ambientAudioCtx.createGain();
-    droneGain.gain.value = 0.0;
-    ambientLfo = ambientAudioCtx.createOscillator();
-    ambientLfo.type = 'sine';
-    ambientLfo.frequency.value = 0.08;
-    const lfoGain = ambientAudioCtx.createGain();
-    lfoGain.gain.value = 0.25;
-    ambientLfo.connect(lfoGain);
-    lfoGain.connect(droneGain.gain);
-    droneOsc.connect(droneGain);
-    droneGain.connect(ambientMasterGain);
-    const hp = ambientAudioCtx.createBiquadFilter();
-    hp.type = 'highpass';
-    hp.frequency.value = 20;
-    const lp = ambientAudioCtx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 1200;
-    droneGain.connect(hp);
-    hp.connect(lp);
-    lp.connect(ambientMasterGain);
-    droneOsc.start();
-    ambientLfo.start();
-  } catch (e) {
-    console.error("Failed to initialize ambient audio:", e);
-    ambientAudioCtx = null;
-  }
+  ambientAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  ambientMasterGain = ambientAudioCtx.createGain();
+  ambientMasterGain.gain.value = 0.0;
+  ambientMasterGain.connect(ambientAudioCtx.destination);
+  droneOsc = ambientAudioCtx.createOscillator();
+  droneOsc.type = 'sine';
+  droneOsc.frequency.value = 110;
+  const droneGain = ambientAudioCtx.createGain();
+  droneGain.gain.value = 0.0;
+  ambientLfo = ambientAudioCtx.createOscillator();
+  ambientLfo.type = 'sine';
+  ambientLfo.frequency.value = 0.08;
+  const lfoGain = ambientAudioCtx.createGain();
+  lfoGain.gain.value = 0.25;
+  ambientLfo.connect(lfoGain);
+  lfoGain.connect(droneGain.gain);
+  droneOsc.connect(droneGain);
+  droneGain.connect(ambientMasterGain);
+  const hp = ambientAudioCtx.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = 20;
+  const lp = ambientAudioCtx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 1200;
+  droneGain.connect(hp);
+  hp.connect(lp);
+  lp.connect(ambientMasterGain);
+  droneOsc.start();
+  ambientLfo.start();
 }
 
 function setAmbientAudio(play) {
     if (!ambientAudioCtx) initAmbientAudio();
-    if (!ambientAudioCtx) return;
-    try {
-        if (play && !ambientAudioPlaying) {
-            ambientAudioCtx.resume().then(() => {
-                ambientMasterGain.gain.exponentialRampToValueAtTime(0.22, ambientAudioCtx.currentTime + 1.2);
-                ambientAudioPlaying = true;
-            });
-        } else if (!play && ambientAudioPlaying) {
-            ambientMasterGain.gain.exponentialRampToValueAtTime(0.0001, ambientAudioCtx.currentTime + 1.0);
-            ambientAudioPlaying = false;
-        }
-    } catch (e) {
-        console.error("Error setting ambient audio state:", e);
+    if (play && !ambientAudioPlaying) {
+        ambientAudioCtx.resume().then(() => {
+            ambientMasterGain.gain.exponentialRampToValueAtTime(0.22, ambientAudioCtx.currentTime + 1.2);
+            ambientAudioPlaying = true;
+        });
+    } else if (!play && ambientAudioPlaying) {
+        ambientMasterGain.gain.exponentialRampToValueAtTime(0.0001, ambientAudioCtx.currentTime + 1.0);
+        ambientAudioPlaying = false;
     }
 }
 
@@ -524,72 +580,60 @@ let hbInterval = null;
 
 function initHeartbeatAudio() {
     if (hbAudioCtx) return;
-    try {
-        hbAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        hbMasterGain = hbAudioCtx.createGain();
-        hbMasterGain.gain.value = 0.0;
-        hbMasterGain.connect(hbAudioCtx.destination);
-    } catch (e) {
-        console.error("Failed to initialize heartbeat audio:", e);
-        hbAudioCtx = null;
-    }
+    hbAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    hbMasterGain = hbAudioCtx.createGain();
+    hbMasterGain.gain.value = 0.0; // Start silent
+    hbMasterGain.connect(hbAudioCtx.destination);
 }
 
 function playHeartbeatSound() {
     if (!hbAudioCtx) return;
-    try {
-        const now = hbAudioCtx.currentTime;
-        // Thump 1 (BA)
-        const thumpOsc1 = hbAudioCtx.createOscillator();
-        thumpOsc1.type = 'sine';
-        thumpOsc1.frequency.setValueAtTime(70, now);
-        thumpOsc1.frequency.exponentialRampToValueAtTime(50, now + 0.1);
-        const thumpGain1 = hbAudioCtx.createGain();
-        thumpGain1.gain.setValueAtTime(0, now);
-        thumpGain1.gain.linearRampToValueAtTime(0.5, now + 0.02);
-        thumpGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-        thumpOsc1.connect(thumpGain1).connect(hbMasterGain);
-        thumpOsc1.start(now);
-        thumpOsc1.stop(now + 0.15);
-        // Thump 2 (DUM)
-        const dumpTime = now + 0.12;
-        const thumpOsc2 = hbAudioCtx.createOscillator();
-        thumpOsc2.type = 'sine';
-        thumpOsc2.frequency.setValueAtTime(60, dumpTime);
-        thumpOsc2.frequency.exponentialRampToValueAtTime(40, dumpTime + 0.15);
-        const thumpGain2 = hbAudioCtx.createGain();
-        thumpGain2.gain.setValueAtTime(0, dumpTime);
-        thumpGain2.gain.linearRampToValueAtTime(0.4, dumpTime + 0.02);
-        thumpGain2.gain.exponentialRampToValueAtTime(0.001, dumpTime + 0.15);
-        thumpOsc2.connect(thumpGain2).connect(hbMasterGain);
-        thumpOsc2.start(dumpTime);
-        thumpOsc2.stop(dumpTime + 0.2);
-    } catch (e) {
-        console.error("Error playing heartbeat sound:", e);
-    }
+    const now = hbAudioCtx.currentTime;
+    
+    // Thump 1 (BA)
+    const thumpOsc1 = hbAudioCtx.createOscillator();
+    thumpOsc1.type = 'sine';
+    thumpOsc1.frequency.setValueAtTime(70, now);
+    thumpOsc1.frequency.exponentialRampToValueAtTime(50, now + 0.1);
+    const thumpGain1 = hbAudioCtx.createGain();
+    thumpGain1.gain.setValueAtTime(0, now);
+    thumpGain1.gain.linearRampToValueAtTime(0.5, now + 0.02);
+    thumpGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    thumpOsc1.connect(thumpGain1).connect(hbMasterGain);
+    thumpOsc1.start(now);
+    thumpOsc1.stop(now + 0.15);
+    
+    // Thump 2 (DUM)
+    const dumpTime = now + 0.12;
+    const thumpOsc2 = hbAudioCtx.createOscillator();
+    thumpOsc2.type = 'sine';
+    thumpOsc2.frequency.setValueAtTime(60, dumpTime);
+    thumpOsc2.frequency.exponentialRampToValueAtTime(40, dumpTime + 0.15);
+    const thumpGain2 = hbAudioCtx.createGain();
+    thumpGain2.gain.setValueAtTime(0, dumpTime);
+    thumpGain2.gain.linearRampToValueAtTime(0.4, dumpTime + 0.02);
+    thumpGain2.gain.exponentialRampToValueAtTime(0.001, dumpTime + 0.15);
+    thumpOsc2.connect(thumpGain2).connect(hbMasterGain);
+    thumpOsc2.start(dumpTime);
+    thumpOsc2.stop(dumpTime + 0.2);
 }
 
 hbToggle.addEventListener('click', () => {
     if (!hbAudioCtx) initHeartbeatAudio();
-    if (!hbAudioCtx) return;
-
+    
     hbAudioPlaying = !hbAudioPlaying;
-    try {
-        if (hbAudioPlaying) {
-            hbAudioCtx.resume().then(() => {
-                hbMasterGain.gain.exponentialRampToValueAtTime(0.3, hbAudioCtx.currentTime + 1.0);
-                playHeartbeatSound();
-                hbInterval = setInterval(playHeartbeatSound, 850);
-                hbLabel.textContent = 'HB On';
-            });
-        } else {
-            hbMasterGain.gain.exponentialRampToValueAtTime(0.0001, hbAudioCtx.currentTime + 1.0);
-            if (hbInterval) clearInterval(hbInterval);
-            hbInterval = null;
-            hbLabel.textContent = 'HB Off';
-        }
-    } catch (e) {
-        console.error("Error toggling heartbeat audio:", e);
+    if (hbAudioPlaying) {
+        hbAudioCtx.resume().then(() => {
+            hbMasterGain.gain.exponentialRampToValueAtTime(0.3, hbAudioCtx.currentTime + 1.0);
+            playHeartbeatSound(); // Play one immediately
+            hbInterval = setInterval(playHeartbeatSound, 850); // ~70 bpm
+            hbLabel.textContent = 'HB On';
+        });
+    } else {
+        hbMasterGain.gain.exponentialRampToValueAtTime(0.0001, hbAudioCtx.currentTime + 1.0);
+        if (hbInterval) clearInterval(hbInterval);
+        hbInterval = null;
+        hbLabel.textContent = 'HB Off';
     }
 });
 
@@ -606,8 +650,11 @@ function createCharts(){
     return {
       type:'line',
       data:{labels:[],datasets:[{
-        label, data:[], borderColor:color,
-        borderWidth:2.5, pointRadius:0, tension:0.4, fill:true,
+        label, data:[], borderColor:color, 
+        borderWidth:2.5, 
+        pointRadius:0, 
+        tension:0.4, 
+        fill:true,
         backgroundColor: (ctx)=>{
           const chart = ctx.chart;
           const gradient = chart.ctx.createLinearGradient(0,0,0,chart.height);
@@ -626,31 +673,21 @@ function createCharts(){
       }
     };
   }
-  try {
-    hrChart = new Chart(document.getElementById('hrChart'), cfg('Heart Rate', bad));
-    spChart = new Chart(document.getElementById('spChart'), cfg('SpO2', accent));
-    gsrChart = new Chart(document.getElementById('gsrChart'), cfg('GSR', warn));
-    // tempChart removed
 
-    spChart.options.scales.y.min = 80; spChart.options.scales.y.max = 100;
-  } catch(e) {
-    console.error("Error creating charts:", e);
-  }
+  hrChart = new Chart(document.getElementById('hrChart'), cfg('Heart Rate', bad || '#f87171'));
+  spChart = new Chart(document.getElementById('spChart'), cfg('SpO2', accent || '#22d3ee'));
+  gsrChart = new Chart(document.getElementById('gsrChart'), cfg('GSR', warn || '#facc15'));
+
+  spChart.options.scales.y.min = 80;
+  spChart.options.scales.y.max = 100;
 }
 function updateChart(chart, value){
-  if(!chart || !chart.data || value === null || typeof value === 'undefined') return;
-  if (!chartToggle.checked) return;
-  try {
-    chart.data.labels.push('');
-    chart.data.datasets[0].data.push(value);
-    if (chart.data.labels.length > MAX_POINTS){
-        chart.data.labels.shift();
-        chart.data.datasets[0].data.shift();
-    }
-    chart.update('none');
-  } catch(e) {
-      console.warn("Error updating chart:", e);
-  }
+  if(!chart || !chart.data) return;
+  if (!document.getElementById('chartToggle').checked) return;
+  chart.data.labels.push('');
+  chart.data.datasets[0].data.push(value);
+  if (chart.data.labels.length > MAX_POINTS){ chart.data.labels.shift(); chart.data.datasets[0].data.shift(); }
+  chart.update('none');
 }
 window.addEventListener('load', createCharts);
 
@@ -660,35 +697,18 @@ window.addEventListener('load', createCharts);
 getLocationBtn.addEventListener('click', () => {
   if (navigator.geolocation){
     getLocationBtn.disabled = true; getLocationBtn.textContent = '...';
-    navigator.geolocation.getCurrentPosition(
-        fetchWeather,
-        (e)=>{
-            alert('Location error: ' + e.message);
-            getLocationBtn.disabled=false; getLocationBtn.textContent='📍';
-        },
-        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
-    );
-  } else alert('Geolocation not supported by this browser.');
+    navigator.geolocation.getCurrentPosition(fetchWeather, (e)=>{ alert('Location error: ' + e.message); getLocationBtn.disabled=false; getLocationBtn.textContent='📍'; });
+  } else alert('Geolocation not supported.');
 });
 async function fetchWeather(position){
   try{
     const {latitude,longitude} = position.coords;
-    const api = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m`;
-    const r = await fetch(api);
-    if (!r.ok) throw new Error(`Weather API error: ${r.status}`);
-    const data = await r.json();
-    if (data.current && typeof data.current.temperature_2m === 'number'){
-      roomTempInput.value = Math.round(data.current.temperature_2m);
-      console.log("Weather fetched, temp set to:", roomTempInput.value);
-    } else {
-        console.warn("Weather data received but temperature not found:", data);
+    const api = `https.api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
+    const r = await fetch(api); const data = await r.json();
+    if (data.current_weather && typeof data.current_weather.temperature === 'number'){
+      roomTempInput.value = Math.round(data.current_weather.temperature);
     }
-  }catch(e){
-      console.error("Fetch weather error:", e);
-      alert("Could not fetch weather data. Please enter temperature manually.");
-  } finally {
-      getLocationBtn.disabled=false; getLocationBtn.textContent='📍';
-  }
+  }catch(e){ console.error(e) } finally { getLocationBtn.disabled=false; getLocationBtn.textContent='📍'; }
 }
 
 /* =========================
@@ -696,183 +716,148 @@ async function fetchWeather(position){
   ========================= */
 
 async function connectToDevice() {
-  startBtn.disabled = true; startBtn.textContent = 'Connecting...';
+  startBtn.disabled = true;
+  startBtn.textContent = 'Connecting...';
+  
   try {
-    if (!navigator.bluetooth) {
-        throw new Error("Web Bluetooth is not available on this browser/device.");
-    }
     if (!bleDevice || !bleDevice.gatt.connected) {
       setBLEStatus('Requesting device...', 'warn');
-      bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ services: [SERVICE_UUID.toLowerCase()] }],
-          // optionalServices: [SERVICE_UUID.toLowerCase()] // Optional
-       });
-      if (!bleDevice) throw new Error("No device selected.");
+      bleDevice = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }], optionalServices: [SERVICE_UUID] });
       bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
       setBLEStatus('Connecting...', 'warn');
       gattServer = await bleDevice.gatt.connect();
       setBLEStatus('Getting service...', 'warn');
-      const service = await gattServer.getPrimaryService(SERVICE_UUID.toLowerCase());
+      const service = await gattServer.getPrimaryService(SERVICE_UUID);
       setBLEStatus('Getting chars...', 'warn');
-      dataCharacteristic = await service.getCharacteristic(CHAR_DATA_UUID.toLowerCase());
-      commandCharacteristic = await service.getCharacteristic(CHAR_COMMAND_UUID.toLowerCase());
+      dataCharacteristic = await service.getCharacteristic(CHAR_DATA_UUID);
+      commandCharacteristic = await service.getCharacteristic(CHAR_COMMAND_UUID);
       await dataCharacteristic.startNotifications();
       dataCharacteristic.addEventListener('characteristicvaluechanged', handleDataNotification);
       setBLEStatus('Connected', 'good');
     }
+    
+    // --- MODIFIED: Open modal *after* connecting ---
     profileTitle.textContent = 'Profile for New Test';
     saveProfileBtn.textContent = 'Save & Start Test';
     document.body.dataset.startTestOnSave = 'true';
     profileModal.classList.add('active');
-    console.log("connectToDevice successful, opening profile modal for test start.");
 
   } catch (err) {
-      console.error('BLE Error:', err);
-      if (err.message.includes("No device selected") || err.name === 'NotFoundError') {
-          setBLEStatus('Pairing Cancelled', 'warn');
-      } else if (err.message.includes("available")) {
-           setBLEStatus('BLE Not Supported', 'bad');
-           alert("Web Bluetooth is not supported or enabled on this browser. Please use Chrome, Edge, or Opera.");
-      } else {
-          setBLEStatus('Connection Error', 'bad');
-      }
-      if (bleDevice && bleDevice.gatt.connected) {
-          try { await bleDevice.gatt.disconnect(); } catch (e) { console.warn("Disconnect failed:", e); }
-      }
-      dataCharacteristic = null; commandCharacteristic = null; gattServer = null; bleDevice = null;
-   }
-  finally {
-      startBtn.disabled = false;
-      startBtn.textContent = 'Connect & Start Test';
-   }
+    console.error('BLE Err', err);
+    setBLEStatus('Error', 'bad');
+    if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
+  } finally {
+    startBtn.disabled = false;
+    startBtn.textContent = 'Connect & Start Test';
+  }
 }
 
+// --- NEW: Function to start the JS timer ---
 function startJsTimer() {
   let timeLeft = TEST_DURATION_S;
   statusText.textContent = 'MEASURING';
   countText.textContent = timeLeft;
-  if (testTimerInterval) clearInterval(testTimerInterval);
+  
+  if (testTimerInterval) clearInterval(testTimerInterval); // Clear any old timer
+  
   testTimerInterval = setInterval(() => {
     timeLeft--;
     countText.textContent = timeLeft;
+    
     if (timeLeft <= 0) {
       clearInterval(testTimerInterval);
       testTimerInterval = null;
-      stopTest();
+      stopTest(); // Call stop function when timer ends
     }
   }, 1000);
 }
 
+// --- NEW: Function to stop the test and process data ---
 async function stopTest() {
-  statusText.textContent = 'CALCULATING...'; countText.textContent = '0';
-  if (testTimerInterval) {
-      clearInterval(testTimerInterval);
-      testTimerInterval = null;
-  }
+  statusText.textContent = 'CALCULATING...';
+  countText.textContent = '0';
+  
+  // 1. Tell ESP32 to stop streaming and turn off buzzer
   try {
-    if (commandCharacteristic && bleDevice && bleDevice.gatt.connected) {
-        const command = JSON.stringify({ command: "stop" });
-        await commandCharacteristic.writeValue(textEncoder.encode(command));
-        console.log("STOP command sent.");
-    } else {
-        console.warn("Stop command not sent: Characteristic unavailable or device disconnected.");
-    }
-  } catch (err) { console.warn("Failed to send STOP command", err); }
-
-  // Filter readings rigorously before averaging
-  const validHrs = liveHrReadings.filter(hr => hr > 35 && hr < 220);
-  const validGsrs = liveGsrReadings.filter(gsr => gsr > 0); // Assuming 0 is invalid/no contact
-  const validSpo2s = liveSpo2Readings.filter(sp => sp > 80 && sp <= 100);
-  const validTemps = liveFingerTempReadings.filter(t => t > 5 && t < 50);
-
-  const hr_avg = calculateAverage(validHrs);
-  const gsr_avg = calculateAverage(validGsrs);
-  const spo2_avg = calculateAverage(validSpo2s);
-  const finger_temp_avg = calculateAverage(validTemps);
-
-  let finger_temp_trend = 0;
-  if (validTemps.length >= 10) {
-      const quarter = Math.floor(validTemps.length / 4);
-      const firstQuarterAvg = calculateAverage(validTemps.slice(0, quarter));
-      const lastQuarterAvg = calculateAverage(validTemps.slice(-quarter));
-      if (firstQuarterAvg > 0 && lastQuarterAvg > 0) {
-         finger_temp_trend = lastQuarterAvg - firstQuarterAvg;
-      }
+    const command = JSON.stringify({ command: "stop" });
+    await commandCharacteristic.writeValue(textEncoder.encode(command));
+  } catch (err) {
+    console.warn("Failed to send STOP command", err);
   }
+  
+  // 2. Process the collected data
+  const hr_avg = calculateAverage(liveHrReadings.filter(hr => hr > 35)); // Filter out 0s
+  const gsr_avg = calculateAverage(liveGsrReadings.filter(gsr => gsr > 0)); // Filter out 0s
+  const spo2_avg = calculateAverage(liveSpo2Readings.filter(sp => sp > 80)); // Filter out -1s
+  
+  console.log("Final Averages:", { hr_avg, gsr_avg, spo2_avg });
+  console.log("Collected Data:", { liveHrReadings, liveGsrReadings, liveSpo2Readings });
 
-  console.log("Final Averages:", { hr_avg, gsr_avg, spo2_avg, finger_temp_avg });
-  console.log("Temp Trend:", finger_temp_trend);
-
+  // 3. Get profile data
   const age = parseInt(ageInput.value || '30', 10);
   const gender = genderInput.value || 'male';
   const temp = parseInt(roomTempInput.value || '30', 10);
-
-  const { level, overview } = calculateStressLevel(hr_avg, gsr_avg, age, gender, temp, finger_temp_trend);
-
+  
+  // 4. Calculate stress level in JavaScript
+  const { level, overview } = calculateStressLevel(hr_avg, gsr_avg, age, gender, temp);
+  
+  // 5. Display results
   analysisSection.style.display = 'block';
   finalLevelText.textContent = level;
   finalLevelText.className = `level-${level}`;
   overviewText.textContent = overview;
   overviewText.style.display = 'block';
-
+  
+  // 6. Save to history
   saveSession({
     level: level,
     hr: hr_avg > 0 ? Math.round(hr_avg) : '--',
     spo2: spo2_avg > 0 ? Math.round(spo2_avg) : '--',
     gsr: gsr_avg >= 0 ? Math.round(gsr_avg) : '--',
-    temp_finger: finger_temp_avg > 0 ? finger_temp_avg.toFixed(1) : '--',
     date: new Date().toLocaleString('en-IN'),
     name: nameInput.value || '—',
     age: ageInput.value || '—'
   });
-  renderStaticSuggestions(level); // Render suggestions based on the final level
+  
+  renderStaticSuggestions(level);
 }
 
+// --- NEW: Helper function to average arrays ---
 function calculateAverage(arr) {
   if (!arr || arr.length === 0) return 0;
   const sum = arr.reduce((a, b) => a + b, 0);
   return sum / arr.length;
 }
 
+
+// "Connect & Start" button now connects, *then* opens modal
 startBtn.addEventListener('click', connectToDevice);
 
 function onDisconnected(){
   setBLEStatus('Disconnected','bad');
   statusText.textContent = 'IDLE';
   countText.textContent = '0';
-  if (testTimerInterval) {
-      clearInterval(testTimerInterval);
-      testTimerInterval = null;
-  }
+  if (testTimerInterval) clearInterval(testTimerInterval); // Stop timer on disconnect
   analysisSection.style.display = 'none';
-  dataCharacteristic = null;
-  commandCharacteristic = null;
-  gattServer = null;
-  // bleDevice reference kept for potential reconnects triggered by user action (e.g., clicking connect again)
+  bleDevice = null;
   startBtn.textContent = 'Connect & Start Test';
-  console.log("BLE Disconnected");
 }
 
 let statusTimeout = null;
 function setBLEStatus(message, level){
-  if (!bleStatusText) return;
   bleStatusText.textContent = message;
   let colorVar = '--bad';
   if (level === 'good') colorVar = '--good';
   else if (level === 'warn') colorVar = '--warn';
   bleStatusText.style.color = getComputedStyle(document.documentElement).getPropertyValue(colorVar);
-
+  
   if(message === 'Receiving...'){
-    if (!bleStatus.classList.contains('pulse-receiving')) {
-        bleStatus.classList.add('pulse-receiving');
-        if(statusTimeout) clearTimeout(statusTimeout);
-        statusTimeout = setTimeout(() => {
-            if(bleDevice && bleDevice.gatt.connected) {
-                 setBLEStatus('Connected', 'good');
-            }
-            bleStatus.classList.remove('pulse-receiving');
-        }, 500);
-    }
+    bleStatus.classList.add('pulse-receiving');
+    if(statusTimeout) clearTimeout(statusTimeout);
+    statusTimeout = setTimeout(() => {
+        setBLEStatus('Connected', 'good');
+        bleStatus.classList.remove('pulse-receiving');
+    }, 500);
   } else {
     if(statusTimeout) clearTimeout(statusTimeout);
     bleStatus.classList.remove('pulse-receiving');
@@ -880,154 +865,139 @@ function setBLEStatus(message, level){
 }
 
 /* =========================
-  Data handling
+  Data handling (now much simpler)
   ========================= */
 function handleDataNotification(event){
-  if (!bleDevice || !bleDevice.gatt.connected) return;
-
-  if (bleStatusText.textContent === 'Connected') { setBLEStatus('Receiving...', 'good'); }
+  if (bleStatusText.textContent === 'Connected') {
+      setBLEStatus('Receiving...', 'good');
+  }
+  
   const jsonString = textDecoder.decode(event.target.value);
   try {
     const data = JSON.parse(jsonString);
 
+    // --- This function now ONLY updates live UI and stores data ---
+    
     const hrRaw = Number(data.hr) || 0;
     const spo2Raw = Number(data.spo2) || -1;
     const gsrRaw = Number(data.gsr) || 0;
-    const tempFingerRaw = Number(data.temp_finger) || 0;
 
-    // --- Debug log for HR ---
-    // console.log('Received HR:', hrRaw);
-
+    // Update UI
     valHR.textContent = hrRaw > 0 ? hrRaw : '--';
     valSp.textContent = (spo2Raw > 0) ? spo2Raw : '--';
     valGSR.textContent = gsrRaw >= 0 ? gsrRaw : '--';
-    // valTemp removed
 
-    if (chartToggle.checked) {
-        if (hrRaw > 35 && hrRaw < 220) updateChart(hrChart, hrRaw); // Added lower bound check
-        if (spo2Raw > 80 && spo2Raw <= 100) updateChart(spChart, spo2Raw);
-        if (gsrRaw >= 0) updateChart(gsrChart, gsrRaw);
-        // tempChart removed
-    }
+    // Add to charts
+    if (hrRaw > 0 && hrRaw < 220) updateChart(hrChart, hrRaw);
+    if (spo2Raw > 0 && spo2Raw <= 100) updateChart(spChart, spo2Raw);
+    if (gsrRaw >= 0) updateChart(gsrChart, gsrRaw);
+    
+    // --- Store raw values for final calculation ---
+    liveHrReadings.push(hrRaw);
+    liveGsrReadings.push(gsrRaw);
+    liveSpo2Readings.push(spo2Raw);
 
-    if (testTimerInterval) {
-        liveHrReadings.push(hrRaw);
-        liveGsrReadings.push(gsrRaw);
-        liveSpo2Readings.push(spo2Raw);
-        liveFingerTempReadings.push(tempFingerRaw);
-    }
-
+    // Pulse animation
     if (hrRaw > 0 && !valHR.classList.contains('pulsing')) {
         valHR.classList.add('pulsing');
         valHR.addEventListener('animationend', () => {
             valHR.classList.remove('pulsing');
         }, { once: true });
-     }
+    }
 
     detectFlatSpO2(spo2Raw);
 
   } catch (err) {
-      console.error('Data Parse Error! Check ESP32 JSON format.', err);
-      console.error('Received problematic string:', jsonString);
-   }
+    console.error('Data Parse Error! Check ESP32 JSON format.', err);
+    console.error('Received problematic string:', jsonString);
+  }
 }
 
 /* =========================
-  STRESS CALCULATION LOGIC
+  NEW STRESS CALCULATION LOGIC
   ========================= */
-function calculateStressLevel(hr_avg, gsr_avg, age, gender, temp, finger_temp_trend) {
-    console.log(`Calculating stress with: HR:${hr_avg.toFixed(1)}, GSR:${gsr_avg.toFixed(1)}, Age:${age}, Gender:${gender}, RoomTemp:${temp}, TempTrend:${finger_temp_trend.toFixed(2)}`);
+function calculateStressLevel(hr_avg, gsr_avg, age, gender, temp) {
+    console.log(`Calculating stress with: HR:${hr_avg}, GSR:${gsr_avg}, Age:${age}, Gender:${gender}, Temp:${temp}`);
     let overview = "";
-    const finger_temp_avg = calculateAverage(liveFingerTempReadings.filter(t => t > 5 && t < 50)); // Calculate avg temp again for overview
+    
+    // --- 1. Get HR Baseline (Based on research) ---
+    let baselineHR = 70; // Default average
+    if (age >= 18 && age <= 25) baselineHR = 70;
+    else if (age >= 26 && age <= 35) baselineHR = 71;
+    else if (age >= 36 && age <= 45) baselineHR = 72;
+    else if (age >= 46 && age <= 55) baselineHR = 73;
+    else if (age >= 56 && age <= 65) baselineHR = 72;
+    else if (age > 65) baselineHR = 70;
 
-    // 1. Get HR Baseline
-    let baselineHR = 70;
-    if (age >= 18 && age <= 25) baselineHR = 70; else if (age >= 26 && age <= 35) baselineHR = 71; else if (age >= 36 && age <= 45) baselineHR = 72; else if (age >= 46 && age <= 55) baselineHR = 73; else if (age >= 56 && age <= 65) baselineHR = 72; else if (age > 65) baselineHR = 70;
-    if (gender === 'female') baselineHR += 3;
+    // Adjust for gender (on avg, female RHR is 2-7bpm higher)
+    if (gender === 'female') {
+        baselineHR += 3;
+    }
 
-    // 2. Calculate HR Score
+    // --- 2. Calculate HR Score ---
     const hr_delta = hr_avg - baselineHR;
     let hr_score = 0;
-    if (hr_avg <= 0) hr_score = 0;
-    else if (hr_delta > 20) hr_score = 100; else if (hr_delta > 12) hr_score = 70; else if (hr_delta > 4) hr_score = 40; else hr_score = 10;
-    if (hr_avg <= 0) overview += `Could not reliably determine average heart rate. `;
-    else if (hr_delta > 15) overview += `Your heart rate was notably elevated (${Math.round(hr_avg)} bpm) for your profile. `; else if (hr_delta > 5) overview += `Your heart rate was slightly elevated (${Math.round(hr_avg)} bpm). `; else overview += `Your heart rate (${Math.round(hr_avg)} bpm) was in a calm range. `;
+    if (hr_delta > 25) hr_score = 100; // e.g., 72 -> 97+
+    else if (hr_delta > 15) hr_score = 70; // e.g., 72 -> 87
+    else if (hr_delta > 5) hr_score = 40;  // e.g., 72 -> 77
+    else hr_score = 10;
+    
+    if (hr_delta > 15) overview += `Your heart rate was notably elevated for your age and gender. `;
+    else if (hr_delta > 5) overview += `Your heart rate was slightly elevated. `;
+    else overview += `Your heart rate was in a calm range. `;
 
-    // 3. Calculate GSR Score
+    // --- 3. Calculate GSR Score (and apply temp modifier) ---
+    // (These values are in kOhms from a typical 10-bit ADC, ~0-1023)
+    // A *higher* gsr_avg value means *lower* stress (more resistance).
+    // A *lower* gsr_avg value means *higher* stress (less resistance, more sweat).
+    
     let gsr_mod = 0;
-    if (temp > 28) gsr_mod = 50; if (temp < 20) gsr_mod = -50;
-    const gsr_modified = gsr_avg + gsr_mod; // Apply temp adjustment
+    if (temp > 28) gsr_mod = 50; // Hot room: expect more sweat. Be *less* sensitive. (add 50 to gsr)
+    if (temp < 20) gsr_mod = -50; // Cold room: expect less sweat. Be *more* sensitive. (sub 50 from gsr)
+    
+    const gsr_modified = gsr_avg + gsr_mod;
+    
     let gsr_score = 0;
-    // --- ADJUSTED GSR Thresholds (Lower numbers = higher resistance = calmer) ---
-    // These thresholds are EXAMPLES - they depend heavily on your specific GSR sensor circuit and ADC range (0-4095)
-    // You WILL need to calibrate these by testing calm vs. stressed states.
-    const gsr_high_stress_threshold = 2000; // Example: Resistance < 2000 (arbitrary units) = HIGH
-    const gsr_mod_stress_threshold = 2800;  // Example: Resistance < 2800 = MODERATE
-    const gsr_low_stress_threshold = 3500;  // Example: Resistance < 3500 = LOW-MID
+    if (gsr_modified < 300) gsr_score = 100; // Very high stress
+    else if (gsr_modified < 450) gsr_score = 70; // High stress
+    else if (gsr_modified < 600) gsr_score = 40; // Moderate stress
+    else gsr_score = 10; // Low stress
+    
+    if (gsr_score > 70) overview += `Your skin conductance was high, indicating a strong physiological arousal.`;
+    else if (gsr_score > 40) overview += `Your skin conductance showed signs of arousal.`;
+    else overview += `Your skin activity appears low and calm.`;
 
-    if (gsr_avg <= 0) gsr_score = 0;
-    else if (gsr_modified < gsr_high_stress_threshold) gsr_score = 100; // High conductance/Low Resistance
-    else if (gsr_modified < gsr_mod_stress_threshold) gsr_score = 70;
-    else if (gsr_modified < gsr_low_stress_threshold) gsr_score = 40;
-    else gsr_score = 10; // Low conductance/High Resistance
+    // --- 4. Final Weighted Score ---
+    const final_score = (hr_score * 0.6) + (gsr_score * 0.4);
 
-    if (gsr_avg <= 0) overview += `Could not reliably determine average skin conductance. `;
-    else if (gsr_score >= 70) overview += `Skin conductance was high (indicating arousal). `; else if (gsr_score >= 40) overview += `Skin conductance showed some arousal. `; else overview += `Skin activity appears low. `;
-
-    // 4. Temperature Trend Modifier & Overview Update
-    let temp_modifier = 0;
-    let temp_overview = `Finger sensor temp avg ${finger_temp_avg > 0 ? finger_temp_avg.toFixed(1)+'°C' : 'N/A'}. `;
-
-    if (finger_temp_avg > 0) { // Only add trend info if average temp was valid
-        if ((hr_score >= 70 || gsr_score >= 70) && finger_temp_trend < -0.3) {
-            temp_modifier = 15;
-            temp_overview += `Temperature dropped significantly, suggesting stress-related vasoconstriction.`;
-        }
-        else if ((hr_score >= 40 || gsr_score >= 40) && finger_temp_trend < -0.15) {
-            temp_modifier = 5;
-            temp_overview += `Temperature decreased slightly.`;
-        }
-        else if (finger_temp_trend > 0.1) {
-             temp_overview += `Temperature was stable or increased.`;
-        } else {
-             temp_overview += `Temperature remained relatively stable.`;
-        }
-    } else {
-        temp_overview += `Finger temperature readings were unreliable.`
-    }
-    overview += temp_overview; // Append temp info
-
-    // 5. Final Weighted Score
-    const final_score = (hr_score * 0.55) + (gsr_score * 0.35) + temp_modifier;
-
-    // 6. Determine Level
+    // --- 5. Determine Level ---
     let level = "LOW";
-    if (hr_score === 0 && gsr_score === 0) {
-      level = "ERROR";
-      overview = "Could not calculate score due to unreliable sensor readings. Please ensure good sensor contact and try again."
-    }
-    else if (final_score > 70) level = "HIGH";
-    else if (final_score > 40) level = "MODERATE";
-
-    console.log(`Scores: HR=${hr_score}, GSR=${gsr_score}, TempMod=${temp_modifier}, Final=${final_score.toFixed(1)}, Level=${level}`);
+    if (final_score > 75) level = "HIGH";
+    else if (final_score > 45) level = "MODERATE";
+    
+    console.log(`Scores: HR_Score=${hr_score}, GSR_Score=${gsr_score}, Final=${final_score}, Level=${level}`);
     return { level, overview };
 }
 /* ========================= */
 
+
 function detectFlatSpO2(spo2Raw){
   if (typeof spo2Raw !== 'number') return;
-  if (spo2Raw === spLast && spo2Raw > 80){
+  if (spo2Raw === spLast && spo2Raw > 0){
     spFlatCount++;
   } else {
     spFlatCount = 0;
     spLast = spo2Raw;
   }
+
   if (spFlatCount >= SP_FLAT_LIMIT){
-    if(analysisSection.style.display === 'none'){
-        // Only show if results aren't already displayed
-        if (suggestList) suggestList.innerHTML = `<li>⚠️ SpO₂ is not varying — sensor may not detect pulse. Tips: <ul style="margin:6px 0 0 18px"><li>Ensure full finger coverage & moderate pressure.</li><li>Reduce ambient light.</li></ul></li>`;
-    }
-    spFlatCount = 0;
+    suggestList.innerHTML = `<li>⚠️ SpO₂ is not varying — sensor may not detect pulse. Tips:
+      <ul style="margin:6px 0 0 18px">
+        <li>Fully cover sensor with finger; moderate pressure.</li>
+        <li>Reduce ambient light; cover sensor housing.</li>
+      </ul>
+    </li>`;
+    spFlatCount = 0; 
   }
 }
 
@@ -1035,97 +1005,78 @@ function detectFlatSpO2(spo2Raw){
   Local suggestions & history
   ========================= */
 const staticSuggestions = {
-  LOW: [ "😌 Calm state detected. Maintain hydration.", "🧘 Try a short mindfulness exercise.", "☀️ Keep up the healthy habits!" ],
-  MODERATE: [ "⚠️ Slight stress. Try '4-7-8' breathing.", "🚶 Take a 5-minute walk or stretch.", "🤔 Identify potential minor stressors." ],
-  HIGH: [ "🛑 High stress detected. Pause & breathe deeply.", "🧘‍♀️ Use the '5-4-3-2-1' grounding technique.", "🗣 Consider talking to someone you trust." ],
-   ERROR: [ "❓ Unable to get reliable readings. Ensure good sensor contact.", "💡 Try cleaning the sensor surfaces.", "🔄 Check connection and try again." ]
+  LOW: [
+    "😌 You're in a calm state. Great job. Take a moment to acknowledge this feeling.",
+    "🧘 Try a simple 3-minute mindfulness exercise to maintain this calm.",
+    "💧 Remember to stay hydrated. A glass of water can help maintain balance."
+  ],
+  MODERATE: [
+    "⚠️ Slight stress detected. Try the '4-7-8' breathing technique: inhale for 4s, hold for 7s, exhale for 8s. Repeat 3 times.",
+    "🚶 Take a 5-minute walk, focusing on your surroundings. Notice 3 things you can see and 2 things you can hear.",
+    "🥤 Drink some water. Dehydration can sometimes mimic or contribute to feelings of stress."
+  ],
+  HIGH: [
+    "🛑 High stress detected. Please pause what you are doing. Your well-being is the priority.",
+    "🧘‍♀️ Use the '5-4-3-2-1' grounding technique: Name 5 things you see, 4 things you feel, 3 things you hear, 2 things you smell, and 1 thing you taste.",
+    "🗣 If possible, step away from your current situation for a few minutes. A change of scenery can help."
+  ]
 };
 
 function renderStaticSuggestions(level){
-  if (!suggestList) return; // Guard
   suggestList.innerHTML = '';
-  const suggestions = staticSuggestions[level] || staticSuggestions.MODERATE;
-  suggestions.forEach(s => {
-    const li = document.createElement('li');
+  const all = staticSuggestions[level] || staticSuggestions.MODERATE;
+  
+  const shuffled = [...all].sort(() => 0.5 - Math.random());
+  const count = Math.min(3, all.length);
+  const selected = shuffled.slice(0, count); 
+  
+  selected.forEach(s => {
+    const li = document.createElement('li'); 
     li.innerHTML = s;
     suggestList.appendChild(li);
   });
 }
 
 function saveSession(sessionData){
-  try {
-    let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-    history.unshift(sessionData);
-    if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-    renderHistory(); // Update display after saving
-  } catch (e) {
-      console.error("Error saving session to localStorage:", e);
-  }
+  let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  history.unshift(sessionData);
+  if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  renderHistory();
 }
 function renderHistory(){
-  if (!historyList) return; // Guard
-  try {
-    const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-    if (!history.length){
-      historyList.innerHTML = `<li style="text-align:center;color:var(--text-body);padding:12px">No sessions recorded yet.</li>`; return;
-    }
-    historyList.innerHTML = history.map(h => `
-      <li class="history-item">
-        <div style="flex:1">
-          <div style="font-weight:700">${h.name || '—'}</div>
-          <div class="muted" style="font-size:12px">${h.date}</div>
-        </div>
-        <div style="min-width:100px;text-align:right">
-           <div style="font-weight:700">${h.level}</div>
-           <div class="muted" style="font-size:12px">HR:${h.hr} ${h.temp_finger !== '--' ? `Temp:${h.temp_finger}°C` : ''}</div>
-        </div>
-      </li>
-    `).join('');
-  } catch(e) {
-      console.error("Error rendering history from localStorage:", e);
-      historyList.innerHTML = `<li style="text-align:center;color:var(--bad);padding:12px">Error loading history.</li>`;
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  if (!history.length){
+    historyList.innerHTML = `<li style="text-align:center;color:var(--text-body);padding:12px">No sessions recorded yet.</li>`; return;
   }
+  historyList.innerHTML = history.map(h => `
+    <li class="history-item">
+      <div style="flex:1"><div style="font-weight:700">${h.name || '—'}</div><div class="muted" style="font-size:12px">${h.date}</div></div>
+      <div style="min-width:80px;text-align:right"><div style="font-weight:700">${h.level}</div><div class="muted" style="font-size:12px">HR:${h.hr}</div></div>
+    </li>
+  `).join('');
 }
-resetHistoryBtn.addEventListener('click', ()=>{
-    if (confirm("Are you sure you want to clear all session history?")) {
-        try {
-            localStorage.removeItem(HISTORY_KEY);
-            renderHistory();
-        } catch (e) {
-            console.error("Error clearing history:", e);
-        }
-    }
-});
-renderHistory(); // Initial render on load
+resetHistoryBtn.addEventListener('click', ()=>{ localStorage.removeItem(HISTORY_KEY); renderHistory(); });
+renderHistory();
 
 /* =========================
   Profile Management
   ========================= */
 function saveProfile() {
-    try {
-        localStorage.setItem('nw_profile', JSON.stringify({
-            name: nameInput.value||'',
-            age: ageInput.value||'',
-            gender: genderInput.value||''
-        }));
-        console.log("Profile saved:", localStorage.getItem('nw_profile'));
-    } catch (e) {
-        console.error("Error saving profile to localStorage:", e);
-    }
+    localStorage.setItem('nw_profile', JSON.stringify({ 
+        name: nameInput.value||'', 
+        age: ageInput.value||'',
+        gender: genderInput.value||''
+    }));
 }
 [nameInput, ageInput, genderInput].forEach(el => el.addEventListener('change', saveProfile));
 
+// Load saved profile on page load
 (() => {
-  try {
-    const p = JSON.parse(localStorage.getItem('nw_profile') || '{}');
-    if (p.name) nameInput.value = p.name;
-    if (p.age) ageInput.value = p.age;
-    if (p.gender) genderInput.value = p.gender;
-  } catch (e) {
-    console.error("Error loading profile from localStorage:", e);
-    localStorage.removeItem('nw_profile');
-  }
+  const p = JSON.parse(localStorage.getItem('nw_profile') || '{}');
+  if (p.name) nameInput.value = p.name;
+  if (p.age) ageInput.value = p.age;
+  if (p.gender) genderInput.value = p.gender;
 })();
 
 /* =========================
@@ -1135,7 +1086,8 @@ let breathInterval = null, breathRunning = false;
 function startBreathing(cycles = 6, inhale = 3, hold = 0, exhale = 4){
   stopBreathing();
   breathRunning = true;
-  let step = 0; let cycleCount = 0;
+  let step = 0;
+  let cycleCount = 0;
   breathCircle.style.transition = `transform ${inhale}s cubic-bezier(.2,.9,.3,1), opacity .2s`;
   breathCircle.textContent = 'Inhale';
   breathCircle.style.transform = 'scale(1)';
@@ -1161,31 +1113,35 @@ function startBreathing(cycles = 6, inhale = 3, hold = 0, exhale = 4){
     }
   }, inhale*1000);
 }
-function stopBreathing(){
-    if (breathInterval) clearTimeout(breathInterval);
-    breathInterval = null; breathRunning = false;
-    breathCircle.style.transform = 'scale(.6)';
-    breathCircle.textContent = 'Stopped';
+function stopBreathing(){ 
+    if (breathInterval) clearTimeout(breathInterval); 
+    breathInterval = null; 
+    breathRunning = false; 
+    breathCircle.style.transform = 'scale(.6)'; 
+    breathCircle.textContent = 'Stopped'; 
 }
-// --- FIX: Added listener ---
-openBreathBtn.addEventListener('click', ()=> {
-    breatherModal.classList.add('active');
-    setAmbientAudio(true);
+
+openBreathBtn.addEventListener('click', ()=> { 
+    breatherModal.classList.add('active'); 
+    setAmbientAudio(true); 
 });
-closeBreatherModal.addEventListener('click', ()=> {
-    breatherModal.classList.remove('active');
-    stopBreathing();
+closeBreatherModal.addEventListener('click', ()=> { 
+    breatherModal.classList.remove('active'); 
+    stopBreathing(); 
     setAmbientAudio(false);
 });
 breathStartBtn.addEventListener('click', ()=> {
   const val = Number(breathSpeed.value);
   if (val === 8) startBreathing(6,4,0,6); else if (val === 6) startBreathing(6,3,0,4); else startBreathing(8,2,0,3);
 });
-breathStopBtn.addEventListener('click', stopBreathing);
+breathStopBtn.addEventListener('click', ()=> { 
+    stopBreathing(); 
+});
 
 /* =========================
   Gemini integration (AI)
   ========================= */
+
 async function fetchWithBackoff(url, options, retries = 3, delay = 1000){
   try {
     const resp = await fetch(url, options);
@@ -1202,42 +1158,64 @@ async function fetchWithBackoff(url, options, retries = 3, delay = 1000){
     throw err;
   }
 }
-async function askGeminiAnalysis(userQuestion='Please analyze my last session and give tips.'){
+
+async function askGeminiAnalysis(userQuestion='Please analyze my last session and give tips.') {
   if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
-    appendChatMessage('system', 'Gemini API key not set. Cannot provide AI suggestions.');
+    appendChatMessage('system', 'Gemini API key not set. Paste your API key into the HTML file (at the top of the <script> block) to enable this feature.');
+    const lastLevel = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')[0]?.level || 'MODERATE';
+    renderStaticSuggestions(lastLevel);
     return;
   }
+
   appendChatMessage('user', userQuestion);
+
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
   const last = history[0] || null;
   const systemPrompt = `You are a compassionate wellness assistant. Provide concise, actionable advice based on sensor readings. Keep your analysis to 2-3 sentences and provide 3-4 very short, actionable bullet points as suggestions.`;
-  // Include temp in prompt
-  const userPrompt = last ? `My name is ${last.name || 'not given'} and my age is ${last.age || 'not given'}. My last session data was: Stress Level: ${last.level}, Avg HR: ${last.hr} bpm, Avg SpO2: ${last.spo2} %, Avg GSR: ${last.gsr} (raw value), Avg Finger Temp: ${last.temp_finger}°C. My question is: ${userQuestion}` : userQuestion;
-  const payload = { contents: [{ parts: [{ text: userPrompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, generationConfig: { temperature: 0.5, maxOutputTokens: 450 } };
+  
+  const userPrompt = last ? `My name is ${last.name || 'not given'} and my age is ${last.age || 'not given'}.
+My last session data was:
+- Stress Level: ${last.level}
+- Avg HR: ${last.hr} bpm
+- Avg SpO2: ${last.spo2} %
+- Avg GSR: ${last.gsr} (raw value)
+
+My question is: ${userQuestion}` : userQuestion;
+
+  const payload = {
+    "contents": [{ "parts": [{ "text": userPrompt }] }],
+    "systemInstruction": { "parts": [{ "text": systemPrompt }] },
+    "generationConfig": { "temperature": 0.5, "maxOutputTokens": 450 }
+  };
+
   try {
     appendChatMessage('system', 'Thinking...');
-    const resp = await fetchWithBackoff(GEMINI_BASE + GEMINI_API_KEY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }, 3, 1000);
+    const resp = await fetchWithBackoff(GEMINI_BASE + GEMINI_API_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }, 3, 1000);
+
     if (!resp.ok) throw new Error(`Gemini error ${resp.status}`);
+
     const result = await resp.json();
     const candidate = result.candidates?.[0];
-    if (candidate?.finishReason && candidate.finishReason !== 'STOP'){
-        throw new Error(`Gemini response stopped: ${candidate.finishReason}`);
-    }
-    const text = candidate?.content?.parts?.[0]?.text || JSON.stringify(result);
+    const text = candidate?.content?.parts?.[0]?.text || candidate?.content?.[0]?.text || JSON.stringify(result);
+    
     appendChatMessage('assistant', text);
+    
     const parts = text.split('\n').filter(s => s.trim().length > 0);
-    if (suggestList) suggestList.innerHTML = parts.map(s => `<li>${escapeHtml(s)}</li>`).join(''); // Update suggestions list
+    suggestList.innerHTML = parts.map(s => `<li>${escapeHtml(s)}</li>`).join('');
+
   } catch (err) {
-    console.error('Gemini error:', err);
-    appendChatMessage('assistant', `Sorry — AI analysis failed (${err.message}). Displaying standard suggestions.`);
+    console.error('Gemini error', err);
+    appendChatMessage('assistant', 'Sorry — the AI analysis failed. Here are some general suggestions based on your results instead.');
     const lastLevel = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')[0]?.level || 'MODERATE';
-    renderStaticSuggestions(lastLevel); // Ensure static suggestions are shown
+    renderStaticSuggestions(lastLevel);
   }
 }
 
-/* =========================
-  Chat helpers
-  ========================= */
+/* chat helpers */
 function appendChatMessage(who, text){
   const div = document.createElement('div');
   if (who === 'user') div.style.textAlign = 'right', div.innerHTML = `<div style="display:inline-block;background:var(--accent);color:var(--bg);padding:8px;border-radius:8px;margin:6px">${escapeHtml(text)}</div>`;
@@ -1247,27 +1225,26 @@ function appendChatMessage(who, text){
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 chatFab.addEventListener('click', ()=> chatPanel.classList.toggle('active'));
 closeChatBtn.addEventListener('click', ()=> chatPanel.classList.remove('active'));
 sendChatBtn.addEventListener('click', ()=> {
-    const q = chatInput.value.trim();
-    if (!q) return;
-    askGeminiAnalysis(q);
-    chatInput.value = '';
- });
+  const q = chatInput.value.trim();
+  if (!q) return;
+  askGeminiAnalysis(q);
+  chatInput.value = '';
+});
+
 askGeminiBtn.addEventListener('click', ()=> {
-    if (analysisSection.style.display !== 'block') {
-        alert("Please complete a test session first before asking Gemini.");
-        return;
-    }
+    analysisSection.style.display = 'block';
     askGeminiAnalysis('Please analyze my last session and give tips.');
- });
+});
 
 /* =========================
-  Modal UI listeners (FIXED)
+  Modal UI listeners
   ========================= */
-sosBtn.addEventListener('click', ()=> sosModal.classList.add('active'));
-closeSosModal.addEventListener('click', ()=> sosModal.classList.remove('active'));
+sosBtn.addEventListener('click', ()=> document.getElementById('sos-modal').classList.add('active'));
+closeSosModal.addEventListener('click', ()=> document.getElementById('sos-modal').classList.remove('active'));
 
 resourcesBtn.addEventListener('click', () => resourcesModal.classList.add('active'));
 closeResourcesModal.addEventListener('click', () => resourcesModal.classList.remove('active'));
@@ -1285,47 +1262,42 @@ closeProfileModal.addEventListener('click', () => {
 });
 
 saveProfileBtn.addEventListener('click', async () => {
-    saveProfile(); // Always save
-    const shouldStartTest = document.body.dataset.startTestOnSave === 'true';
-    profileModal.classList.remove('active'); // Always close
-    document.body.dataset.startTestOnSave = 'false'; // Always reset flag
-
-    if (shouldStartTest) {
-      console.log("Attempting to send START command...");
+    saveProfile();
+    profileModal.classList.remove('active');
+    
+    if (document.body.dataset.startTestOnSave === 'true') {
+      document.body.dataset.startTestOnSave = 'false';
+      
+      // --- NEW: Start the test by sending the START command ---
       try {
-        if (!commandCharacteristic || !bleDevice || !bleDevice.gatt.connected) {
-             console.error("BLE Command Characteristic not available or device not connected!");
-             setBLEStatus('Error: Not Connected', 'bad');
-             alert("Device is not connected. Please connect first.");
-             return;
-        }
         const temp = parseInt(roomTempInput.value || '30', 10);
         let irThr = 20000;
-        if (temp < 20) irThr = 15000; else if (temp >= 28) irThr = 25000;
+        if (temp < 20) irThr = 15000;
+        else if (temp >= 28) irThr = 25000;
 
-        // Clear old data and UI
-        liveHrReadings = []; liveGsrReadings = []; liveSpo2Readings = []; liveFingerTempReadings = [];
-        [hrChart, spChart, gsrChart].forEach(c => { if (c && c.data) { c.data.labels = []; c.data.datasets[0].data = []; c.update('none'); } });
-        analysisSection.style.display = 'none'; overviewText.style.display = 'none';
-        finalLevelText.textContent = '--'; finalLevelText.className = '';
-        valHR.textContent = '--'; valSp.textContent = '--'; valGSR.textContent = '--'; // Reset live values
-
-        const command = JSON.stringify({ command: "start", irThreshold: irThr });
-        console.log("Sending command:", command);
+        // Clear old data
+        liveHrReadings = [];
+        liveGsrReadings = [];
+        liveSpo2Readings = [];
+        [hrChart, spChart, gsrChart].forEach(c => { if (c) { c.data.labels = []; c.data.datasets[0].data = []; c.update(); } });
+        analysisSection.style.display = 'none';
+        
+        // Send start command
+        const command = JSON.stringify({ 
+            command: "start",
+            irThreshold: irThr 
+        });
         await commandCharacteristic.writeValue(textEncoder.encode(command));
-        console.log("START command sent successfully.");
-
+        
+        // Start the webpage timer
         startJsTimer();
-        console.log("JavaScript timer started.");
-
+        
       } catch (err) {
-        console.error("Failed to send START command or start timer", err);
+        console.error("Failed to send START command", err);
         setBLEStatus('Command Failed', 'bad');
-        alert(`Failed to start test: ${err.message}`);
       }
     }
 });
-
 
 /* =========================
   Utility helpers
@@ -1336,11 +1308,15 @@ function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
   Final note / warning about API keys
   ========================= */
 if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
+    console.warn("************************************************************");
     console.warn("GEMINI_API_KEY is not set!");
+    console.warn("Paste your key at the top of the <script> block in this HTML file.");
+    console.warn("************************************************************");
 } else {
     console.log("NeuroWell dashboard loaded. Gemini key is set.");
 }
 
+/* End of script */
 </script>
 </body>
 </html>
